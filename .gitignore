@@ -1,4 +1,4 @@
-# Edited by jasonmulderrig on 2020-11-10
+# Edited by jasonmulderrig on 2024-08-23
 
 ### Temporary files component of .gitignore
 *~
@@ -39,6 +39,9 @@ share/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Interactive Python for Jupyter notebooks
+etc/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
