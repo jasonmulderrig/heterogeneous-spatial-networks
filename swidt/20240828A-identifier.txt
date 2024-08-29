@@ -1,9 +1,0 @@
-date_20240828
-batch_A
-network_swidt
-scheme_rccs
-dim
-b
-n
-k
-eta_n
