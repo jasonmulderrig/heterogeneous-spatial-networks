@@ -658,7 +658,7 @@ def random_core_coords_crosslinker_seeding(
         b: float,
         n: int,
         max_try: int,
-        filename: str) -> None:
+        filename_prefix: str) -> None:
     """Random cross-linker seeding procedure for heterogeneous spatial
     networks.
 
@@ -672,11 +672,11 @@ def random_core_coords_crosslinker_seeding(
         b (float): Chain segment and/or cross-linker diameter.
         n (int): Intended number of core cross-linkers.
         max_try (int): Maximum number of cross-linker placement attempts.
-        filename (str): Baseline filename for data files.
+        filename_prefix (str): Baseline filename prefix for data files.
     
     """
     # Generate data filename
-    config_filename = filename + ".config"
+    config_filename = filename_prefix + ".config"
 
     # Initialize random number generator
     rng = np.random.default_rng()
@@ -749,15 +749,11 @@ def random_core_coords_crosslinker_seeding(
                     )
                     # Gather the indices from each separate coordinate
                     # together to assess all possible cross-linker
-                    # neighbors
-                    psbl_nghbr_indcs = (
-                        np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs))
-                    )
-                    # Retain unique indices corresponding to each
-                    # possible cross-linker neighbor, and the number of
-                    # times each such index value appears
+                    # neighbors. Retain unique indices corresponding to
+                    # each possible cross-linker neighbor, and the
+                    # number of times each such index value appears
                     psbl_nghbr_indcs, psbl_nghbr_indcs_counts = (
-                        np.unique(psbl_nghbr_indcs, return_counts=True)
+                        np.unique(np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs), dtype=int), return_counts=True)
                     )
                     # The true cross-linker neighbors are those whose
                     # index value appears twice in the possible
@@ -773,9 +769,7 @@ def random_core_coords_crosslinker_seeding(
                     if nghbr_num > 0:
                         # Gather the indices of the cross-linker
                         # neighbors
-                        nghbr_indcs = (
-                            psbl_nghbr_indcs[nghbr_indcs_vals_indcs]
-                        )
+                        nghbr_indcs = psbl_nghbr_indcs[nghbr_indcs_vals_indcs]
                         # Extract cross-linker neighbor coordinates
                         nghbr_tsslltd_rccs_x = tsslltd_rccs_x[nghbr_indcs]
                         nghbr_tsslltd_rccs_y = tsslltd_rccs_y[nghbr_indcs]
@@ -909,16 +903,11 @@ def random_core_coords_crosslinker_seeding(
                     )
                     # Gather the indices from each separate coordinate
                     # together to assess all possible cross-linker
-                    # neighbors
-                    psbl_nghbr_indcs = (
-                        np.concatenate(
-                            (psbl_nghbr_x_indcs, psbl_nghbr_y_indcs, psbl_nghbr_z_indcs))
-                    )
-                    # Retain unique indices corresponding to each
-                    # possible cross-linker neighbor, and the number of
-                    # times each such index value appears
+                    # neighbors. Retain unique indices corresponding to
+                    # each possible cross-linker neighbor, and the
+                    # number of times each such index value appears
                     psbl_nghbr_indcs, psbl_nghbr_indcs_counts = (
-                        np.unique(psbl_nghbr_indcs, return_counts=True)
+                        np.unique(np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs, psbl_nghbr_z_indcs), dtype=int), return_counts=True)
                     )
                     # The true cross-linker neighbors are those whose
                     # index value appears thrice in the possible
@@ -934,9 +923,7 @@ def random_core_coords_crosslinker_seeding(
                     if nghbr_num > 0:
                         # Gather the indices of the cross-linker
                         # neighbors
-                        nghbr_indcs = (
-                            psbl_nghbr_indcs[nghbr_indcs_vals_indcs]
-                        )
+                        nghbr_indcs = psbl_nghbr_indcs[nghbr_indcs_vals_indcs]
                         # Extract cross-linker neighbor coordinates
                         nghbr_tsslltd_rccs_x = tsslltd_rccs_x[nghbr_indcs]
                         nghbr_tsslltd_rccs_y = tsslltd_rccs_y[nghbr_indcs]
@@ -1011,7 +998,7 @@ def lammps_input_file_generator(
         L: float,
         b: float,
         n: int,
-        filename: str) -> None:
+        filename_prefix: str) -> None:
     """LAMMPS input file generator for soft pushoff and FIRE energy
     minimization of randomly placed cross-linkers.
 
@@ -1026,12 +1013,13 @@ def lammps_input_file_generator(
         L (float): Simulation box size of the core cross-linkers.
         b (float): Chain segment and/or cross-linker diameter.
         n (int): Number of core cross-linkers.
-        filename (str): Baseline filename for LAMMPS data files.
+        filename_prefix (str): Baseline filename prefix for LAMMPS data
+        files.
     
     """
     # Generate filenames
-    lammps_input_filename = filename + ".in"
-    config_input_filename = filename + ".config"
+    lammps_input_filename = filename_prefix + ".in"
+    config_input_filename = filename_prefix + ".config"
     
     # Create random integers
     rng = np.random.default_rng()
@@ -1120,163 +1108,43 @@ def crosslinker_seeding(
         scheme.
     
     """
-    # Generate filename
-    filename = filename_str(network, date, batch, sample)
-    L_filename = filename + "-L" + ".dat"
+    # Generate filename prefix
+    filename_prefix = filename_str(network, date, batch, sample)
+    L_filename = filename_prefix + "-L" + ".dat"
     
     # Load L
     L = np.loadtxt(L_filename)
 
-    # Append configuration number to filename
-    filename = filename + f"C{config:d}"
+    # Append configuration number to filename prefix
+    filename_prefix = filename_prefix + f"C{config:d}"
     
     # Call appropriate helper function to calculate the core
     # cross-linker coordinates
     if scheme == "rccs": # random core cross-linker coordinates
-        random_core_coords_crosslinker_seeding(dim, L, b, n, max_try, filename)
+        random_core_coords_crosslinker_seeding(
+            dim, L, b, n, max_try, filename_prefix)
     elif scheme == "mccs": # minimized core cross-linker coordinates
-        lammps_input_file_generator(dim, L, b, n, filename)
+        lammps_input_file_generator(dim, L, b, n, filename_prefix)
 
-def unique_sorted_nodes_edges(
-        nodes: list[int],
-        edges: list[tuple[int, int]]) -> tuple[np.ndarray, np.ndarray]:
-    """Unique nodes and edges.
+def unique_sorted_edges(edges: list[tuple[int, int]]) -> np.ndarray:
+    """Unique edges.
 
-    This function takes a list of node numbers and a list of (A, B)
-    nodes specifying edges, converts these lists to np.ndarrays, and
-    retains unique node numbers and unique edges. If the original edge
-    list contains edges (A, B) and (B, A), then only (A, B) will be
-    retained (assuming that A <= B).
+    This function takes a list of (A, B) nodes specifying edges,
+    converts this to an np.ndarray, and retains unique edges. If the
+    original edge list contains edges (A, B) and (B, A), then only
+    (A, B) will be retained (assuming that A <= B).
 
     Args:
-        nodes (list[int]): List of node numbers.
         edges (list[tuple[int, int]]): List of edges.
     
     Returns:
-        tuple[np.ndarray, np.ndarray]: Unique node numbers and unique
-        edges, respectively.
+        np.ndarray: Unique edges.
     
     """
-    # Convert list of node numbers to np.ndarray, and retain unique node
-    # numbers
-    nodes = np.unique(np.asarray(nodes, dtype=int))
     # Convert list of edges to np.ndarray, sort the order of each (A, B)
     # edge entry so that A <= B for all entries (after sorting), and
     # retain unique edges
-    edges = (
-        np.unique(np.sort(np.asarray(edges, dtype=int), axis=1), axis=0)
-    )
-
-    return nodes, edges
-
-def core_pb_refactor(
-        tsslltd_core_pb_nodes: np.ndarray,
-        tsslltd_core_pb_edges: np.ndarray,
-        n: int) -> tuple[int, int, np.ndarray]:
-    """Number of core and periodic boundary nodes and edges, and
-    refactored core and periodic boundary edge np.ndarray.
-
-    This function calculates the number of core and periodic boundary
-    nodes and edges. It also refactors the node numbers in the edge
-    np.ndarray to be members of the (zero-indexed) set
-    {0, 1, ..., core_pb_n-1}.
-
-    Args:
-        tsslltd_core_pb_nodes (np.ndarray): np.ndarray of the core and
-        periodic boundary node numbers. The total number of nodes in
-        this np.ndarray is core_pb_n.
-        tsslltd_core_pb_edges (np.ndarray): np.ndarray of the core and
-        periodic boundary edges. The total number of edges in this
-        np.ndarray is core_pb_m.
-        n (int): Number of core nodes.
-    
-    Note that there exists node numbers in tsslltd_core_pb_nodes and
-    tsslltd_core_pb_edges that are >= core_pb_n.
-    
-    Returns:
-        tuple[int, int, np.ndarray]: Number of core and periodic
-        boundary nodes, number of core and periodic boundary edges, and
-        refactored core and periodic boundary edge np.ndarray,
-        respectively. The node numbers in the refactored core and
-        periodic boundary edge np.ndarray are members of the
-        (zero-indexed) set {0, 1, ..., core_pb_n-1}.
-    
-    """
-    # Refactored node numbers for the core and periodic boundary
-    # nodes are to be members of the (zero-indexed) set
-    # {0, 1, ..., core_pb_n-1}, i.e.,
-    # core_pb_nodes = np.arange(core_pb_n, dtype=int)
-    core_pb_edges = np.empty_like(tsslltd_core_pb_edges, dtype=int)
-    
-    # Number of core and periodic boundary nodes; note that core_pb_n > n
-    core_pb_n = np.shape(tsslltd_core_pb_nodes)[0]
-    # Number of core and periodic boundary edges
-    core_pb_m = np.shape(core_pb_edges)[0]
-    
-    for edge in range(core_pb_m):
-        # Node numbers for each edge in tsslltd_core_pb_edges
-        node_0 = tsslltd_core_pb_edges[edge, 0]
-        node_1 = tsslltd_core_pb_edges[edge, 1]
-
-        # Note that node numbers corresponding to the core nodes are
-        # members of the (zero-indexed) set {0, 1, ..., n-1}, and the
-        # node numbers corresponding to the periodic boundary nodes are
-        # members of the set {n, n+1, ..., core_pb_n-1}. Thus, only the
-        # node numbers from tsslltd_core_pb_edges that are >= n need to
-        # be refactored to be members of the set
-        # {n, n+1, ..., core_pb_n-1}.
-        if node_0 >= n:
-            node_0 = int(np.where(tsslltd_core_pb_nodes == node_0)[0][0])
-        elif node_1 >= n:
-            node_1 = int(np.where(tsslltd_core_pb_nodes == node_1)[0][0])
-        else: pass
-
-        # Save (refactored) node numbers for each core and periodic
-        # boundary edge
-        core_pb_edges[edge, 0] = node_0
-        core_pb_edges[edge, 1] = node_1
-    
-    return core_pb_n, core_pb_m, core_pb_edges
-
-def core_pb_conn_refactor(
-        core_pb_m: int,
-        core_pb_edges: np.ndarray,
-        pb2core_nodes: np.ndarray) -> np.ndarray:
-    """Refactored edge np.ndarray corresponding to the periodic
-    connections between the core nodes.
-
-    This function creates an edge np.ndarray corresponding to the
-    periodic connections between the core nodes.
-
-    Args:
-        core_pb_m (int): Number of core and periodic boundary edges.
-        core_pb_edges (np.ndarray): np.ndarray of the core and periodic
-        boundary edges.
-        pb2core_nodes (np.ndarray): np.ndarray that returns the core
-        node that corresponds to each core and periodic boundary node,
-        i.e., pb2core_nodes[core_pb_node] = core_node.
-    
-    Returns:
-        np.ndarray: Refactored edge np.ndarray corresponding to the
-        periodic connections between the core nodes (the node numbers in
-        this np.ndarray are members of the (zero-indexed) set
-        {0, 1, ..., n-1}.
-    
-    """
-    core_pb_conn_edges = np.empty_like(core_pb_edges, dtype=int)
-
-    for edge in range(core_pb_m):
-        # Use pb2core_nodes to convert any periodic boundary node to its
-        # corresponding core node for each edge in the network.
-        # Duplicate entries will arise.
-        core_pb_conn_edges[edge, 0] = pb2core_nodes[core_pb_edges[edge, 0]]
-        core_pb_conn_edges[edge, 1] = pb2core_nodes[core_pb_edges[edge, 1]]
-    
-    # Sort the order of each (A, B) edge entry so that A <= B for all
-    # entries (after sorting), and retain unique edges
-    core_pb_conn_edges = np.unique(np.sort(core_pb_conn_edges, axis=1), axis=0)
-
-    return core_pb_conn_edges
+    return np.unique(np.sort(np.asarray(edges, dtype=int), axis=1), axis=0)
 
 def core2pb_nodes_func(
         core_nodes: np.ndarray,
@@ -1313,7 +1181,7 @@ def swidt_dim_2_network_topology_initialization(
         core_x: np.ndarray,
         core_y: np.ndarray,
         n: int,
-        filename: str) -> None:
+        filename_prefix: str) -> None:
     """Network topology initialization procedure for two-dimensional
     spider web-inspired Delaunay-triangulated networks.
 
@@ -1329,20 +1197,17 @@ def swidt_dim_2_network_topology_initialization(
         core_x (np.ndarray): x-coordinates of the core cross-linkers.
         core_y (np.ndarray): y-coordinates of the core cross-linkers.
         n (int): Number of core cross-linkers.
-        filename (str): Baseline filename for data files.
+        filename_prefix (str): Baseline filename prefix for data files.
     
     """
     # Import the scipy.spatial.Delaunay() function
     from scipy.spatial import Delaunay
     
     # Generate filenames
-    core_pb_n_filename = filename + "-core_pb_n" + ".dat"
-    core_pb_edges_filename = filename + "-core_pb_edges" + ".dat"
-    pb2core_nodes_filename = filename + "-pb2core_nodes" + ".dat"
-    core_pb_conn_edges_filename = filename + "-core_pb_conn_edges" + ".dat"
-    
-    core_pb_x_filename = filename + "-core_pb_x" + ".dat"
-    core_pb_y_filename = filename + "-core_pb_y" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
 
     # Core cross-linker nodes
     core_nodes = np.arange(n, dtype=int)
@@ -1393,9 +1258,7 @@ def swidt_dim_2_network_topology_initialization(
     # Extract the simplices from the Delaunay triangulation
     simplices = tsslltd_core_deltri.simplices
 
-    # Lists for the nodes and edges of the core and periodic boundary
-    # cross-linkers
-    tsslltd_core_pb_nodes = []
+    # List for edges of the core and periodic boundary cross-linkers
     tsslltd_core_pb_edges = []
 
     for simplex in simplices:
@@ -1405,68 +1268,51 @@ def swidt_dim_2_network_topology_initialization(
         node_2 = int(simplex[2])
 
         # If any of the nodes involved in any simplex edge correspond to
-        # the original core cross-linkers, then add those nodes and that
-        # edge to the appropriate lists. Duplicate entries will arise.
+        # the original core cross-linkers, then add that edge to the
+        # edge list. Duplicate entries will arise.
         if (node_0 < n) or (node_1 < n):
-            tsslltd_core_pb_nodes.append(node_0)
-            tsslltd_core_pb_nodes.append(node_1)
             tsslltd_core_pb_edges.append((node_0, node_1))
         if (node_1 < n) or (node_2 < n):
-            tsslltd_core_pb_nodes.append(node_1)
-            tsslltd_core_pb_nodes.append(node_2)
             tsslltd_core_pb_edges.append((node_1, node_2))
         if (node_2 < n) or (node_0 < n):
-            tsslltd_core_pb_nodes.append(node_2)
-            tsslltd_core_pb_nodes.append(node_0)
             tsslltd_core_pb_edges.append((node_2, node_0))
         else: pass
     
     del simplex, simplices, tsslltd_core_deltri
 
-    # Convert node and edge lists to np.ndarrays, and retain the unique
-    # nodes and edges from the core and periodic boundary cross-linkers
-    tsslltd_core_pb_nodes, tsslltd_core_pb_edges = (
-        unique_sorted_nodes_edges(tsslltd_core_pb_nodes, tsslltd_core_pb_edges)
-    )
+    # Convert edge list to np.ndarray, and retain the unique edges from
+    # the core and periodic boundary cross-linkers
+    tsslltd_core_pb_edges = unique_sorted_edges(tsslltd_core_pb_edges)
 
-    # Extract the core and periodic boundary cross-linker x- and
-    # y-coordinates using the corresponding node numbers
-    core_pb_x = tsslltd_core_x[tsslltd_core_pb_nodes].copy()
-    core_pb_y = tsslltd_core_y[tsslltd_core_pb_nodes].copy()
+    # Lists for the edges of the graph capturing the periodic
+    # connections between the core cross-linkers
+    conn_core_edges = []
+    conn_pb_edges = []
 
-    del tsslltd_core_x, tsslltd_core_y
+    for edge in range(np.shape(tsslltd_core_pb_edges)[0]):
+        node_0 = int(tsslltd_core_pb_edges[edge, 0])
+        node_1 = int(tsslltd_core_pb_edges[edge, 1])
 
-    # Extract the core and periodic boundary cross-linker nodes in the
-    # np.ndarray that returns the core cross-linker node that
-    # corresponds to each core and periodic boundary cross-linker node
-    pb2core_nodes = pb2core_nodes[tsslltd_core_pb_nodes].copy()
-
-    # Extract the number of core and periodic boundary cross-linker
-    # nodes and edges. Refactor the node numbers in the edge np.ndarray
-    # to be members of the (zero-indexed) set {0, 1, ..., core_pb_n-1}.
-    core_pb_n, core_pb_m, core_pb_edges = (
-        core_pb_refactor(tsslltd_core_pb_nodes, tsslltd_core_pb_edges, n)
-    )
+        # Edge is a core edge
+        if (node_0 < n) and (node_1 < n):
+            conn_core_edges.append((node_0, node_1))
+        # Edge is a periodic boundary edge
+        else:
+            node_0 = int(pb2core_nodes[node_0])
+            node_1 = int(pb2core_nodes[node_1])
+            conn_pb_edges.append((node_0, node_1))
     
-    del tsslltd_core_pb_nodes, tsslltd_core_pb_edges
-
-    # Determine the edge np.ndarray corresponding to the periodic
-    # connections between the core cross-linkers (without the periodic
-    # boundary cross-linkers)
-    core_pb_conn_edges = (
-        core_pb_conn_refactor(core_pb_m, core_pb_edges, pb2core_nodes)
-    )
+    # Convert edge lists to np.ndarrays, and retain unique edges
+    conn_core_edges = unique_sorted_edges(conn_core_edges)
+    conn_pb_edges = unique_sorted_edges(conn_pb_edges)
 
     # Save fundamental graph constituents from this topology
-    np.savetxt(core_pb_n_filename, [core_pb_n], fmt="%d")
-    np.savetxt(core_pb_edges_filename, core_pb_edges, fmt="%d")
-    np.savetxt(pb2core_nodes_filename, pb2core_nodes, fmt="%d")
-    np.savetxt(core_pb_conn_edges_filename, core_pb_conn_edges, fmt="%d")
+    np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")
+    np.savetxt(conn_pb_edges_filename, conn_pb_edges, fmt="%d")
 
-    # Save the core and periodic boundary cross-linker x- and
-    # y-coordinates
-    np.savetxt(core_pb_x_filename, core_pb_x)
-    np.savetxt(core_pb_y_filename, core_pb_y)
+    # Save the core cross-linker x- and y-coordinates
+    np.savetxt(core_x_filename, core_x)
+    np.savetxt(core_y_filename, core_y)
 
 def swidt_dim_3_network_topology_initialization(
         L: float,
@@ -1474,7 +1320,7 @@ def swidt_dim_3_network_topology_initialization(
         core_y: np.ndarray,
         core_z: np.ndarray,
         n: int,
-        filename: str) -> None:
+        filename_prefix: str) -> None:
     """Network topology initialization procedure for three-dimensional
     spider web-inspired Delaunay-triangulated networks.
 
@@ -1491,21 +1337,18 @@ def swidt_dim_3_network_topology_initialization(
         core_y (np.ndarray): y-coordinates of the core cross-linkers.
         core_z (np.ndarray): z-coordinates of the core cross-linkers.
         n (int): Number of core cross-linkers.
-        filename (str): Baseline filename for data files.
-
+        filename_prefix (str): Baseline filename prefix for data files.
+    
     """
     # Import the scipy.spatial.Delaunay() function
     from scipy.spatial import Delaunay
     
     # Generate filenames
-    core_pb_n_filename = filename + "-core_pb_n" + ".dat"
-    core_pb_edges_filename = filename + "-core_pb_edges" + ".dat"
-    pb2core_nodes_filename = filename + "-pb2core_nodes" + ".dat"
-    core_pb_conn_edges_filename = filename + "-core_pb_conn_edges" + ".dat"
-    
-    core_pb_x_filename = filename + "-core_pb_x" + ".dat"
-    core_pb_y_filename = filename + "-core_pb_y" + ".dat"
-    core_pb_z_filename = filename + "-core_pb_z" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
+    core_z_filename = filename_prefix + "-core_z" + ".dat"
 
     # Core cross-linker nodes
     core_nodes = np.arange(n, dtype=int)
@@ -1526,7 +1369,7 @@ def swidt_dim_3_network_topology_initialization(
         x_tsslltn = dim_3_tsslltn[tsslltn, 0]
         y_tsslltn = dim_3_tsslltn[tsslltn, 1]
         z_tsslltn = dim_3_tsslltn[tsslltn, 2]
-        # Skip the (hold, hold, hold) tessellation call because the core
+        # Skip the (hold, hold) tessellation call because the core
         # cross-linkers are being tessellated about themselves
         if (x_tsslltn == 0) and (y_tsslltn == 0) and (z_tsslltn == 0): continue
         else:
@@ -1563,9 +1406,7 @@ def swidt_dim_3_network_topology_initialization(
     # Extract the simplices from the Delaunay triangulation
     simplices = tsslltd_core_deltri.simplices
 
-    # Lists for the nodes and edges of the core and periodic boundary
-    # cross-linkers
-    tsslltd_core_pb_nodes = []
+    # List for edges of the core and periodic boundary cross-linkers
     tsslltd_core_pb_edges = []
 
     for simplex in simplices:
@@ -1579,79 +1420,55 @@ def swidt_dim_3_network_topology_initialization(
         # the original core cross-linkers, then add those nodes and that
         # edge to the appropriate lists. Duplicate entries will arise.
         if (node_0 < n) or (node_1 < n):
-            tsslltd_core_pb_nodes.append(node_0)
-            tsslltd_core_pb_nodes.append(node_1)
             tsslltd_core_pb_edges.append((node_0, node_1))
         if (node_1 < n) or (node_2 < n):
-            tsslltd_core_pb_nodes.append(node_1)
-            tsslltd_core_pb_nodes.append(node_2)
             tsslltd_core_pb_edges.append((node_1, node_2))
         if (node_2 < n) or (node_0 < n):
-            tsslltd_core_pb_nodes.append(node_2)
-            tsslltd_core_pb_nodes.append(node_0)
             tsslltd_core_pb_edges.append((node_2, node_0))
         if (node_3 < n) or (node_0 < n):
-            tsslltd_core_pb_nodes.append(node_3)
-            tsslltd_core_pb_nodes.append(node_0)
             tsslltd_core_pb_edges.append((node_3, node_0))
         if (node_3 < n) or (node_1 < n):
-            tsslltd_core_pb_nodes.append(node_3)
-            tsslltd_core_pb_nodes.append(node_1)
             tsslltd_core_pb_edges.append((node_3, node_1))
         if (node_3 < n) or (node_2 < n):
-            tsslltd_core_pb_nodes.append(node_3)
-            tsslltd_core_pb_nodes.append(node_2)
             tsslltd_core_pb_edges.append((node_3, node_2))
         else: pass
     
     del simplex, simplices, tsslltd_core_deltri
 
-    # Convert node and edge lists to np.ndarrays, and retain the unique
-    # nodes and edges from the core and periodic boundary cross-linkers
-    tsslltd_core_pb_nodes, tsslltd_core_pb_edges = (
-        unique_sorted_nodes_edges(tsslltd_core_pb_nodes, tsslltd_core_pb_edges)
-    )
+    # Convert edge list to np.ndarray, and retain the unique edges from
+    # the core and periodic boundary cross-linkers
+    tsslltd_core_pb_edges = unique_sorted_edges(tsslltd_core_pb_edges)
 
-    # Extract the core and periodic boundary cross-linker x-, y-, and
-    # z-coordinates using the corresponding node numbers
-    core_pb_x = tsslltd_core_x[tsslltd_core_pb_nodes].copy()
-    core_pb_y = tsslltd_core_y[tsslltd_core_pb_nodes].copy()
-    core_pb_z = tsslltd_core_z[tsslltd_core_pb_nodes].copy()
+    # Lists for the edges of the graph capturing the periodic
+    # connections between the core cross-linkers
+    conn_core_edges = []
+    conn_pb_edges = []
 
-    del tsslltd_core_x, tsslltd_core_y, tsslltd_core_z
+    for edge in range(np.shape(tsslltd_core_pb_edges)[0]):
+        node_0 = int(tsslltd_core_pb_edges[edge, 0])
+        node_1 = int(tsslltd_core_pb_edges[edge, 1])
 
-    # Extract the core and periodic boundary cross-linker nodes in the
-    # np.ndarray that returns the core cross-linker node that
-    # corresponds to each core and periodic boundary cross-linker node
-    pb2core_nodes = pb2core_nodes[tsslltd_core_pb_nodes].copy()
-
-    # Extract the number of core and periodic boundary cross-linker
-    # nodes and edges. Refactor the node numbers in the edge np.ndarray
-    # to be members of the (zero-indexed) set {0, 1, ..., core_pb_n-1}.
-    core_pb_n, core_pb_m, core_pb_edges = (
-        core_pb_refactor(tsslltd_core_pb_nodes, tsslltd_core_pb_edges, n)
-    )
+        # Edge is a core edge
+        if (node_0 < n) and (node_1 < n):
+            conn_core_edges.append((node_0, node_1))
+        # Edge is a periodic boundary edge
+        else:
+            node_0 = int(pb2core_nodes[node_0])
+            node_1 = int(pb2core_nodes[node_1])
+            conn_pb_edges.append((node_0, node_1))
     
-    del tsslltd_core_pb_nodes, tsslltd_core_pb_edges
-
-    # Determine the edge np.ndarray corresponding to the periodic
-    # connections between the core cross-linkers (without the periodic
-    # boundary cross-linkers)
-    core_pb_conn_edges = (
-        core_pb_conn_refactor(core_pb_m, core_pb_edges, pb2core_nodes)
-    )
+    # Convert edge lists to np.ndarrays, and retain unique edges
+    conn_core_edges = unique_sorted_edges(conn_core_edges)
+    conn_pb_edges = unique_sorted_edges(conn_pb_edges)
 
     # Save fundamental graph constituents from this topology
-    np.savetxt(core_pb_n_filename, [core_pb_n], fmt="%d")
-    np.savetxt(core_pb_edges_filename, core_pb_edges, fmt="%d")
-    np.savetxt(pb2core_nodes_filename, pb2core_nodes, fmt="%d")
-    np.savetxt(core_pb_conn_edges_filename, core_pb_conn_edges, fmt="%d")
-    
-    # Save the core and periodic boundary cross-linker x-, y-, and
-    # z-coordinates
-    np.savetxt(core_pb_x_filename, core_pb_x)
-    np.savetxt(core_pb_y_filename, core_pb_y)
-    np.savetxt(core_pb_z_filename, core_pb_z)
+    np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")
+    np.savetxt(conn_pb_edges_filename, conn_pb_edges, fmt="%d")
+
+    # Save the core cross-linker x-, y-, and z-coordinates
+    np.savetxt(core_x_filename, core_x)
+    np.savetxt(core_y_filename, core_y)
+    np.savetxt(core_z_filename, core_z)
 
 def swidt_network_topology_initialization(
         network: str,
@@ -1705,18 +1522,18 @@ def swidt_network_topology_initialization(
             + "only proceed if network = ``swidt''."
         )
         sys.exit(error_str)
-    # Generate filename
-    filename = filename_str(network, date, batch, sample)
-    L_filename = filename + "-L" + ".dat"
+    # Generate filename prefix
+    filename_prefix = filename_str(network, date, batch, sample)
+    L_filename = filename_prefix + "-L" + ".dat"
     
     # Load L
     L = np.loadtxt(L_filename)
 
-    # Append configuration number to filename
-    filename = filename + f"C{config:d}"
+    # Append configuration number to filename prefix
+    filename_prefix = filename_prefix + f"C{config:d}"
 
     # Generate config filename
-    config_filename = filename + ".config"
+    config_filename = filename_prefix + ".config"
 
     # Call appropriate helper function to initialize network topology
     if scheme == "rccs": # random core cross-linker coordinates
@@ -1730,13 +1547,13 @@ def swidt_network_topology_initialization(
         if dim == 2:
             del rccs
             swidt_dim_2_network_topology_initialization(
-                L, rccs_x, rccs_y, rccs_n, filename)
+                L, rccs_x, rccs_y, rccs_n, filename_prefix)
         elif dim == 3:
             # Separate z-coordinates of core cross-linkers
             rccs_z = rccs[:, 2].copy()
             del rccs
             swidt_dim_3_network_topology_initialization(
-                L, rccs_x, rccs_y, rccs_z, rccs_n, filename)
+                L, rccs_x, rccs_y, rccs_z, rccs_n, filename_prefix)
     elif scheme == "mccs": # minimized core cross-linker coordinates
         skiprows_num = 15
         # Load core cross-linker coordinates
@@ -1747,76 +1564,53 @@ def swidt_network_topology_initialization(
         if dim == 2:
             del mccs
             swidt_dim_2_network_topology_initialization(
-                L, mccs_x, mccs_y, n, filename)
+                L, mccs_x, mccs_y, n, filename_prefix)
         elif dim == 3:
             # Separate z-coordinates of core cross-linkers
             mccs_z = mccs[:, 4].copy()
             del mccs
             swidt_dim_3_network_topology_initialization(
-                L, mccs_x, mccs_y, mccs_z, n, filename)
+                L, mccs_x, mccs_y, mccs_z, n, filename_prefix)
 
-def dim_2_core_node2pb_node_mic_identification(
-        core_node: int,
-        core_node2pb_node: int,
-        core2pb_nodes: list[np.ndarray],
-        core_pb_x: np.ndarray,
-        core_pb_y: np.ndarray) -> int:
-    pb_nodes = core2pb_nodes[core_node2pb_node]
-    # Select the correct pb_node via the minimum image criterion, i.e.,
-    # the minimum distance criterion
-    core_node_pstn = np.asarray(
-        [
-            core_pb_x[core_node],
-            core_pb_y[core_node]
-        ]
-    )
-    pb_nodes_num = np.shape(pb_nodes)[0]
-    r_pb_nodes = np.empty(pb_nodes_num)
-    for pb_node_indx in range(pb_nodes_num):
-        pb_node = pb_nodes[pb_node_indx]
-        pb_node_pstn = np.asarray(
-            [
-                core_pb_x[pb_node],
-                core_pb_y[pb_node]
-            ]
-        )
-        r_pb_nodes[pb_node_indx] = (
-            np.linalg.norm(core_node_pstn-pb_node_pstn)
-        )
-    return pb_nodes[np.argmin(r_pb_nodes)]
+def add_nodes_from_numpy_array(graph, nodes: np.ndarray):
+    """Add node numbers from a np.ndarray array to an undirected
+    NetworkX graph.
 
-def dim_3_core_node2pb_node_mic_identification(
-        core_node: int,
-        core_node2pb_node: int,
-        core2pb_nodes: list[np.ndarray],
-        core_pb_x: np.ndarray,
-        core_pb_y: np.ndarray,
-        core_pb_z: np.ndarray) -> int:
-    pb_nodes = core2pb_nodes[core_node2pb_node]
-    # Select the correct pb_node via the minimum image criterion, i.e.,
-    # the minimum distance criterion
-    core_node_pstn = np.asarray(
-        [
-            core_pb_x[core_node],
-            core_pb_y[core_node],
-            core_pb_z[core_node]
-        ]
-    )
-    pb_nodes_num = np.shape(pb_nodes)[0]
-    r_pb_nodes = np.empty(pb_nodes_num)
-    for pb_node_indx in range(pb_nodes_num):
-        pb_node = pb_nodes[pb_node_indx]
-        pb_node_pstn = np.asarray(
-            [
-                core_pb_x[pb_node],
-                core_pb_y[pb_node],
-                core_pb_z[pb_node]
-            ]
-        )
-        r_pb_nodes[pb_node_indx] = (
-            np.linalg.norm(core_node_pstn-pb_node_pstn)
-        )
-    return pb_nodes[np.argmin(r_pb_nodes)]
+    This function adds node numbers from a np.ndarray array to an
+    undirected NetworkX graph.
+
+    Args:
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph
+        or nx.MultiGraph.
+        nodes (np.ndarray): Node numbers
+    
+    Returns:
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph
+        or nx.MultiGraph.
+    
+    """
+    graph.add_nodes_from(nodes.tolist())
+    return graph
+
+def add_edges_from_numpy_array(graph, edges: np.ndarray):
+    """Add edges from a two-dimensional np.ndarray to an undirected
+    NetworkX graph.
+
+    This function adds edges from a two-dimensional np.ndarray to an
+    undirected NetworkX graph.
+
+    Args:
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph
+        or nx.MultiGraph.
+        edges (np.ndarray): np.ndarray of edges
+    
+    Returns:
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph
+        or nx.MultiGraph.
+    
+    """
+    graph.add_edges_from(list(tuple(edge) for edge in edges.tolist()))
+    return graph
 
 def swidt_network_edge_pruning_procedure(
         network: str,
@@ -1832,10 +1626,10 @@ def swidt_network_edge_pruning_procedure(
     web-inspired Delaunay-triangulated networks.
 
     This function loads fundamental graph constituents along with core
-    and periodic boundary cross-linker coordinates, performs a random
-    edge pruning procedure such that each cross-linker in the network is
-    connected to, at most, k edges, and isolates the maximum connected
-    component from the resulting network.
+    cross-linker coordinates, performs a random edge pruning procedure
+    such that each cross-linker in the network is connected to, at most,
+    k edges, and isolates the maximum connected component from the
+    resulting network.
 
     Args:
         network (str): Lower-case acronym indicating the particular type
@@ -1874,328 +1668,323 @@ def swidt_network_edge_pruning_procedure(
     # Initialize node number integer constants
     core_node_0 = 0
     core_node_1 = 0
-    pb_node_0 = 0
-    pb_node_1 = 0
 
     # Generate filenames
-    filename = filename_str(network, date, batch, sample) + f"C{config:d}"
-    core_pb_n_filename = filename + "-core_pb_n" + ".dat"
-    core_pb_edges_filename = filename + "-core_pb_edges" + ".dat"
-    pb2core_nodes_filename = filename + "-pb2core_nodes" + ".dat"
-    core_pb_conn_edges_filename = filename + "-core_pb_conn_edges" + ".dat"
-    core_pb_x_filename = filename + "-core_pb_x" + ".dat"
-    core_pb_y_filename = filename + "-core_pb_y" + ".dat"
+    filename_prefix = filename_str(network, date, batch, sample) + f"C{config:d}"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
     if dim == 3:
-        core_pb_z_filename = filename + "-core_pb_z" + ".dat"
-    mx_cmp_core_pb_n_filename = (
-        filename + f"P{pruning:d}" + "-core_pb_n" + ".dat"
-    )
-    mx_cmp_core_pb_edges_filename = (
-        filename + f"P{pruning:d}" + "-core_pb_edges" + ".dat"
-    )
-    mx_cmp_pb2core_nodes_filename = (
-        filename + f"P{pruning:d}" + "-pb2core_nodes" + ".dat"
-    )
-    mx_cmp_core_pb_conn_n_filename = (
-        filename + f"P{pruning:d}" + "-core_pb_conn_n" + ".dat"
-    )
-    mx_cmp_core_pb_conn_edges_filename = (
-        filename + f"P{pruning:d}" + "-core_pb_conn_edges" + ".dat"
-    )
-    mx_cmp_core_pb_x_filename = (
-        filename + f"P{pruning:d}" + "-core_pb_x" + ".dat"
-    )
-    mx_cmp_core_pb_y_filename = (
-        filename + f"P{pruning:d}" + "-core_pb_y" + ".dat"
-    )
+        core_z_filename = filename_prefix + "-core_z" + ".dat"
+    filename_prefix = filename_prefix + f"P{pruning:d}"
+    mx_cmp_conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    mx_cmp_conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    mx_cmp_conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    mx_cmp_core_x_filename = filename_prefix + "-core_x" + ".dat"
+    mx_cmp_core_y_filename = filename_prefix + "-core_y" + ".dat"
     if dim == 3:
-        mx_cmp_core_pb_z_filename = (
-            filename + f"P{pruning:d}" + "-core_pb_z" + ".dat"
-        )
+        mx_cmp_core_z_filename = filename_prefix + "-core_z" + ".dat"
     
     # Load fundamental graph constituents
-    core_pb_n = np.loadtxt(core_pb_n_filename, dtype=int)
-    core_pb_edges = np.loadtxt(core_pb_edges_filename, dtype=int)
-    pb2core_nodes = np.loadtxt(pb2core_nodes_filename, dtype=int)
-    core_pb_conn_edges = np.loadtxt(core_pb_conn_edges_filename, dtype=int)
-
     core_nodes = np.arange(n, dtype=int)
-    core_pb_nodes = np.arange(core_pb_n, dtype=int)
-    core_pb_conn_nodes = core_nodes.copy()
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
 
-    # Construct the core2pb_nodes list
-    core2pb_nodes = core2pb_nodes_func(core_nodes, pb2core_nodes)
-
-    # Load the core and periodic boundary cross-linker x- and
-    # y-coordinates
-    core_pb_x = np.loadtxt(core_pb_x_filename)
-    core_pb_y = np.loadtxt(core_pb_y_filename)
+    # Load core cross-linker x- and y-coordinates
+    core_x = np.loadtxt(core_x_filename)
+    core_y = np.loadtxt(core_y_filename)
     if dim == 3:
-        # Load the core and periodic boundary cross-linker z-coordinates
-        core_pb_z = np.loadtxt(core_pb_z_filename)
+        # Load core cross-linker z-coordinates
+        core_z = np.loadtxt(core_z_filename)
     
-    # Create nx.Graphs, and add nodes before edges
-    core_pb_graph = nx.Graph()
-    core_pb_graph.add_nodes_from(core_pb_nodes)
-    core_pb_graph.add_edges_from(core_pb_edges)
+    # Create nx.Graphs, load fundamental graph constituents, and add
+    # nodes before edges
+    conn_core_graph = nx.Graph()
+    conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
+    conn_core_graph = add_edges_from_numpy_array(conn_core_graph, conn_core_edges)
 
-    core_pb_conn_graph = nx.Graph()
-    core_pb_conn_graph.add_nodes_from(core_pb_conn_nodes)
-    core_pb_conn_graph.add_edges_from(core_pb_conn_edges)
+    conn_pb_graph = nx.Graph()
+    conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+    conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
 
-    # Degree of cross-linker nodes in the core_pb_conn_graph
-    core_pb_conn_graph_k = (
-        np.asarray(list(core_pb_conn_graph.degree()), dtype=int)[:, 1]
-    )
+    conn_graph = nx.Graph()
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
 
-    if np.any(core_pb_conn_graph_k > k):
+    # Degree of cross-linker nodes in the graph
+    conn_graph_k = np.asarray(list(conn_graph.degree()), dtype=int)[:, 1]
+
+    if np.any(conn_graph_k > k):
         # Explicit edge pruning procedure
-        while np.any(core_pb_conn_graph_k > k):
+        while np.any(conn_graph_k > k):
             # Identify the cross-linker nodes connected to more than k
-            # edges in the core_pb_conn_graph, i.e., hyperconnected
-            # cross-linker nodes
-            core_pb_conn_graph_hyprconn_nodes = (
-                np.where(core_pb_conn_graph_k > k)[0]
-            )
+            # edges in the graph, i.e., hyperconnected cross-linker
+            # nodes
+            conn_graph_hyprconn_nodes = np.where(conn_graph_k > k)[0]
             # Identify the edges connected to the hyperconnected
             # cross-linker nodes
-            core_pb_conn_graph_hyprconn_edge_indcs_0 = (
-                np.where(np.isin(core_pb_conn_edges[:, 0], core_pb_conn_graph_hyprconn_nodes))[0]
+            conn_graph_hyprconn_edge_indcs_0 = (
+                np.where(np.isin(conn_edges[:, 0], conn_graph_hyprconn_nodes))[0]
             )
-            core_pb_conn_graph_hyprconn_edge_indcs_1 = (
-                np.where(np.isin(core_pb_conn_edges[:, 1], core_pb_conn_graph_hyprconn_nodes))[0]
+            conn_graph_hyprconn_edge_indcs_1 = (
+                np.where(np.isin(conn_edges[:, 1], conn_graph_hyprconn_nodes))[0]
             )
-            core_pb_conn_graph_hyprconn_edge_indcs = (
+            conn_graph_hyprconn_edge_indcs = (
                 np.unique(
                     np.concatenate(
-                        (core_pb_conn_graph_hyprconn_edge_indcs_0, core_pb_conn_graph_hyprconn_edge_indcs_1)))
+                        (conn_graph_hyprconn_edge_indcs_0, conn_graph_hyprconn_edge_indcs_1),
+                        dtype=int))
             )
             # Randomly select a hyperconnected edge to remove
             edge_indcs_indx2remove_indx = (
                 rng.integers(
-                    np.shape(core_pb_conn_graph_hyprconn_edge_indcs)[0], dtype=int)
+                    np.shape(conn_graph_hyprconn_edge_indcs)[0], dtype=int)
             )
             edge_indx2remove = (
-                core_pb_conn_graph_hyprconn_edge_indcs[edge_indcs_indx2remove_indx]
+                conn_graph_hyprconn_edge_indcs[edge_indcs_indx2remove_indx]
             )
-            edge2remove = core_pb_conn_edges[edge_indx2remove]
-            core_node_0 = edge2remove[0]
-            core_node_1 = edge2remove[1]
+            core_node_0 = int(conn_edges[edge_indx2remove, 0])
+            core_node_1 = int(conn_edges[edge_indx2remove, 1])
 
-            # Remove hyperconnected edge in the core_pb_conn_graph
-            core_pb_conn_graph.remove_edge(core_node_0, core_node_1)
-            core_pb_conn_edges = (
-                np.delete(core_pb_conn_edges, edge_indx2remove, axis=0)
-            )
-            
-            # Remove hyperconnected edge(s) in the core_pb_graph
-            if core_pb_graph.has_edge(core_node_0, core_node_1):
-                # Hyperconnected edge connects two core cross-linkers in
-                # the core_pb_graph
-                core_pb_graph.remove_edge(core_node_0, core_node_1)
-            else:
-                # Two hyperconnected edges that each separately yet
-                # correspondingly connect a core cross-linker and a
-                # periodic boundary cross-linker in the core_pb_graph.
-                # Identify all possible periodic boundary cross-linkers
-                # that could be involved in each hyperconnected edge.
-                pb_nodes_0 = core2pb_nodes[core_node_0]
-                pb_nodes_1 = core2pb_nodes[core_node_1]
-                # Determine the specific periodic boundary and core
-                # cross-linker pair involved in each hyperconnected
-                # edge, and remove each edge
-                for pb_node_0 in np.nditer(pb_nodes_0):
-                    pb_node_0 = int(pb_node_0)
-                    if core_pb_graph.has_edge(pb_node_0, core_node_1):
-                        core_pb_graph.remove_edge(pb_node_0, core_node_1)
-                        break
-                    else: pass
-                for pb_node_1 in np.nditer(pb_nodes_1):
-                    pb_node_1 = int(pb_node_1)
-                    if core_pb_graph.has_edge(core_node_0, pb_node_1):
-                        core_pb_graph.remove_edge(core_node_0, pb_node_1)
-                        break
-                    else: pass
+            # Remove hyperconnected edge in the graphs
+            conn_graph.remove_edge(core_node_0, core_node_1)
+            conn_edges = np.delete(conn_edges, edge_indx2remove, axis=0)
+            if conn_core_graph.has_edge(core_node_0, core_node_1):
+                conn_core_graph.remove_edge(core_node_0, core_node_1)
+            if conn_pb_graph.has_edge(core_node_0, core_node_1):
+                conn_pb_graph.remove_edge(core_node_0, core_node_1)
 
-            # Update degree of cross-linker nodes in the
-            # core_pb_conn_graph
-            core_pb_conn_graph_k[core_node_0] -= 1
-            core_pb_conn_graph_k[core_node_1] -= 1
+            # Update degree of cross-linker nodes in the graph
+            conn_graph_k[core_node_0] -= 1
+            conn_graph_k[core_node_1] -= 1
                 
-        # Isolate largest/maximum connected component from the
-        # core_pb_conn_graph in a nodewise fashion. Note that
-        # mx_cmp_core_pb_conn_graph_nodes[updated_node] = original_node
-        mx_cmp_core_pb_conn_graph_nodes = max(
-            nx.connected_components(core_pb_conn_graph), key=len)
-        mx_cmp_core_pb_conn_graph = (
-            core_pb_conn_graph.subgraph(mx_cmp_core_pb_conn_graph_nodes).copy()
+        # Isolate largest/maximum connected component in a nodewise
+        # fashion. Note that
+        # mx_cmp_conn_graph_nodes[updated_node] = original_node
+        mx_cmp_conn_graph_nodes = max(
+            nx.connected_components(conn_graph), key=len)
+        mx_cmp_conn_core_graph = (
+            conn_core_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
         )
-        # Nodes from the core_pb_conn_graph largest/maximum connected
-        # component, sorted in ascending order
-        mx_cmp_core_pb_conn_graph_nodes = (
-            np.sort(np.fromiter(mx_cmp_core_pb_conn_graph_nodes, dtype=int))
+        mx_cmp_conn_pb_graph = (
+            conn_pb_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
         )
-        # Edges from the core_pb_conn_graph largest/maximum connected
-        # component
-        mx_cmp_core_pb_conn_graph_edges = (
-            np.asarray(list(mx_cmp_core_pb_conn_graph.edges()), dtype=int)
+        # Nodes from the largest/maximum connected component, sorted in
+        # ascending order
+        mx_cmp_conn_graph_nodes = (
+            np.sort(np.fromiter(mx_cmp_conn_graph_nodes, dtype=int))
         )
-        # Number of nodes in the core_pb_conn_graph largest/maximum
-        # connected component
-        mx_cmp_core_pb_conn_graph_n = (
-            np.shape(mx_cmp_core_pb_conn_graph_nodes)[0]
+        # Edges from the largest/maximum connected component
+        mx_cmp_conn_core_graph_edges = (
+            np.asarray(list(mx_cmp_conn_core_graph.edges()), dtype=int)
         )
-        # Number of edges in the core_pb_conn_graph largest/maximum
-        # connected component
-        mx_cmp_core_pb_conn_graph_m = (
-            np.shape(mx_cmp_core_pb_conn_graph_edges)[0]
+        mx_cmp_conn_pb_graph_edges = (
+            np.asarray(list(mx_cmp_conn_pb_graph.edges()), dtype=int)
         )
-        
-        # Isolate largest/maximum connected component from the
-        # core_pb_graph via the core_pb_conn_graph largest/maximum
-        # connected component
-        mx_cmp_core_pb_graph_nodes = []
-        mx_cmp_core_pb_graph_edges = []
-
-        for edge in range(mx_cmp_core_pb_conn_graph_m):
-            # original_node
-            core_node_0 = mx_cmp_core_pb_conn_graph_edges[edge, 0]
-            core_node_1 = mx_cmp_core_pb_conn_graph_edges[edge, 1]
-
-            # Add edge(s) in the core_pb_graph
-            if core_pb_graph.has_edge(core_node_0, core_node_1):
-                # Add edge that connects two core cross-linkers in the
-                # core_pb_graph, and add the core cross-linkers
-                mx_cmp_core_pb_graph_nodes.append(core_node_0)
-                mx_cmp_core_pb_graph_nodes.append(core_node_1)
-                mx_cmp_core_pb_graph_edges.append((core_node_0, core_node_1))
-            else:
-                # Add two edges that each separately yet correspondingly
-                # connect a core cross-linker and a periodic boundary
-                # cross-linker in the core_pb_graph. Also add the core
-                # and periodic boundary cross-linkers. Identify all
-                # possible periodic boundary cross-linkers that could be
-                # involved in each edge.
-                pb_nodes_0 = core2pb_nodes[core_node_0]
-                pb_nodes_1 = core2pb_nodes[core_node_1]
-                # Determine the specific periodic boundary and core
-                # cross-linker pair involved in each edge, and then add
-                # the edge and cross-linkers
-                for pb_node_0 in np.nditer(pb_nodes_0):
-                    pb_node_0 = int(pb_node_0)
-                    if core_pb_graph.has_edge(pb_node_0, core_node_1):
-                        mx_cmp_core_pb_graph_nodes.append(pb_node_0)
-                        mx_cmp_core_pb_graph_nodes.append(core_node_1)
-                        mx_cmp_core_pb_graph_edges.append((pb_node_0, core_node_1))
-                        break
-                    else: pass
-                for pb_node_1 in np.nditer(pb_nodes_1):
-                    pb_node_1 = int(pb_node_1)
-                    if core_pb_graph.has_edge(core_node_0, pb_node_1):
-                        mx_cmp_core_pb_graph_nodes.append(core_node_0)
-                        mx_cmp_core_pb_graph_nodes.append(pb_node_1)
-                        mx_cmp_core_pb_graph_edges.append((core_node_0, pb_node_1))
-                        break
-                    else: pass
-        
-        # Convert to np.ndarrays and retain unique values
-        mx_cmp_core_pb_graph_nodes = (
-            np.unique(np.asarray(mx_cmp_core_pb_graph_nodes, dtype=int))
-        )
-        mx_cmp_core_pb_graph_edges = (
-            np.unique(np.asarray(mx_cmp_core_pb_graph_edges, dtype=int), axis=0)
-        )
-        # Number of nodes in the core_pb_graph largest/maximum connected
-        # component
-        mx_cmp_core_pb_graph_n = np.shape(mx_cmp_core_pb_graph_nodes)[0]
-        # Number of edges in the core_pb_graph largest/maximum connected
-        # component
-        mx_cmp_core_pb_graph_m = np.shape(mx_cmp_core_pb_graph_edges)[0]
+        # Number of nodes in the largest/maximum connected component
+        mx_cmp_conn_graph_n = np.shape(mx_cmp_conn_graph_nodes)[0]
+        # Number of edges in the largest/maximum connected component
+        mx_cmp_conn_core_graph_m = np.shape(mx_cmp_conn_core_graph_edges)[0]
+        mx_cmp_conn_pb_graph_m = np.shape(mx_cmp_conn_pb_graph_edges)[0]
 
         # Isolate the cross-linker coordinates for the largest/maximum
         # connected component
         # updated_node
-        mx_cmp_core_pb_x = core_pb_x[mx_cmp_core_pb_graph_nodes]
-        mx_cmp_core_pb_y = core_pb_y[mx_cmp_core_pb_graph_nodes]
+        mx_cmp_core_x = core_x[mx_cmp_conn_graph_nodes]
+        mx_cmp_core_y = core_y[mx_cmp_conn_graph_nodes]
         if dim == 3:
-            mx_cmp_core_pb_z = core_pb_z[mx_cmp_core_pb_graph_nodes]
-        
-        # Isolate pb2core_nodes for the largest/maximum connected
-        # component. Note that
-        # mx_cmp_pb2core_nodes[updated_node] = original_node
-        mx_cmp_pb2core_nodes = pb2core_nodes[mx_cmp_core_pb_graph_nodes]
+            mx_cmp_core_z = core_z[mx_cmp_conn_graph_nodes]
 
-        # Update all original_node values with updated_node values for
-        # mx_cmp_core_pb_conn_graph_edges
-        for edge in range(mx_cmp_core_pb_conn_graph_m):
+        # Update all original_node values with updated_node values
+        for edge in range(mx_cmp_conn_core_graph_m):
             # updated_node
-            mx_cmp_core_pb_conn_graph_edges[edge, 0] = (
-                int(np.where(mx_cmp_core_pb_conn_graph_nodes == mx_cmp_core_pb_conn_graph_edges[edge, 0])[0][0])
+            mx_cmp_conn_core_graph_edges[edge, 0] = (
+                int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 0])[0][0])
             )
-            mx_cmp_core_pb_conn_graph_edges[edge, 1] = (
-                int(np.where(mx_cmp_core_pb_conn_graph_nodes == mx_cmp_core_pb_conn_graph_edges[edge, 1])[0][0])
+            mx_cmp_conn_core_graph_edges[edge, 1] = (
+                int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 1])[0][0])
             )
-        
-        # Update all original_node values with updated_node values for
-        # mx_cmp_pb2core_nodes
-        for node in range(mx_cmp_core_pb_graph_n):
+
+        for edge in range(mx_cmp_conn_pb_graph_m):
             # updated_node
-            mx_cmp_pb2core_nodes[node] = (
-                int(np.where(mx_cmp_core_pb_conn_graph_nodes == mx_cmp_pb2core_nodes[node])[0][0])
+            mx_cmp_conn_pb_graph_edges[edge, 0] = (
+                int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 0])[0][0])
             )
-        
-        # Update all original_node values with updated_node values for
-        # mx_cmp_core_pb_graph_edges
-        for edge in range(mx_cmp_core_pb_graph_m):
-            # updated_node
-            mx_cmp_core_pb_graph_edges[edge, 0] = (
-                int(np.where(mx_cmp_core_pb_graph_nodes == mx_cmp_core_pb_graph_edges[edge, 0])[0][0])
-            )
-            mx_cmp_core_pb_graph_edges[edge, 1] = (
-                int(np.where(mx_cmp_core_pb_graph_nodes == mx_cmp_core_pb_graph_edges[edge, 1])[0][0])
+            mx_cmp_conn_pb_graph_edges[edge, 1] = (
+                int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 1])[0][0])
             )
                 
         # Save fundamental graph constituents from this topology
+        np.savetxt(mx_cmp_conn_n_filename, [mx_cmp_conn_graph_n], fmt="%d")
         np.savetxt(
-            mx_cmp_core_pb_n_filename, [mx_cmp_core_pb_graph_n], fmt="%d")
+            mx_cmp_conn_core_edges_filename, mx_cmp_conn_core_graph_edges, fmt="%d")
         np.savetxt(
-            mx_cmp_core_pb_edges_filename, mx_cmp_core_pb_graph_edges, fmt="%d")
-        np.savetxt(
-            mx_cmp_pb2core_nodes_filename, mx_cmp_pb2core_nodes, fmt="%d")
-        np.savetxt(
-            mx_cmp_core_pb_conn_n_filename, [mx_cmp_core_pb_conn_graph_n],
-            fmt="%d")
-        np.savetxt(
-            mx_cmp_core_pb_conn_edges_filename, mx_cmp_core_pb_conn_graph_edges,
-            fmt="%d")
+            mx_cmp_conn_pb_edges_filename, mx_cmp_conn_pb_graph_edges, fmt="%d")
         
-        # Save the core and periodic boundary cross-linker x- and
-        # y-coordinates
-        np.savetxt(mx_cmp_core_pb_x_filename, mx_cmp_core_pb_x)
-        np.savetxt(mx_cmp_core_pb_y_filename, mx_cmp_core_pb_y)
+        # Save the core cross-linker x- and y-coordinates
+        np.savetxt(mx_cmp_core_x_filename, mx_cmp_core_x)
+        np.savetxt(mx_cmp_core_y_filename, mx_cmp_core_y)
         if dim == 3:
-            # Save the core and periodic boundary cross-linker
-            # z-coordinates
-            np.savetxt(mx_cmp_core_pb_z_filename, mx_cmp_core_pb_z)
+            # Save the core cross-linker z-coordinates
+            np.savetxt(mx_cmp_core_z_filename, mx_cmp_core_z)
     else:
         # Save fundamental graph constituents from this topology
-        np.savetxt(mx_cmp_core_pb_n_filename, [core_pb_n], fmt="%d")
-        np.savetxt(mx_cmp_core_pb_edges_filename, core_pb_edges, fmt="%d")
-        np.savetxt(mx_cmp_pb2core_nodes_filename, pb2core_nodes, fmt="%d")
-        np.savetxt(mx_cmp_core_pb_conn_n_filename, [n], fmt="%d")
-        np.savetxt(
-            mx_cmp_core_pb_conn_edges_filename, core_pb_conn_edges, fmt="%d")
+        np.savetxt(mx_cmp_conn_n_filename, [n], fmt="%d")
+        np.savetxt(mx_cmp_conn_core_edges_filename, conn_core_edges, fmt="%d")
+        np.savetxt(mx_cmp_conn_pb_edges_filename, conn_pb_edges, fmt="%d")
         
-        # Save the core and periodic boundary cross-linker x- and
-        # y-coordinates
-        np.savetxt(mx_cmp_core_pb_x_filename, core_pb_x)
-        np.savetxt(mx_cmp_core_pb_y_filename, core_pb_y)
+        # Save the core cross-linker x- and y-coordinates
+        np.savetxt(mx_cmp_core_x_filename, core_x)
+        np.savetxt(mx_cmp_core_y_filename, core_y)
         if dim == 3:
-            # Save the core and periodic boundary cross-linker
-            # z-coordinates
-            np.savetxt(mx_cmp_core_pb_z_filename, core_pb_z)
+            # Save the core cross-linker z-coordinates
+            np.savetxt(mx_cmp_core_z_filename, core_z)
 
-def graph_k_counts_calculation(graph) -> np.ndarray:
+# To realize the elastically-effective network from the original
+# network, I need to remove self-loops, and dangling chains repeatedly
+# (e.g., to remove pending loops). However, one must deal with the case
+# where a second-order loop, i.e., multiedge, is connected to a free
+# node. This is a case of a dangling multiedge. Such an edge needs to be
+# removed. Check this case by viewing the neighbor list for the both
+# nodes holding the multiedge. If one of them only has one neighbor
+# (being the other node), then remove the multiedge entirely. This needs
+# to be performed in the same protocol as the dangling edge removal
+# (where this is repeatedly checked until no dangling edges exist).
+
+# Make sure/Check that node numbers that are being extracted from
+# np.nditer AND any node numbers being provided to any NetworkX function
+# or graph are always wrapped with the int() function!! Node numbers
+# that are coming from numpy arrays also need to be wrapped with the
+# int() function.
+
+def elastically_effective_graph(graph):
+    """Elastically-effective graph.
+
+    This function returns the portion of a given graph that corresponds
+    to the elastically-effective network in the graph, i.e., the given
+    graph less self-loops, dangling chains, or pending chains.
+
+    Args:
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph
+        or nx.MultiGraph.
+    
+    Returns:
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph
+        or nx.MultiGraph. This graph corresponds to the
+        elastically-effective network of the given graph.
+    
+    """
+    # Self-loop pruning procedure
+    if nx.number_of_selfloops(graph) > 0:
+        graph.remove_edges_from(list(nx.selfloop_edges(graph)))
+    
+    # If the graph is of type nx.MultiGraph, then address multi-edges by
+    # pruning redundant edges
+    graph_edges = np.asarray([])
+    graph_edges_counts = np.asarray([])
+    if graph.is_multigraph():    
+        # Gather edges and edges counts
+        graph_edges, graph_edges_counts = (
+            np.unique(np.sort(np.asarray(list(graph.edges()), dtype=int), axis=1), return_counts=True, axis=0)
+        )
+
+        # Address multi-edges by pruning redundant edges
+        if np.any(graph_edges_counts > 1):
+            # Extract multi-edges
+            multiedges = np.where(graph_edges_counts > 1)[0]
+            for multiedge in np.nditer(multiedges):
+                multiedge = int(multiedge)
+                # Number of edges in the multiedge
+                edge_num = graph_edges_counts[multiedge]
+                # Remove redundant edges in the multiedge (thereby
+                # leaving one edge)
+                graph.remove_edges_from(
+                    list((int(graph_edges[multiedge, 0]), int(graph_edges[multiedge, 1])) for _ in range(edge_num-1)))
+    
+    # Degree of nodes
+    graph_nodes_k = np.asarray(list(graph.degree()), dtype=int)
+    graph_k = graph_nodes_k[:, 1]
+
+    # Dangling edge pruning procedure
+    while np.any(graph_k == 1):
+        # Extract dangling nodes (with k = 1)
+        dangling_nodes = np.where(graph_k == 1)[0]
+        for dangling_node in np.nditer(dangling_nodes):
+            dangling_node = int(dangling_node)
+            # Dangling node (with k = 1)
+            node = int(graph_nodes_k[dangling_node, 0])
+            # Neighbor of dangling node (with k = 1)
+            node_nghbr_arr = np.asarray(list(graph.neighbors(node)), dtype=int)
+            # Check to see if the dangling edge was previously removed
+            if np.shape(node_nghbr_arr)[0] == 0: continue
+            else:
+                # Remove dangling edge
+                graph.remove_edge(node, int(node_nghbr_arr[0]))
+        # Update degree of nodes
+        graph_nodes_k = np.asarray(list(graph.degree()), dtype=int)
+        graph_k = graph_nodes_k[:, 1]
+    
+    # If the graph is of type nx.MultiGraph, then address multi-edges by
+    # adding back elastically-effective redundant edges
+    if graph.is_multigraph():    
+        # Address multi-edges by adding back elastically-effective
+        # redundant edges
+        if np.any(graph_edges_counts > 1):
+            # Extract multi-edges
+            multiedges = np.where(graph_edges_counts > 1)[0]
+            for multiedge in np.nditer(multiedges):
+                multiedge = int(multiedge)
+                # Number of edges in the multiedge
+                edge_num = graph_edges_counts[multiedge]
+                # Multiedge nodes
+                node_0 = int(graph_edges[multiedge, 0])
+                node_1 = int(graph_edges[multiedge, 1])
+                # Add back elastically-effective redundant edges
+                if graph.has_edge(node_0, node_1):
+                    graph.add_edges_from(
+                        list((node_0, node_1) for _ in range(edge_num-1)))
+    
+    return graph
+
+def proportion_elastically_effective_nodes(graph):
+    # Number of nodes involved in the given graph
+    graph_n = np.shape(np.unique(np.asarray(list(graph.edges()), dtype=int)))[0]
+    # Elastically-effective graph
+    ee_graph = elastically_effective_graph(graph)
+    # Number of nodes involved in the elastically-effective graph
+    ee_graph_n = (
+        np.shape(np.unique(np.asarray(list(ee_graph.edges()), dtype=int)))[0]
+    )
+
+    return ee_graph_n / graph_n
+
+def proportion_elastically_effective_edges(graph):
+    """Node degree counts.
+
+    This function calculates the node degree counts in an (undirected)
+    graph, where the node degree can be between 1 and 8, inclusive.
+
+    Args:
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph
+        or nx.MultiGraph.
+    
+    Returns:
+        np.ndarray: Node degree counts, where the node degree can be
+        between 1 and 8, inclusive.
+    
+    """
+    # Number of edges in given graph
+    graph_m = len(list(graph.edges()))
+    # Elastically-effective graph
+    ee_graph = elastically_effective_graph(graph)
+    # Number of edges in elastically-effective graph
+    ee_graph_m = len(list(ee_graph.edges()))
+
+    return ee_graph_m / graph_m
+
+def k_counts_calculation(graph) -> np.ndarray:
     """Node degree counts.
 
     This function calculates the node degree counts in an (undirected)
@@ -2226,14 +2015,14 @@ def graph_k_counts_calculation(graph) -> np.ndarray:
     
     return k_counts
 
-def swidt_network_graph_k_counts(
+def swidt_network_k_counts(
         network: str,
         date: str,
         batch: str,
         sample: int,
         config: int,
         pruning: int,
-        graph: str) -> None:
+        elastically_effective: bool) -> None:
     """Cross-linker node degree counts in spider web-inspired
     Delaunay-triangulated networks.
 
@@ -2256,12 +2045,8 @@ def swidt_network_graph_k_counts(
         sample (int): Label of a particular network in the batch.
         config (int): Configuration number.
         pruning (int): Edge pruning procedure number.
-        graph (str): Graph type in which the cross-linker node degree
-        counts will be calculated; here, either "core_pb" (corresponding
-        to the graph capturing the spatial topology of the core and
-        periodic boundary nodes and edges) or "core_pb_conn"
-        (corresponding to the graph capturing the periodic connections
-        between the core nodes) are applicable.
+        elastically_effective (bool): Marker used to indicate if the
+        elastically-effective network should be analyzed.
     
     """
     # Cross-linker node degree counts calculation is only applicable for
@@ -2279,20 +2064,33 @@ def swidt_network_graph_k_counts(
         filename_str(network, date, batch, sample)
         + f"C{config:d}" + f"P{pruning:d}"
     )
-    n_filename = filename_prefix + "-" + graph + "_n" + ".dat"
-    edges_filename = filename_prefix + "-" + graph + "_edges" + ".dat"
-    k_counts_filename = filename_prefix + "-" + graph + "_k_counts" + ".dat"
+    conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    k_counts_filename = filename_prefix + "-k_counts" + ".dat"
+
+    # Load fundamental graph constituents
+    core_nodes = np.arange(np.loadtxt(conn_n_filename, dtype=int), dtype=int)
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
 
     # Create nx.Graph, load fundamental graph constituents, and add
     # nodes before edges
-    graph = nx.Graph()
-    graph.add_nodes_from(np.arange(np.loadtxt(n_filename, dtype=int), dtype=int))
-    graph.add_edges_from(np.loadtxt(edges_filename, dtype=int))
+    conn_graph = nx.Graph()
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
+
+    # Yield the elastically-effective network graph, if called for
+    if elastically_effective:
+        k_counts_filename = filename_prefix + "-ee_k_counts" + ".dat"
+        conn_graph = elastically_effective_graph(conn_graph)
 
     # Calculate and save the node degree counts
-    np.savetxt(k_counts_filename, graph_k_counts_calculation(graph), fmt="%d")
+    np.savetxt(
+        k_counts_filename, k_counts_calculation(conn_graph), fmt="%d")
 
-def graph_h_counts_calculation(graph, l_bound: int) -> np.ndarray:
+def h_counts_calculation(graph, l_bound: int) -> np.ndarray:
     """Chordless cycle counts.
 
     This function calculates the chordless cycle counts in an
@@ -2331,7 +2129,7 @@ def graph_h_counts_calculation(graph, l_bound: int) -> np.ndarray:
     # If the graph is of type nx.MultiGraph, then address multi-edges,
     # prune redundant edges, and convert resulting graph to type
     # nx.Graph
-    if graph.is_multigraph() == True:    
+    if graph.is_multigraph():    
         # Gather edges and edges counts
         graph_edges, graph_edges_counts = (
             np.unique(np.sort(np.asarray(list(graph.edges()), dtype=int), axis=1), return_counts=True, axis=0)
@@ -2344,8 +2142,6 @@ def graph_h_counts_calculation(graph, l_bound: int) -> np.ndarray:
             multiedges = np.where(graph_edges_counts > 1)[0]
             for multiedge in np.nditer(multiedges):
                 multiedge = int(multiedge)
-                # Multiedge
-                edge = graph_edges[multiedge]
                 # Number of edges in the multiedge
                 edge_num = graph_edges_counts[multiedge]
                 # Calculate the number of second-order cycles induced by
@@ -2354,7 +2150,7 @@ def graph_h_counts_calculation(graph, l_bound: int) -> np.ndarray:
                 # Remove redundant edges in the multiedge (thereby
                 # leaving one edge)
                 graph.remove_edges_from(
-                    list((edge[0], edge[1]) for _ in range(edge_num-1)))
+                    list((int(graph_edges[multiedge, 0]), int(graph_edges[multiedge, 1])) for _ in range(edge_num-1)))
         
         # Convert graph to type nx.Graph
         graph = nx.Graph(graph)
@@ -2365,19 +2161,19 @@ def graph_h_counts_calculation(graph, l_bound: int) -> np.ndarray:
 
     # Dangling edge pruning procedure
     while np.any(graph_k == 1):
-        # Extract nodes with k = 1
-        k1_nodes = np.where(graph_k == 1)[0]
-        for k1_node in np.nditer(k1_nodes):
-            k1_node = int(k1_node)
-            # Node with k = 1
-            node = graph_nodes_k[k1_node, 0]
-            # Neighbor of node with k = 1
+        # Extract dangling nodes (with k = 1)
+        dangling_nodes = np.where(graph_k == 1)[0]
+        for dangling_node in np.nditer(dangling_nodes):
+            dangling_node = int(dangling_node)
+            # Dangling node (with k = 1)
+            node = int(graph_nodes_k[dangling_node, 0])
+            # Neighbor of dangling node (with k = 1)
             node_nghbr_arr = np.asarray(list(graph.neighbors(node)), dtype=int)
             # Check to see if the dangling edge was previously removed
             if np.shape(node_nghbr_arr)[0] == 0: continue
             else:
                 # Remove dangling edge
-                graph.remove_edge(node, node_nghbr_arr[0])
+                graph.remove_edge(node, int(node_nghbr_arr[0]))
         # Update degree of nodes
         graph_nodes_k = np.asarray(list(graph.degree()), dtype=int)
         graph_k = graph_nodes_k[:, 1]
@@ -2396,15 +2192,14 @@ def graph_h_counts_calculation(graph, l_bound: int) -> np.ndarray:
     
     return h_counts
 
-def swidt_network_graph_h_counts(
+def swidt_network_h_counts(
         network: str,
         date: str,
         batch: str,
         sample: int,
         l_bound: int,
         config: int,
-        pruning: int,
-        graph: str) -> None:
+        pruning: int) -> None:
     """Chordless cycle counts in spider web-inspired
     Delaunay-triangulated networks.
 
@@ -2428,12 +2223,6 @@ def swidt_network_graph_h_counts(
         l_bound (int): Maximal chordless cycle order.
         config (int): Configuration number.
         pruning (int): Edge pruning procedure number.
-        graph (str): Graph type in which the chordless cycle counts will
-        be calculated; here, either "core_pb" (corresponding to the
-        graph capturing the spatial topology of the core and periodic
-        boundary nodes and edges) or "core_pb_conn" (corresponding to
-        the graph capturing the periodic connections between the core
-        nodes) are applicable.
     
     """
     # Chordless cycle counts calculation is only applicable for spider
@@ -2451,366 +2240,346 @@ def swidt_network_graph_h_counts(
         filename_str(network, date, batch, sample)
         + f"C{config:d}" + f"P{pruning:d}"
     )
-    n_filename = filename_prefix + "-" + graph + "_n" + ".dat"
-    edges_filename = filename_prefix + "-" + graph + "_edges" + ".dat"
-    h_counts_filename = filename_prefix + "-" + graph + "_h_counts" + ".dat"
+    conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    h_counts_filename = filename_prefix + "-h_counts" + ".dat"
+
+    # Load fundamental graph constituents
+    core_nodes = np.arange(np.loadtxt(conn_n_filename, dtype=int), dtype=int)
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
 
     # Create nx.Graph, load fundamental graph constituents, and add
     # nodes before edges
-    graph = nx.Graph()
-    graph.add_nodes_from(np.arange(np.loadtxt(n_filename, dtype=int), dtype=int))
-    graph.add_edges_from(np.loadtxt(edges_filename, dtype=int))
+    conn_graph = nx.Graph()
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
 
     # Calculate and save the chordless cycle counts counts
     np.savetxt(
-        h_counts_filename, graph_h_counts_calculation(graph, l_bound), fmt="%d")
+        h_counts_filename, h_counts_calculation(conn_graph, l_bound), fmt="%d")
 
-############ Split up the functionality for l_edges and l_edges_cmpnts in an analogous manner as was done above for k and h, where the graph type is made 
-# Could normalization be activated with a boolean variable? And thus reduce the code size?
+def dim_2_core_pb_edge_identification(
+        core_node_0_x: float,
+        core_node_0_y: float,
+        core_node_1_x: float,
+        core_node_1_y: float,
+        L: float) -> tuple[float, float, float]:
+    """Two-dimensional periodic boundary edge and node identification.
 
-def core_pb_graph_l_edges_calculation(
-        filename_prefix: str,
-        dim: int) -> np.ndarray:
-    """Length of each edge calculated in the graph capturing the spatial
-    topology of the core and periodic boundary nodes and edges.
-
-    This function loads fundamental graph constituents, calculates the
-    length of each edge in the graph capturing the spatial topology of
-    the core and periodic boundary nodes and edges, and returns this
-    information.
+    This function uses the minimum image criterion to determine/identify
+    the nodal coordinates of a particular periodic boundary edge in a
+    two-dimensional network.
 
     Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-        dim (int): Physical dimensionality of the network; either 2 or 3
-        (for two-dimensional or three-dimensional networks).
-    
+        core_node_0_x (float): x-coordinate of the core node in the
+        periodic boundary edge.
+        core_node_0_y (float): y-coordinate of the core node in the
+        periodic boundary edge.
+        core_node_1_x (float): x-coordinate of the core node that
+        translates/tessellates to the periodic node in the periodic
+        boundary edge.
+        core_node_1_y (float): y-coordinate of the core node that
+        translates/tessellates to the periodic node in the periodic
+        boundary edge.
+        L (float): Tessellation scaling distance (i.e., simulation box
+        size).
+
     Returns:
-        np.ndarray: Length of each edge in the graph capturing the
-        spatial topology of the core and periodic boundary nodes and
-        edges.
+        tuple[float, float, float]: x- and y-coordinates of the periodic
+        node in the periodic boundary edge, and the length of the
+        periodic boundary edge, respectively.
     
     """
-    # Generate filenames
-    core_pb_n_filename = filename_prefix + "-core_pb_n" + ".dat"
-    core_pb_edges_filename = filename_prefix + "-core_pb_edges" + ".dat"
-    pb2core_nodes_filename = filename_prefix + "-pb2core_nodes" + ".dat"
-    core_pb_conn_n_filename = filename_prefix + "-core_pb_conn_n" + ".dat"
-    core_pb_conn_edges_filename = (
-        filename_prefix + "-core_pb_conn_edges" + ".dat"
+    # core_node_0 position
+    core_node_0_pstn = np.asarray(
+        [
+            core_node_0_x,
+            core_node_0_y
+        ]
     )
-    core_pb_x_filename = filename_prefix + "-core_pb_x" + ".dat"
-    core_pb_y_filename = filename_prefix + "-core_pb_y" + ".dat"
-    if dim == 3:
-        core_pb_z_filename = filename_prefix + "-core_pb_z" + ".dat"
-
-    # Load fundamental graph constituents
-    core_pb_n = np.loadtxt(core_pb_n_filename, dtype=int)
-    core_pb_edges = np.loadtxt(core_pb_edges_filename, dtype=int)
-    pb2core_nodes = np.loadtxt(pb2core_nodes_filename, dtype=int)
-    core_pb_conn_n = np.loadtxt(core_pb_conn_n_filename, dtype=int)
-    core_pb_conn_edges = np.loadtxt(core_pb_conn_edges_filename, dtype=int)
-
-    core_pb_nodes = np.arange(core_pb_n, dtype=int)
-    core_pb_conn_nodes = np.arange(core_pb_conn_n, dtype=int)
-    core_pb_conn_m = np.shape(core_pb_conn_edges)[0]
-
-    # Construct the core2pb_nodes list
-    core2pb_nodes = core2pb_nodes_func(core_pb_conn_nodes, pb2core_nodes)
-
-    # Load the core and periodic boundary node x- and y-coordinates
-    core_pb_x = np.loadtxt(core_pb_x_filename)
-    core_pb_y = np.loadtxt(core_pb_y_filename)
-    if dim == 3:
-        # Load the core and periodic boundary node z-coordinates
-        core_pb_z = np.loadtxt(core_pb_z_filename)
+    # Two-dimensional tessellation protocol
+    dim_2_tsslltn, dim_2_tsslltn_num = tessellation_protocol(2)
+    # Use two-dimensional tessellation protocol to tessellate
+    # core_node_1
+    core_node_1_tsslltn_x, core_node_1_tsslltn_y = (
+        dim_2_tessellation_protocol(
+            L, core_node_1_x, core_node_1_y, dim_2_tsslltn)
+    )
+    # Use minimum image/distance criterion to select the correct
+    # periodic boundary node and edge corresponding to core_node_1
+    l_pb_nodes_1 = np.empty(dim_2_tsslltn_num)
+    for pb_node_1 in range(dim_2_tsslltn_num):
+        pb_node_1_pstn = np.asarray(
+            [
+                core_node_1_tsslltn_x[pb_node_1],
+                core_node_1_tsslltn_y[pb_node_1]
+            ]
+        )
+        l_pb_nodes_1[pb_node_1] = np.linalg.norm(pb_node_1_pstn-core_node_0_pstn)
+    pb_node_1 = np.argmin(l_pb_nodes_1)
     
-    # Create nx.Graph, and add nodes before edges
-    core_pb_graph = nx.Graph()
-    core_pb_graph.add_nodes_from(core_pb_nodes)
-    core_pb_graph.add_edges_from(core_pb_edges)
+    return (
+        core_node_1_tsslltn_x[pb_node_1], core_node_1_tsslltn_y[pb_node_1],
+        l_pb_nodes_1[pb_node_1]
+    )
 
-    # Length of each distinct edge in the core_pb_graph. Do note that
-    # the number of distinct edges in the core_pb_graph is equal to the
-    # number of edges from the core_pb_conn_graph.
-    core_pb_l_edges = np.empty(core_pb_conn_m)
+def dim_3_core_pb_edge_identification(
+        core_node_0_x: float,
+        core_node_0_y: float,
+        core_node_0_z: float,
+        core_node_1_x: float,
+        core_node_1_y: float,
+        core_node_1_z: float,
+        L: float) -> tuple[float, float, float, float]:
+    """Three-dimensional periodic boundary edge and node identification.
 
-    # Initialize other essential parameters
-    l_edge = 0.0
-    core_node_0 = 0
-    core_node_1 = 0
-    pb_node_1 = 0
-    core_node_0_pstn = np.asarray([])
-    core_node_1_pstn = np.asarray([])
-    pb_node_1_pstn = np.asarray([])
+    This function uses the minimum image criterion to determine/identify
+    the nodal coordinates of a particular periodic boundary edge in a
+    three-dimensional network.
 
-    # Calculate and store the length of each distinct edge in the
-    # core_pb_graph
-    for edge in range(core_pb_conn_m):
-        core_node_0 = core_pb_conn_edges[edge, 0]
-        core_node_1 = core_pb_conn_edges[edge, 1]
+    Args:
+        core_node_0_x (float): x-coordinate of the core node in the
+        periodic boundary edge.
+        core_node_0_y (float): y-coordinate of the core node in the
+        periodic boundary edge.
+        core_node_0_z (float): z-coordinate of the core node in the
+        periodic boundary edge.
+        core_node_1_x (float): x-coordinate of the core node that
+        translates/tessellates to the periodic node in the periodic
+        boundary edge.
+        core_node_1_y (float): y-coordinate of the core node that
+        translates/tessellates to the periodic node in the periodic
+        boundary edge.
+        core_node_1_z (float): z-coordinate of the core node that
+        translates/tessellates to the periodic node in the periodic
+        boundary edge.
+        L (float): Tessellation scaling distance (i.e., simulation box
+        size).
+    
+    Returns:
+        tuple[float, float, float, float]: x-, y-, and z-coordinates of
+        the periodic node in the periodic boundary edge, and the length
+        of the periodic boundary edge, respectively.
+    
+    """
+    # core_node_0 position
+    core_node_0_pstn = np.asarray(
+        [
+            core_node_0_x,
+            core_node_0_y,
+            core_node_0_z
+        ]
+    )
+    # Three-dimensional tessellation protocol
+    dim_3_tsslltn, dim_3_tsslltn_num = tessellation_protocol(3)
+    # Use three-dimensional tessellation protocol to tessellate
+    # core_node_1
+    core_node_1_tsslltn_x, core_node_1_tsslltn_y, core_node_1_tsslltn_z = (
+        dim_3_tessellation_protocol(
+            L, core_node_1_x, core_node_1_y, core_node_1_z, dim_3_tsslltn)
+    )
+    # Use minimum image/distance criterion to select the correct
+    # periodic boundary node and edge corresponding to core_node_1
+    l_pb_nodes_1 = np.empty(dim_3_tsslltn_num)
+    for pb_node_1 in range(dim_3_tsslltn_num):
+        pb_node_1_pstn = np.asarray(
+            [
+                core_node_1_tsslltn_x[pb_node_1],
+                core_node_1_tsslltn_y[pb_node_1],
+                core_node_1_tsslltn_z[pb_node_1]
+            ]
+        )
+        l_pb_nodes_1[pb_node_1] = np.linalg.norm(pb_node_1_pstn-core_node_0_pstn)
+    pb_node_1 = np.argmin(l_pb_nodes_1)
+    
+    return (
+        core_node_1_tsslltn_x[pb_node_1], core_node_1_tsslltn_y[pb_node_1],
+        core_node_1_tsslltn_z[pb_node_1], l_pb_nodes_1[pb_node_1]
+    )
 
-        # Edge is a distinct core edge
-        if core_pb_graph.has_edge(core_node_0, core_node_1):
-            # Determine coordinates for the location of each edge node
-            if dim == 2:
-                core_node_0_pstn = np.asarray(
-                    [
-                        core_pb_x[core_node_0],
-                        core_pb_y[core_node_0]
-                    ]
-                )
-                core_node_1_pstn = np.asarray(
-                    [
-                        core_pb_x[core_node_1],
-                        core_pb_y[core_node_1]
-                    ]
-                )
-            elif dim == 3:
-                core_node_0_pstn = np.asarray(
-                    [
-                        core_pb_x[core_node_0],
-                        core_pb_y[core_node_0],
-                        core_pb_z[core_node_0]
-                    ]
-                )
-                core_node_1_pstn = np.asarray(
-                    [
-                        core_pb_x[core_node_1],
-                        core_pb_y[core_node_1],
-                        core_pb_z[core_node_1]
-                    ]
-                )
-            # Calculate edge length
-            l_edge = np.linalg.norm(core_node_1_pstn-core_node_0_pstn)
-            
-        # Edge is a periodic edge, which is represented by two edges in
-        # the core_pb_graph. Only one of these edges needs to be
-        # interrogated in order to calculate the periodic edge length.
+def dim_2_l_edges_calculation(
+        conn_core_graph,
+        conn_pb_graph,
+        conn_graph,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        L: float) -> np.ndarray:
+    """Edge length calculation for two-dimensional networks.
+
+    This function calculates the length of each core and periodic
+    boundary edge in a two-dimensional network. Note that the length of
+    each edge is calculated as the true spatial length, not the naive
+    length present in the graph.
+
+    Args:
+        conn_core_graph: (Undirected) NetworkX graph that can be of
+        type nx.Graph or nx.MultiGraph. This graph represents the core
+        edges from the graph capturing the periodic connections between
+        the core cross-linkers.
+        conn_pb_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph represents the periodic
+        boundary edges from the graph capturing the periodic connections
+        between the core cross-linkers.
+        conn_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph captures the periodic
+        connections between the core cross-linkers.
+        core_x (np.ndarray): x-coordinates of the core cross-linkers.
+        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        L (float): Tessellation scaling distance (i.e., simulation box
+        size).
+    
+    Returns:
+        np.ndarray: Edge length.
+    
+    """
+    # Gather edges and initialize l_edges np.ndarray
+    conn_edges = list(conn_graph.edges())
+    conn_m = len(conn_edges)
+    l_edges = np.empty(conn_m)
+
+    # Calculate and store the length of each edge
+    for edge_indx, edge in enumerate(conn_edges):
+        # Node numbers
+        core_node_0 = int(edge[0])
+        core_node_1 = int(edge[1])
+
+        # Coordinates of each node
+        core_node_0_x = core_x[core_node_0]
+        core_node_0_y = core_y[core_node_0]
+        core_node_1_x = core_x[core_node_1]
+        core_node_1_y = core_y[core_node_1]
+
+        # Edge is a core edge
+        if conn_core_graph.has_edge(core_node_0, core_node_1):
+            # Position of each core node
+            core_node_0_pstn = np.asarray(
+                [
+                    core_node_0_x,
+                    core_node_0_y
+                ]
+            )
+            core_node_1_pstn = np.asarray(
+                [
+                    core_node_1_x,
+                    core_node_1_y
+                ]
+            )
+            # Calculate and store core edge length
+            l_edges[edge_indx] = np.linalg.norm(core_node_1_pstn-core_node_0_pstn)
+        # Edge is a periodic boundary edge
+        elif conn_pb_graph.has_edge(core_node_0, core_node_1):
+            # Calculate and store periodic boundary edge length
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
+            l_edges[edge_indx] = l_pb_edge
         else:
-            # Identify all possible periodic boundary nodes that could
-            # be involved in the periodic edge
-            pb_nodes_1 = core2pb_nodes[core_node_1]
-            # Determine the specific periodic boundary and core node
-            # pair involved in the periodic edge
-            for pb_node_1 in np.nditer(pb_nodes_1):
-                pb_node_1 = int(pb_node_1)
-                if core_pb_graph.has_edge(core_node_0, pb_node_1):
-                    # Determine coordinates for the location of each
-                    # edge node
-                    if dim == 2:
-                        node_0_pstn = np.asarray(
-                            [
-                                core_pb_x[core_node_0],
-                                core_pb_y[core_node_0]
-                            ]
-                        )
-                        pb_node_1_pstn = np.asarray(
-                            [
-                                core_pb_x[pb_node_1],
-                                core_pb_y[pb_node_1]
-                            ]
-                        )
-                    elif dim == 3:
-                        node_0_pstn = np.asarray(
-                            [
-                                core_pb_x[core_node_0],
-                                core_pb_y[core_node_0],
-                                core_pb_z[core_node_0]
-                            ]
-                        )
-                        pb_node_1_pstn = np.asarray(
-                            [
-                                core_pb_x[pb_node_1],
-                                core_pb_y[pb_node_1],
-                                core_pb_z[pb_node_1]
-                            ]
-                        )
-                    # Calculate edge length
-                    l_edge = np.linalg.norm(pb_node_1_pstn-node_0_pstn)
-                    break
-                else: pass
+            error_str = (
+                "The edge in the overall graph was not detected in "
+                + "either the core edge graph or the periodic boundary "
+                + "edge graph."
+            )
+            sys.exit(error_str)
         
-        # Store edge length
-        core_pb_l_edges[edge] = l_edge
-    
-    # Return the length of distinct edges in the core_pb_graph
-    return core_pb_l_edges
+    return l_edges
 
-def core_pb_conn_graph_l_edges_calculation(
-        filename_prefix: str,
-        dim: int) -> tuple[np.ndarray, np.ndarray]:
-    """Length of each edge calculated in the graph capturing the
-    periodic connections between the core nodes.
+def dim_3_l_edges_calculation(
+        conn_core_graph,
+        conn_pb_graph,
+        conn_graph,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        core_z: np.ndarray,
+        L: float) -> np.ndarray:
+    """Edge length calculation for three-dimensional networks.
 
-    This function loads fundamental graph constituents, calculates the
-    length of each edge in the graph capturing the periodic connections
-    between the core nodes, and returns this information.
+    This function calculates the length of each core and periodic
+    boundary edge in a three-dimensional network. Note that the length
+    of each edge is calculated as the true spatial length, not the naive
+    length present in the graph.
 
     Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-        dim (int): Physical dimensionality of the network; either 2 or 3
-        (for two-dimensional or three-dimensional networks).
+        conn_core_graph: (Undirected) NetworkX graph that can be of
+        type nx.Graph or nx.MultiGraph. This graph represents the core
+        edges from the graph capturing the periodic connections between
+        the core cross-linkers.
+        conn_pb_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph represents the periodic
+        boundary edges from the graph capturing the periodic connections
+        between the core cross-linkers.
+        conn_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph captures the periodic
+        connections between the core cross-linkers.
+        core_x (np.ndarray): x-coordinates of the core cross-linkers.
+        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        core_z (np.ndarray): z-coordinates of the core cross-linkers.
+        L (float): Tessellation scaling distance (i.e., simulation box
+        size).
     
     Returns:
-        tuple[np.ndarray, np.ndarray]: Respective lengths of the core
-        and periodic boundary edges in the graph capturing the periodic
-        connections between the core nodes.
+        np.ndarray: Edge length.
     
     """
-    # Generate filenames
-    core_pb_n_filename = filename_prefix + "-core_pb_n" + ".dat"
-    core_pb_edges_filename = filename_prefix + "-core_pb_edges" + ".dat"
-    core_pb_conn_edges_filename = (
-        filename_prefix + "-core_pb_conn_edges" + ".dat"
-    )
-    core_pb_x_filename = filename_prefix + "-core_pb_x" + ".dat"
-    core_pb_y_filename = filename_prefix + "-core_pb_y" + ".dat"
-    if dim == 3:
-        core_pb_z_filename = filename_prefix + "-core_pb_z" + ".dat"
+    # Gather edges and initialize l_edges np.ndarray
+    conn_edges = list(conn_graph.edges())
+    conn_m = len(conn_edges)
+    l_edges = np.empty(conn_m)
 
-    # Load fundamental graph constituents
-    core_pb_n = np.loadtxt(core_pb_n_filename, dtype=int)
-    core_pb_edges = np.loadtxt(core_pb_edges_filename, dtype=int)
-    core_pb_conn_edges = np.loadtxt(core_pb_conn_edges_filename, dtype=int)
+    # Calculate and store the length of each edge
+    for edge_indx, edge in enumerate(conn_edges):
+        # Node numbers
+        core_node_0 = int(edge[0])
+        core_node_1 = int(edge[1])
 
-    core_pb_nodes = np.arange(core_pb_n, dtype=int)
-    core_pb_conn_m = np.shape(core_pb_conn_edges)[0]
+        # Coordinates of each node
+        core_node_0_x = core_x[core_node_0]
+        core_node_0_y = core_y[core_node_0]
+        core_node_0_z = core_z[core_node_0]
+        core_node_1_x = core_x[core_node_1]
+        core_node_1_y = core_y[core_node_1]
+        core_node_1_z = core_z[core_node_1]
 
-    # Load the core and periodic boundary node x- and y-coordinates
-    core_pb_x = np.loadtxt(core_pb_x_filename)
-    core_pb_y = np.loadtxt(core_pb_y_filename)
-    if dim == 3:
-        # Load the core and periodic boundary node z-coordinates
-        core_pb_z = np.loadtxt(core_pb_z_filename)
-    
-    # Create nx.Graphs, and add nodes before edges
-    core_pb_graph = nx.Graph()
-    core_pb_graph.add_nodes_from(core_pb_nodes)
-    core_pb_graph.add_edges_from(core_pb_edges)
-
-    # Initialize lists for the length of the core edges and the length
-    # of the periodic boundary edges in the core_pb_conn_graph
-    core_pb_conn_l_core_edges = []
-    core_pb_conn_l_pb_edges = []
-
-    # Initialize other essential parameters
-    core_node_0_pstn = np.asarray([])
-    core_node_1_pstn = np.asarray([])
-
-    # Calculate and store the length of each edge in the
-    # core_pb_conn_graph
-    for edge in range(core_pb_conn_m):
-        core_node_0 = core_pb_conn_edges[edge, 0]
-        core_node_1 = core_pb_conn_edges[edge, 1]
-
-        # Determine coordinates for the location of each edge node
-        if dim == 2:
+        # Edge is a core edge
+        if conn_core_graph.has_edge(core_node_0, core_node_1):
+            # Position of each core node
             core_node_0_pstn = np.asarray(
                 [
-                    core_pb_x[core_node_0],
-                    core_pb_y[core_node_0]
+                    core_node_0_x,
+                    core_node_0_y,
+                    core_node_0_z
                 ]
             )
             core_node_1_pstn = np.asarray(
                 [
-                    core_pb_x[core_node_1],
-                    core_pb_y[core_node_1]
+                    core_node_1_x,
+                    core_node_1_y,
+                    core_node_1_z
                 ]
             )
-        elif dim == 3:
-            core_node_0_pstn = np.asarray(
-                [
-                    core_pb_x[core_node_0],
-                    core_pb_y[core_node_0],
-                    core_pb_z[core_node_0]
-                ]
+            # Calculate and store core edge length
+            l_edges[edge_indx] = np.linalg.norm(core_node_1_pstn-core_node_0_pstn)
+        # Edge is a periodic boundary edge
+        elif conn_pb_graph.has_edge(core_node_0, core_node_1):
+            # Calculate and store periodic boundary edge length
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
             )
-            core_node_1_pstn = np.asarray(
-                [
-                    core_pb_x[core_node_1],
-                    core_pb_y[core_node_1],
-                    core_pb_z[core_node_1]
-                ]
+            l_edges[edge_indx] = l_pb_edge
+        else:
+            error_str = (
+                "The edge in the overall graph was not detected in "
+                + "either the core edge graph or the periodic boundary "
+                + "edge graph."
             )
-        # Calculate edge length
-        l_edge = np.linalg.norm(core_node_1_pstn-core_node_0_pstn)
-        # Store edge length
-        if core_pb_graph.has_edge(core_node_0, core_node_1): # Core edge
-            core_pb_conn_l_core_edges.append(l_edge)
-        else: # Periodic edge
-            core_pb_conn_l_pb_edges.append(l_edge)
-    
-    # Convert lists for the length of the core edges and the length of
-    # the periodic boundary edges in the core_pb_conn_graph to
-    # np.ndarrays
-    core_pb_conn_l_core_edges = np.asarray(core_pb_conn_l_core_edges)
-    core_pb_conn_l_pb_edges = np.asarray(core_pb_conn_l_pb_edges)
-    
-    # Return the length of the core edges and the length of the periodic
-    # boundary edges in the core_pb_conn_graph
-    return core_pb_conn_l_core_edges, core_pb_conn_l_pb_edges
+            sys.exit(error_str)
+            
+    return l_edges
 
-def core_pb_graph_l_edges(filename_prefix: str, dim: int) -> None:
-    """Length of each edge calculated in the graph capturing the spatial
-    topology of the core and periodic boundary nodes and edges.
-
-    This function calls upon a helper function to calculate the length
-    of each edge in the graph capturing the spatial topology of the core
-    and periodic boundary nodes and edges, and saves this information.
-
-    Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-        dim (int): Physical dimensionality of the network; either 2 or 3
-        (for two-dimensional or three-dimensional networks).
-    
-    """
-    # Generate filename
-    core_pb_l_edges_filename = filename_prefix + "-core_pb_l_edges" + ".dat"
-    
-    # Length of each distinct edge in the core_pb_graph
-    core_pb_l_edges = core_pb_graph_l_edges_calculation(filename_prefix, dim)
-    
-    # Save length of distinct edges in the core_pb_graph
-    np.savetxt(core_pb_l_edges_filename, core_pb_l_edges)
-
-def core_pb_conn_graph_l_edges(filename_prefix: str, dim: int) -> None:
-    """Length of each edge calculated in the graph capturing the
-    periodic connections between the core nodes.
-
-    This function calls upon a helper function to calculate the length
-    of each edge in the graph capturing the periodic connections between
-    the core nodes, and saves this information.
-
-    Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-        dim (int): Physical dimensionality of the network; either 2 or 3
-        (for two-dimensional or three-dimensional networks).
-    
-    """
-    # Generate filenames
-    core_pb_conn_l_core_edges_filename = (
-        filename_prefix + "-core_pb_conn_l_core_edges" + ".dat"
-    )
-    core_pb_conn_l_pb_edges_filename = (
-        filename_prefix + "-core_pb_conn_l_pb_edges" + ".dat"
-    )
-    
-    # Length of the core edges and length of the periodic boundary edges
-    # in the core_pb_conn_graph
-    core_pb_conn_l_core_edges, core_pb_conn_l_pb_edges = (
-        core_pb_conn_graph_l_edges_calculation(filename_prefix, dim)
-    )
-    
-    # Save the length of the core edges and the length of the periodic
-    # boundary edges in the core_pb_conn_graph
-    np.savetxt(core_pb_conn_l_core_edges_filename, core_pb_conn_l_core_edges)
-    np.savetxt(core_pb_conn_l_pb_edges_filename, core_pb_conn_l_pb_edges)
-
-def swidt_network_graph_l_edges(
+def swidt_network_l_edges(
         network: str,
         date: str,
         batch: str,
@@ -2818,7 +2587,7 @@ def swidt_network_graph_l_edges(
         dim: int,
         config: int,
         pruning: int,
-        graph: str) -> None:
+        elastically_effective: bool) -> None:
     """Length of each edge in spider web-inspired Delaunay-triangulated
     networks.
 
@@ -2842,12 +2611,8 @@ def swidt_network_graph_l_edges(
         (for two-dimensional or three-dimensional networks).
         config (int): Configuration number.
         pruning (int): Edge pruning procedure number.
-        graph (str): Graph type in which the length of each edge will be
-        calculated; here, either "core_pb" (corresponding to the graph
-        capturing the spatial topology of the core and periodic boundary
-        nodes and edges) or "core_pb_conn" (corresponding to the graph
-        capturing the periodic connections between the core nodes) are
-        applicable.
+        elastically_effective (bool): Marker used to indicate if the
+        elastically-effective network should be analyzed.
     
     """
     # Edge length calculation is only applicable for spider web-inspired
@@ -2861,114 +2626,153 @@ def swidt_network_graph_l_edges(
         )
         sys.exit(error_str)
     # Generate filenames
-    swidt_filename_prefix = (
-        filename_str(network, date, batch, sample)
-        + f"C{config:d}" + f"P{pruning:d}"
-    )
-    # Calculate and save the length of each edge in the spider
-    # web-inspired Delaunay-triangulated networks.
-    if graph == "core_pb":
-        # Graph capturing the spatial topology of the core and periodic
-        # boundary nodes and edges
-        core_pb_graph_l_edges(swidt_filename_prefix, dim)
-    elif graph == "core_pb_conn":
-        # Graph capturing the periodic connections between the core
-        # cross-linker nodes.
-        core_pb_conn_graph_l_edges(swidt_filename_prefix, dim)
+    filename_prefix = filename_str(network, date, batch, sample)
+    L_filename = filename_prefix + "-L" + ".dat"
+    filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+    conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
+    core_z_filename = filename_prefix + "-core_z" + ".dat"
+    l_edges_filename = filename_prefix + "-l_edges" + ".dat"
 
-def core_pb_graph_l_nrmlzd_edges(
-        filename: str,
-        filename_prefix: str,
-        dim: int) -> None:
-    """Normalized length of each edge calculated in the graph capturing
-    the spatial topology of the core and periodic boundary nodes and
-    edges.
+    # Load fundamental graph constituents
+    core_nodes = np.arange(np.loadtxt(conn_n_filename, dtype=int), dtype=int)
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
 
-    This function loads the simulation box size, calls upon a helper
-    function to calculate the length of each edge in the graph capturing
-    the spatial topology of the core and periodic boundary nodes and
-    edges, normalizes the edge lengths by the simulation box size, and
-    saves this information.
-
-    Args:
-        filename (str): Baseline filename for the simulation box size.
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-        dim (int): Physical dimensionality of the network; either 2 or 3
-        (for two-dimensional or three-dimensional networks).
-    
-    """
-    # Generate filename
-    L_filename = filename + "-L" + ".dat"
-    core_pb_l_nrmlzd_edges_filename = (
-        filename_prefix + "-core_pb_l_nrmlzd_edges" + ".dat"
-    )
-    
     # Load L
     L = np.loadtxt(L_filename)
+
+    # Load core node x- and y-coordinates
+    core_x = np.loadtxt(core_x_filename)
+    core_y = np.loadtxt(core_y_filename)
     
-    # Length of each distinct edge in the core_pb_graph
-    core_pb_l_edges = core_pb_graph_l_edges_calculation(filename_prefix, dim)
+    # Create nx.Graphs, load fundamental graph constituents, and add
+    # nodes before edges
+    conn_core_graph = nx.Graph()
+    conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
+    conn_core_graph = add_edges_from_numpy_array(conn_core_graph, conn_core_edges)
+
+    conn_pb_graph = nx.Graph()
+    conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+    conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
+
+    conn_graph = nx.Graph()
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
+
+    # Yield the elastically-effective network graph, if called for
+    if elastically_effective:
+        l_edges_filename = filename_prefix + "-ee_l_edges" + ".dat"
+        conn_graph = elastically_effective_graph(conn_graph)
     
-    # Edge length normalization by L*sqrt(dim)
-    core_pb_l_nrmlzd_edges = core_pb_l_edges / (L*np.sqrt(dim))
+    if dim == 2:
+        # Calculate and save edge lengths
+        np.savetxt(
+            l_edges_filename,
+            dim_2_l_edges_calculation(
+                conn_core_graph, conn_pb_graph, conn_graph, core_x, core_y, L))
+    elif dim == 3:
+        # Load core node z-coordinates
+        core_z = np.loadtxt(core_z_filename)
+        # Calculate and save edge lengths
+        np.savetxt(
+            l_edges_filename,
+            dim_3_l_edges_calculation(
+                conn_core_graph, conn_pb_graph, conn_graph,
+                core_x, core_y, core_z, L))
 
-    # Save normalized length of distinct edges in the core_pb_graph
-    np.savetxt(core_pb_l_nrmlzd_edges_filename, core_pb_l_nrmlzd_edges)
+def dim_2_l_nrmlzd_edges_calculation(
+        conn_core_graph,
+        conn_pb_graph,
+        conn_graph,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        L: float) -> np.ndarray:
+    """Normalized edge length calculation for two-dimensional networks.
 
-def core_pb_conn_graph_l_nrmlzd_edges(
-        filename: str,
-        filename_prefix: str,
-        dim: int) -> None:
-    """Normalized length of each edge calculated in the graph capturing
-    the periodic connections between the core nodes.
-
-    This function loads the simulation box size, calls upon a helper
-    function to calculate the length of each edge calculated in the
-    graph capturing the periodic connections between the core nodes,
-    normalizes the edge lengths by the simulation box size, and saves
-    this information.
+    This function calculates the normalized length of each core and
+    periodic boundary edge in a two-dimensional network. Note that the
+    length of each edge is calculated as the true spatial length, not
+    the naive length present in the graph.
 
     Args:
-        filename (str): Baseline filename for the simulation box size.
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-        dim (int): Physical dimensionality of the network; either 2 or 3
-        (for two-dimensional or three-dimensional networks).
+        conn_core_graph: (Undirected) NetworkX graph that can be of
+        type nx.Graph or nx.MultiGraph. This graph represents the core
+        edges from the graph capturing the periodic connections between
+        the core cross-linkers.
+        conn_pb_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph represents the periodic
+        boundary edges from the graph capturing the periodic connections
+        between the core cross-linkers.
+        conn_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph captures the periodic
+        connections between the core cross-linkers.
+        core_x (np.ndarray): x-coordinates of the core cross-linkers.
+        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        L (float): Tessellation scaling distance (i.e., simulation box
+        size).
+    
+    Returns:
+        np.ndarray: Normalized edge length.
     
     """
-    # Generate filename
-    L_filename = filename + "-L" + ".dat"
-    core_pb_conn_l_nrmlzd_core_edges_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_core_edges" + ".dat"
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_pb_edges" + ".dat"
-    )
-    
-    # Load L
-    L = np.loadtxt(L_filename)
-    
-    # Length of the core edges and the length of the periodic boundary
-    # edges in the core_pb_conn_graph
-    core_pb_conn_l_core_edges, core_pb_conn_l_pb_edges = (
-        core_pb_conn_graph_l_edges_calculation(filename_prefix, dim)
-    )
+    # Edge length
+    l_edges = dim_2_l_edges_calculation(
+        conn_core_graph, conn_pb_graph, conn_graph, core_x, core_y, L)
     
     # Edge length normalization by L*sqrt(dim)
-    core_pb_conn_l_nrmlzd_core_edges = (
-        core_pb_conn_l_core_edges / (L*np.sqrt(dim))
-    )
-    core_pb_conn_l_nrmlzd_pb_edges = core_pb_conn_l_pb_edges / (L*np.sqrt(dim))
+    return l_edges / (L*np.sqrt(2))
 
-    # Save the normalized length of the core edges and the normalized
-    # length of the periodic boundary edges in the core_pb_conn_graph
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_core_edges_filename, core_pb_conn_l_nrmlzd_core_edges)
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_pb_edges_filename, core_pb_conn_l_nrmlzd_pb_edges)
+def dim_3_l_nrmlzd_edges_calculation(
+        conn_core_graph,
+        conn_pb_graph,
+        conn_graph,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        core_z: np.ndarray,
+        L: float) -> np.ndarray:
+    """Normalized edge length calculation for three-dimensional
+    networks.
 
-def swidt_network_graph_l_nrmlzd_edges(
+    This function calculates the normalized length of each core and
+    periodic boundary edge in a three-dimensional network. Note that the
+    length of each edge is calculated as the true spatial length, not
+    the naive length present in the graph.
+
+    Args:
+        conn_core_graph: (Undirected) NetworkX graph that can be of
+        type nx.Graph or nx.MultiGraph. This graph represents the core
+        edges from the graph capturing the periodic connections between
+        the core cross-linkers.
+        conn_pb_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph represents the periodic
+        boundary edges from the graph capturing the periodic connections
+        between the core cross-linkers.
+        conn_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph captures the periodic
+        connections between the core cross-linkers.
+        core_x (np.ndarray): x-coordinates of the core cross-linkers.
+        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        core_z (np.ndarray): z-coordinates of the core cross-linkers.
+        L (float): Tessellation scaling distance (i.e., simulation box
+        size).
+    
+    Returns:
+        np.ndarray: Normalized edge length.
+    
+    """
+    # Edge length
+    l_edges = dim_3_l_edges_calculation(
+        conn_core_graph, conn_pb_graph, conn_graph, core_x, core_y, core_z, L)
+    
+    # Edge length normalization by L*sqrt(dim)
+    return l_edges / (L*np.sqrt(3))
+
+def swidt_network_l_nrmlzd_edges(
         network: str,
         date: str,
         batch: str,
@@ -2976,7 +2780,7 @@ def swidt_network_graph_l_nrmlzd_edges(
         dim: int,
         config: int,
         pruning: int,
-        graph: str) -> None:
+        elastically_effective: bool) -> None:
     """Normalized length of each edge in spider web-inspired
     Delaunay-triangulated networks.
 
@@ -3000,12 +2804,8 @@ def swidt_network_graph_l_nrmlzd_edges(
         (for two-dimensional or three-dimensional networks).
         config (int): Configuration number.
         pruning (int): Edge pruning procedure number.
-        graph (str): Graph type in which the normalized length of each
-        edge will be calculated; here, either "core_pb" (corresponding
-        to the graph capturing the spatial topology of the core and
-        periodic boundary nodes and edges) or "core_pb_conn"
-        (corresponding to the graph capturing the periodic connections
-        between the core nodes) are applicable.
+        elastically_effective (bool): Marker used to indicate if the
+        elastically-effective network should be analyzed.
     
     """
     # Normalized edge length calculation is only applicable for spider
@@ -3019,761 +2819,234 @@ def swidt_network_graph_l_nrmlzd_edges(
         )
         sys.exit(error_str)
     # Generate filenames
-    filename = filename_str(network, date, batch, sample)
-    swidt_filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
-    # Calculate and save the normalized length of each edge in the
-    # spider web-inspired Delaunay-triangulated networks.
-    if graph == "core_pb":
-        # Graph capturing the spatial topology of the core and periodic
-        # boundary nodes and edges
-        core_pb_graph_l_nrmlzd_edges(filename, swidt_filename_prefix, dim)
-    elif graph == "core_pb_conn":
-        # Graph capturing the periodic connections between the core
-        # cross-linker nodes.
-        core_pb_conn_graph_l_nrmlzd_edges(filename, swidt_filename_prefix, dim)
-
-def core_pb_graph_l_edges_dim_2_cmpnts_calculation(
-        filename_prefix: str) -> tuple[np.ndarray, np.ndarray]:
-    """Two-dimensional length components of each edge calculated in the
-    graph capturing the spatial topology of the core and periodic
-    boundary nodes and edges.
-
-    This function loads fundamental graph constituents, calculates the
-    two-dimensional length components of each edge in the graph
-    capturing the spatial topology of the core and periodic boundary
-    nodes and edges, and returns this information.
-
-    Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-    
-    Returns:
-        tuple[np.ndarray, np.ndarray]: Respective two-dimensional x- and
-        y-length components of each edge calculated in the graph
-        capturing the spatial topology of the core and periodic boundary
-        nodes and edges.
-    
-    """
-    # Initialize random number generator
-    rng = np.random.default_rng()
-
-    # Generate filenames
-    core_pb_n_filename = filename_prefix + "-core_pb_n" + ".dat"
-    core_pb_edges_filename = filename_prefix + "-core_pb_edges" + ".dat"
-    pb2core_nodes_filename = filename_prefix + "-pb2core_nodes" + ".dat"
-    core_pb_conn_n_filename = filename_prefix + "-core_pb_conn_n" + ".dat"
-    core_pb_conn_edges_filename = (
-        filename_prefix + "-core_pb_conn_edges" + ".dat"
-    )
-    core_pb_x_filename = filename_prefix + "-core_pb_x" + ".dat"
-    core_pb_y_filename = filename_prefix + "-core_pb_y" + ".dat"
+    filename_prefix = filename_str(network, date, batch, sample)
+    L_filename = filename_prefix + "-L" + ".dat"
+    filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+    conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
+    core_z_filename = filename_prefix + "-core_z" + ".dat"
+    l_nrmlzd_edges_filename = filename_prefix + "-l_nrmlzd_edges" + ".dat"
 
     # Load fundamental graph constituents
-    core_pb_n = np.loadtxt(core_pb_n_filename, dtype=int)
-    core_pb_edges = np.loadtxt(core_pb_edges_filename, dtype=int)
-    pb2core_nodes = np.loadtxt(pb2core_nodes_filename, dtype=int)
-    core_pb_conn_n = np.loadtxt(core_pb_conn_n_filename, dtype=int)
-    core_pb_conn_edges = np.loadtxt(core_pb_conn_edges_filename, dtype=int)
+    core_nodes = np.arange(np.loadtxt(conn_n_filename, dtype=int), dtype=int)
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
 
-    core_pb_nodes = np.arange(core_pb_n, dtype=int)
-    core_pb_conn_nodes = np.arange(core_pb_conn_n, dtype=int)
-    core_pb_conn_m = np.shape(core_pb_conn_edges)[0]
+    # Load L
+    L = np.loadtxt(L_filename)
 
-    # Construct the core2pb_nodes list
-    core2pb_nodes = core2pb_nodes_func(core_pb_conn_nodes, pb2core_nodes)
-
-    # Load the core and periodic boundary node x- and y-coordinates
-    core_pb_x = np.loadtxt(core_pb_x_filename)
-    core_pb_y = np.loadtxt(core_pb_y_filename)
+    # Load core node x- and y-coordinates
+    core_x = np.loadtxt(core_x_filename)
+    core_y = np.loadtxt(core_y_filename)
     
-    # Create nx.Graphs, and add nodes before edges
-    core_pb_graph = nx.Graph()
-    core_pb_graph.add_nodes_from(core_pb_nodes)
-    core_pb_graph.add_edges_from(core_pb_edges)
+    # Create nx.Graphs, load fundamental graph constituents, and add
+    # nodes before edges
+    conn_core_graph = nx.Graph()
+    conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
+    conn_core_graph = add_edges_from_numpy_array(conn_core_graph, conn_core_edges)
 
-    # Length components of each distinct edge in the core_pb_graph. Do
-    # note that the number of distinct edges in the core_pb_graph is
-    # equal to the number of edges from the core_pb_conn_graph.
-    core_pb_l_edges_x_cmpnt = np.empty(core_pb_conn_m)
-    core_pb_l_edges_y_cmpnt = np.empty(core_pb_conn_m)
+    conn_pb_graph = nx.Graph()
+    conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+    conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
 
-    # Initialize other essential parameters
-    l_edge_x_cmpnt = 0.0
-    l_edge_y_cmpnt = 0.0
-    l_edge_x_cmpnt_opt_0 = 0.0
-    l_edge_y_cmpnt_opt_0 = 0.0
-    l_edge_x_cmpnt_opt_1 = 0.0
-    l_edge_y_cmpnt_opt_1 = 0.0
+    conn_graph = nx.Graph()
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
 
-    # Calculate and store the length components of each distinct edge in
-    # the core_pb_graph
-    for edge in range(core_pb_conn_m):
-        core_node_0 = core_pb_conn_edges[edge, 0]
-        core_node_1 = core_pb_conn_edges[edge, 1]
+    # Yield the elastically-effective network graph, if called for
+    if elastically_effective:
+        l_nrmlzd_edges_filename = (
+            filename_prefix + "-ee_l_nrmlzd_edges" + ".dat"
+        )
+        conn_graph = elastically_effective_graph(conn_graph)
+    
+    if dim == 2:
+        # Calculate and save normalized edge lengths
+        np.savetxt(
+            l_nrmlzd_edges_filename,
+            dim_2_l_nrmlzd_edges_calculation(
+                conn_core_graph, conn_pb_graph, conn_graph, core_x, core_y, L))
+    elif dim == 3:
+        # Load core node z-coordinates
+        core_z = np.loadtxt(core_z_filename)
+        # Calculate and save normalized edge lengths
+        np.savetxt(
+            l_nrmlzd_edges_filename,
+            dim_3_l_nrmlzd_edges_calculation(
+                conn_core_graph, conn_pb_graph, conn_graph,
+                core_x, core_y, core_z, L))
+    
+def dim_2_l_cmpnts_edges_calculation(
+        conn_core_graph,
+        conn_pb_graph,
+        conn_graph,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        L: float) -> tuple[np.ndarray, np.ndarray]:
+    """Edge length component calculation for two-dimensional networks.
 
-        # Edge is a distinct core edge
-        if core_pb_graph.has_edge(core_node_0, core_node_1):
-            core_node_0_x = core_pb_x[core_node_0]
-            core_node_1_x = core_pb_x[core_node_1]
-            l_edge_x_cmpnt = core_node_1_x - core_node_0_x
+    This function calculates the length components of each core and
+    periodic boundary edge in a two-dimensional network. Note that the
+    length components of each edge are calculated as the true spatial
+    length components, not the naive length components present in the
+    graph.
 
-            core_node_0_y = core_pb_y[core_node_0]
-            core_node_1_y = core_pb_y[core_node_1]
-            l_edge_y_cmpnt = core_node_1_y - core_node_0_y
-        # Edge is a periodic edge, which is represented by two edges in
-        # the core_pb_graph. Each of these edges needs to be
-        # interrogated in order to calculate the periodic edge length
-        # components.
+    Args:
+        conn_core_graph: (Undirected) NetworkX graph that can be of
+        type nx.Graph or nx.MultiGraph. This graph represents the core
+        edges from the graph capturing the periodic connections between
+        the core cross-linkers.
+        conn_pb_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph represents the periodic
+        boundary edges from the graph capturing the periodic connections
+        between the core cross-linkers.
+        conn_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph captures the periodic
+        connections between the core cross-linkers.
+        core_x (np.ndarray): x-coordinates of the core cross-linkers.
+        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        L (float): Tessellation scaling distance (i.e., simulation box
+        size).
+    
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Edge length x- and y-components,
+        respectively.
+    
+    """
+    # Gather edges and initialize l_x_cmpnts_edges and l_y_cmpnts_edges
+    # np.ndarrays
+    conn_edges = list(conn_graph.edges())
+    conn_m = len(conn_edges)
+    l_x_cmpnts_edges = np.empty(conn_m)
+    l_y_cmpnts_edges = np.empty(conn_m)
+
+    # Calculate and store the length of each edge
+    for edge_indx, edge in enumerate(conn_edges):
+        # Node numbers
+        core_node_0 = int(edge[0])
+        core_node_1 = int(edge[1])
+
+        # Coordinates of each node
+        core_node_0_x = core_x[core_node_0]
+        core_node_0_y = core_y[core_node_0]
+        core_node_1_x = core_x[core_node_1]
+        core_node_1_y = core_y[core_node_1]
+
+        # Edge is a core edge
+        if conn_core_graph.has_edge(core_node_0, core_node_1):
+            # Calculate and store core edge length components
+            l_x_cmpnts_edges[edge_indx] = core_node_1_x - core_node_0_x
+            l_y_cmpnts_edges[edge_indx] = core_node_1_y - core_node_0_y
+        # Edge is a periodic boundary edge
+        elif conn_pb_graph.has_edge(core_node_0, core_node_1):
+            # Calculate and store periodic boundary edge length
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
+            l_x_cmpnts_edges[edge_indx] = pb_node_1_x - core_node_0_x
+            l_y_cmpnts_edges[edge_indx] = pb_node_1_y - core_node_0_y
         else:
-            # Identify all possible periodic boundary nodes that could
-            # be involved in each periodic edge
-            pb_nodes_0 = core2pb_nodes[core_node_0]
-            pb_nodes_1 = core2pb_nodes[core_node_1]
-            # Determine the specific periodic boundary and core node
-            # pair involved in each periodic edge
-            for pb_node_0 in np.nditer(pb_nodes_0):
-                pb_node_0 = int(pb_node_0)
-                if core_pb_graph.has_edge(pb_node_0, core_node_1):
-                    pb_node_0_x = core_pb_x[pb_node_0]
-                    core_node_1_x = core_pb_x[core_node_1]
-                    l_edge_x_cmpnt_opt_0 = core_node_1_x - pb_node_0_x
+            error_str = (
+                "The edge in the overall graph was not detected in "
+                + "either the core edge graph or the periodic boundary "
+                + "edge graph."
+            )
+            sys.exit(error_str)
+        
+    return (l_x_cmpnts_edges, l_y_cmpnts_edges)
 
-                    pb_node_0_y = core_pb_y[pb_node_0]
-                    core_node_1_y = core_pb_y[core_node_1]
-                    l_edge_y_cmpnt_opt_0 = core_node_1_y - pb_node_0_y
-                    
-                    break
-                else: pass
-            for pb_node_1 in np.nditer(pb_nodes_1):
-                pb_node_1 = int(pb_node_1)
-                if core_pb_graph.has_edge(core_node_0, pb_node_1):
-                    core_node_0_x = core_pb_x[core_node_0]
-                    pb_node_1_x = core_pb_x[pb_node_1]
-                    l_edge_x_cmpnt_opt_1 = pb_node_1_x - core_node_0_x
+def dim_3_l_cmpnts_edges_calculation(
+        conn_core_graph,
+        conn_pb_graph,
+        conn_graph,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        core_z: np.ndarray,
+        L: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Edge length component calculation for three-dimensional networks.
 
-                    core_node_0_y = core_pb_y[core_node_0]
-                    pb_node_1_y = core_pb_y[pb_node_1]
-                    l_edge_y_cmpnt_opt_1 = pb_node_1_y - core_node_0_y
-                    
-                    break
-                else: pass
-            # Interrogate each periodic edge in order to determine the
-            # periodic edge length components
-            if l_edge_x_cmpnt_opt_0 == l_edge_x_cmpnt_opt_1:
-                l_edge_x_cmpnt = l_edge_x_cmpnt_opt_0
-            else:
-                coin_flip = rng.integers(2, dtype=int)
-                if coin_flip == 0:
-                    l_edge_x_cmpnt = l_edge_x_cmpnt_opt_0
-                else:
-                    l_edge_x_cmpnt = l_edge_x_cmpnt_opt_1
-            
-            if l_edge_y_cmpnt_opt_0 == l_edge_y_cmpnt_opt_1:
-                l_edge_y_cmpnt = l_edge_y_cmpnt_opt_0
-            else:
-                coin_flip = rng.integers(2, dtype=int)
-                if coin_flip == 0:
-                    l_edge_y_cmpnt = l_edge_y_cmpnt_opt_0
-                else:
-                    l_edge_y_cmpnt = l_edge_y_cmpnt_opt_1
-        # Store edge length components
-        core_pb_l_edges_x_cmpnt[edge] = l_edge_x_cmpnt
-        core_pb_l_edges_y_cmpnt[edge] = l_edge_y_cmpnt
-    
-    # Return the length components of distinct edges in the
-    # core_pb_graph
-    return core_pb_l_edges_x_cmpnt, core_pb_l_edges_y_cmpnt
-
-def core_pb_graph_l_edges_dim_3_cmpnts_calculation(
-        filename_prefix: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Three-dimensional length components of each edge calculated in
-    the graph capturing the spatial topology of the core and periodic
-    boundary nodes and edges.
-
-    This function loads fundamental graph constituents, calculates the
-    three-dimensional length components of each edge in the graph
-    capturing the spatial topology of the core and periodic boundary
-    nodes and edges, and returns this information.
+    This function calculates the length components of each core and
+    periodic boundary edge in a three-dimensional network. Note that the
+    length components of each edge are calculated as the true spatial
+    length components, not the naive length components present in the
+    graph.
 
     Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
+        conn_core_graph: (Undirected) NetworkX graph that can be of
+        type nx.Graph or nx.MultiGraph. This graph represents the core
+        edges from the graph capturing the periodic connections between
+        the core cross-linkers.
+        conn_pb_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph represents the periodic
+        boundary edges from the graph capturing the periodic connections
+        between the core cross-linkers.
+        conn_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph captures the periodic
+        connections between the core cross-linkers.
+        core_x (np.ndarray): x-coordinates of the core cross-linkers.
+        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        core_z (np.ndarray): z-coordinates of the core cross-linkers.
+        L (float): Tessellation scaling distance (i.e., simulation box
+        size).
     
     Returns:
-        tuple[np.ndarray, np.ndarray, np.ndarray]: Respective
-        three-dimensional x-, y-, and z-length components of each edge
-        calculated in the graph capturing the spatial topology of the
-        core and periodic boundary nodes and edges.
+        tuple[np.ndarray, np.ndarray, np.ndarray]: Edge length x-, y-,
+        and z-components, respectively.
     
     """
-    # Initialize random number generator
-    rng = np.random.default_rng()
+    # Gather edges and initialize l_x_cmpnts_edges, l_y_cmpnts_edges,
+    # and l_z_cmpnts_edges np.ndarrays
+    conn_edges = list(conn_graph.edges())
+    conn_m = len(conn_edges)
+    l_x_cmpnts_edges = np.empty(conn_m)
+    l_y_cmpnts_edges = np.empty(conn_m)
+    l_z_cmpnts_edges = np.empty(conn_m)
 
-    # Generate filenames
-    core_pb_n_filename = filename_prefix + "-core_pb_n" + ".dat"
-    core_pb_edges_filename = filename_prefix + "-core_pb_edges" + ".dat"
-    pb2core_nodes_filename = filename_prefix + "-pb2core_nodes" + ".dat"
-    core_pb_conn_n_filename = filename_prefix + "-core_pb_conn_n" + ".dat"
-    core_pb_conn_edges_filename = (
-        filename_prefix + "-core_pb_conn_edges" + ".dat"
-    )
-    core_pb_x_filename = filename_prefix + "-core_pb_x" + ".dat"
-    core_pb_y_filename = filename_prefix + "-core_pb_y" + ".dat"
-    core_pb_z_filename = filename_prefix + "-core_pb_z" + ".dat"
+    # Calculate and store the length of each edge
+    for edge_indx, edge in enumerate(conn_edges):
+        # Node numbers
+        core_node_0 = int(edge[0])
+        core_node_1 = int(edge[1])
 
-    # Load fundamental graph constituents
-    core_pb_n = np.loadtxt(core_pb_n_filename, dtype=int)
-    core_pb_edges = np.loadtxt(core_pb_edges_filename, dtype=int)
-    pb2core_nodes = np.loadtxt(pb2core_nodes_filename, dtype=int)
-    core_pb_conn_n = np.loadtxt(core_pb_conn_n_filename, dtype=int)
-    core_pb_conn_edges = np.loadtxt(core_pb_conn_edges_filename, dtype=int)
+        # Coordinates of each node
+        core_node_0_x = core_x[core_node_0]
+        core_node_0_y = core_y[core_node_0]
+        core_node_0_z = core_z[core_node_0]
+        core_node_1_x = core_x[core_node_1]
+        core_node_1_y = core_y[core_node_1]
+        core_node_1_z = core_z[core_node_1]
 
-    core_pb_nodes = np.arange(core_pb_n, dtype=int)
-    core_pb_conn_nodes = np.arange(core_pb_conn_n, dtype=int)
-    core_pb_conn_m = np.shape(core_pb_conn_edges)[0]
-
-    # Construct the core2pb_nodes list
-    core2pb_nodes = core2pb_nodes_func(core_pb_conn_nodes, pb2core_nodes)
-
-    # Load the core and periodic boundary node x-, y-, and z-coordinates
-    core_pb_x = np.loadtxt(core_pb_x_filename)
-    core_pb_y = np.loadtxt(core_pb_y_filename)
-    core_pb_z = np.loadtxt(core_pb_z_filename)
-    
-    # Create nx.Graphs, and add nodes before edges
-    core_pb_graph = nx.Graph()
-    core_pb_graph.add_nodes_from(core_pb_nodes)
-    core_pb_graph.add_edges_from(core_pb_edges)
-
-    # Length components of each distinct edge in the core_pb_graph. Do
-    # note that the number of distinct edges in the core_pb_graph is
-    # equal to the number of edges from the core_pb_conn_graph.
-    core_pb_l_edges_x_cmpnt = np.empty(core_pb_conn_m)
-    core_pb_l_edges_y_cmpnt = np.empty(core_pb_conn_m)
-    core_pb_l_edges_z_cmpnt = np.empty(core_pb_conn_m)
-
-    # Initialize other essential parameters
-    l_edge_x_cmpnt = 0.0
-    l_edge_y_cmpnt = 0.0
-    l_edge_z_cmpnt = 0.0
-    l_edge_x_cmpnt_opt_0 = 0.0
-    l_edge_y_cmpnt_opt_0 = 0.0
-    l_edge_z_cmpnt_opt_0 = 0.0
-    l_edge_x_cmpnt_opt_1 = 0.0
-    l_edge_y_cmpnt_opt_1 = 0.0
-    l_edge_z_cmpnt_opt_1 = 0.0
-
-    # Calculate and store the length components of each distinct edge in
-    # the core_pb_graph
-    for edge in range(core_pb_conn_m):
-        core_node_0 = core_pb_conn_edges[edge, 0]
-        core_node_1 = core_pb_conn_edges[edge, 1]
-
-        # Edge is a distinct core edge
-        if core_pb_graph.has_edge(core_node_0, core_node_1):
-            core_node_0_x = core_pb_x[core_node_0]
-            core_node_1_x = core_pb_x[core_node_1]
-            l_edge_x_cmpnt = core_node_1_x - core_node_0_x
-
-            core_node_0_y = core_pb_y[core_node_0]
-            core_node_1_y = core_pb_y[core_node_1]
-            l_edge_y_cmpnt = core_node_1_y - core_node_0_y
-
-            core_node_0_z = core_pb_z[core_node_0]
-            core_node_1_z = core_pb_z[core_node_1]
-            l_edge_z_cmpnt = core_node_1_z - core_node_0_z
-        # Edge is a periodic edge, which is represented by two edges in
-        # the core_pb_graph. Each of these edges needs to be
-        # interrogated in order to calculate the periodic edge length
-        # components.
+        # Edge is a core edge
+        if conn_core_graph.has_edge(core_node_0, core_node_1):
+            # Calculate and store core edge length components
+            l_x_cmpnts_edges[edge_indx] = core_node_1_x - core_node_0_x
+            l_y_cmpnts_edges[edge_indx] = core_node_1_y - core_node_0_y
+            l_z_cmpnts_edges[edge_indx] = core_node_1_z - core_node_0_z
+        # Edge is a periodic boundary edge
+        elif conn_pb_graph.has_edge(core_node_0, core_node_1):
+            # Calculate and store periodic boundary edge length
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
+            l_x_cmpnts_edges[edge_indx] = pb_node_1_x - core_node_0_x
+            l_y_cmpnts_edges[edge_indx] = pb_node_1_y - core_node_0_y
+            l_z_cmpnts_edges[edge_indx] = pb_node_1_z - core_node_0_z
         else:
-            # Identify all possible periodic boundary nodes that could
-            # be involved in each periodic edge
-            pb_nodes_0 = core2pb_nodes[core_node_0]
-            pb_nodes_1 = core2pb_nodes[core_node_1]
-            # Determine the specific periodic boundary and core node
-            # pair involved in each periodic edge
-            for pb_node_0 in np.nditer(pb_nodes_0):
-                pb_node_0 = int(pb_node_0)
-                if core_pb_graph.has_edge(pb_node_0, core_node_1):
-                    pb_node_0_x = core_pb_x[pb_node_0]
-                    core_node_1_x = core_pb_x[core_node_1]
-                    l_edge_x_cmpnt_opt_0 = core_node_1_x - pb_node_0_x
+            error_str = (
+                "The edge in the overall graph was not detected in "
+                + "either the core edge graph or the periodic boundary "
+                + "edge graph."
+            )
+            sys.exit(error_str)
+        
+    return (l_x_cmpnts_edges, l_y_cmpnts_edges, l_z_cmpnts_edges)
 
-                    pb_node_0_y = core_pb_y[pb_node_0]
-                    core_node_1_y = core_pb_y[core_node_1]
-                    l_edge_y_cmpnt_opt_0 = core_node_1_y - pb_node_0_y
-
-                    pb_node_0_z = core_pb_z[pb_node_0]
-                    core_node_1_z = core_pb_z[core_node_1]
-                    l_edge_z_cmpnt_opt_0 = core_node_1_z - pb_node_0_z
-                    
-                    break
-                else: pass
-            for pb_node_1 in np.nditer(pb_nodes_1):
-                pb_node_1 = int(pb_node_1)
-                if core_pb_graph.has_edge(core_node_0, pb_node_1):
-                    core_node_0_x = core_pb_x[core_node_0]
-                    pb_node_1_x = core_pb_x[pb_node_1]
-                    l_edge_x_cmpnt_opt_1 = pb_node_1_x - core_node_0_x
-
-                    core_node_0_y = core_pb_y[core_node_0]
-                    pb_node_1_y = core_pb_y[pb_node_1]
-                    l_edge_y_cmpnt_opt_1 = pb_node_1_y - core_node_0_y
-
-                    core_node_0_z = core_pb_z[core_node_0]
-                    pb_node_1_z = core_pb_z[pb_node_1]
-                    l_edge_z_cmpnt_opt_1 = pb_node_1_z - core_node_0_z
-                    
-                    break
-                else: pass
-            # Interrogate each periodic edge in order to determine the
-            # periodic edge length components
-            if l_edge_x_cmpnt_opt_0 == l_edge_x_cmpnt_opt_1:
-                l_edge_x_cmpnt = l_edge_x_cmpnt_opt_0
-            else:
-                coin_flip = rng.integers(2, dtype=int)
-                if coin_flip == 0:
-                    l_edge_x_cmpnt = l_edge_x_cmpnt_opt_0
-                else:
-                    l_edge_x_cmpnt = l_edge_x_cmpnt_opt_1
-            
-            if l_edge_y_cmpnt_opt_0 == l_edge_y_cmpnt_opt_1:
-                l_edge_y_cmpnt = l_edge_y_cmpnt_opt_0
-            else:
-                coin_flip = rng.integers(2, dtype=int)
-                if coin_flip == 0:
-                    l_edge_y_cmpnt = l_edge_y_cmpnt_opt_0
-                else:
-                    l_edge_y_cmpnt = l_edge_y_cmpnt_opt_1
-            
-            if l_edge_z_cmpnt_opt_0 == l_edge_z_cmpnt_opt_1:
-                l_edge_z_cmpnt = l_edge_z_cmpnt_opt_0
-            else:
-                coin_flip = rng.integers(2, dtype=int)
-                if coin_flip == 0:
-                    l_edge_z_cmpnt = l_edge_z_cmpnt_opt_0
-                else:
-                    l_edge_z_cmpnt = l_edge_z_cmpnt_opt_1
-        # Store edge length components
-        core_pb_l_edges_x_cmpnt[edge] = l_edge_x_cmpnt
-        core_pb_l_edges_y_cmpnt[edge] = l_edge_y_cmpnt
-        core_pb_l_edges_z_cmpnt[edge] = l_edge_z_cmpnt
-    
-    # Return the length components of distinct edges in the
-    # core_pb_graph
-    return (
-        core_pb_l_edges_x_cmpnt,
-        core_pb_l_edges_y_cmpnt,
-        core_pb_l_edges_z_cmpnt
-    )
-
-def core_pb_conn_graph_l_edges_dim_2_cmpnts_calculation(
-        filename_prefix: str) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Two-dimensional length components of each edge calculated in the
-    graph capturing the periodic connections between the core nodes.
-
-    This function loads fundamental graph constituents, calculates the
-    two-dimensional length components of each edge in the graph
-    capturing the periodic connections between the core nodes, and
-    returns this information.
-
-    Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-    
-    Returns:
-        tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        Respective two-dimensional x- and y-length components of each
-        core and periodic edge calculated in the graph capturing the
-        periodic connections between the core nodes.
-    
-    """
-    # Generate filenames
-    core_pb_n_filename = filename_prefix + "-core_pb_n" + ".dat"
-    core_pb_edges_filename = filename_prefix + "-core_pb_edges" + ".dat"
-    core_pb_conn_edges_filename = (
-        filename_prefix + "-core_pb_conn_edges" + ".dat"
-    )
-    core_pb_x_filename = filename_prefix + "-core_pb_x" + ".dat"
-    core_pb_y_filename = filename_prefix + "-core_pb_y" + ".dat"
-
-    # Load fundamental graph constituents
-    core_pb_n = np.loadtxt(core_pb_n_filename, dtype=int)
-    core_pb_edges = np.loadtxt(core_pb_edges_filename, dtype=int)
-    core_pb_conn_edges = np.loadtxt(core_pb_conn_edges_filename, dtype=int)
-
-    core_pb_nodes = np.arange(core_pb_n, dtype=int)
-    core_pb_conn_m = np.shape(core_pb_conn_edges)[0]
-
-    # Load the core and periodic boundary node x- and y-coordinates
-    core_pb_x = np.loadtxt(core_pb_x_filename)
-    core_pb_y = np.loadtxt(core_pb_y_filename)
-    
-    # Create nx.Graphs, and add nodes before edges
-    core_pb_graph = nx.Graph()
-    core_pb_graph.add_nodes_from(core_pb_nodes)
-    core_pb_graph.add_edges_from(core_pb_edges)
-
-    # Initialize lists for the length components of the core edges and
-    # the length components of the periodic boundary edges in the
-    # core_pb_conn_graph
-    core_pb_conn_l_core_edges_x_cmpnt = []
-    core_pb_conn_l_core_edges_y_cmpnt = []
-    core_pb_conn_l_pb_edges_x_cmpnt = []
-    core_pb_conn_l_pb_edges_y_cmpnt = []
-
-    # Calculate and store the length components of each edge in the
-    # core_pb_conn_graph
-    for edge in range(core_pb_conn_m):
-        core_node_0 = core_pb_conn_edges[edge, 0]
-        core_node_1 = core_pb_conn_edges[edge, 1]
-
-        core_node_0_x = core_pb_x[core_node_0]
-        core_node_1_x = core_pb_x[core_node_1]
-        l_edge_x_cmpnt = core_node_1_x - core_node_0_x
-
-        core_node_0_y = core_pb_y[core_node_0]
-        core_node_1_y = core_pb_y[core_node_1]
-        l_edge_y_cmpnt = core_node_1_y - core_node_0_y
-
-        if core_pb_graph.has_edge(core_node_0, core_node_1): # Core edge
-            core_pb_conn_l_core_edges_x_cmpnt.append(l_edge_x_cmpnt)
-            core_pb_conn_l_core_edges_y_cmpnt.append(l_edge_y_cmpnt)
-        else: # Periodic edge
-            core_pb_conn_l_pb_edges_x_cmpnt.append(l_edge_x_cmpnt)
-            core_pb_conn_l_pb_edges_y_cmpnt.append(l_edge_y_cmpnt)
-    
-    # Convert lists for the length components of the core edges and the
-    # length components of the periodic boundary edges in the
-    # core_pb_conn_graph to np.ndarrays
-    core_pb_conn_l_core_edges_x_cmpnt = (
-        np.asarray(core_pb_conn_l_core_edges_x_cmpnt)
-    )
-    core_pb_conn_l_core_edges_y_cmpnt = (
-        np.asarray(core_pb_conn_l_core_edges_y_cmpnt)
-    )
-    core_pb_conn_l_pb_edges_x_cmpnt = (
-        np.asarray(core_pb_conn_l_pb_edges_x_cmpnt)
-    )
-    core_pb_conn_l_pb_edges_y_cmpnt = (
-        np.asarray(core_pb_conn_l_pb_edges_y_cmpnt)
-    )
-
-    # Return the length components of the core edges and the length
-    # components of the periodic boundary edges in the
-    # core_pb_conn_graph
-    return (
-        core_pb_conn_l_core_edges_x_cmpnt,
-        core_pb_conn_l_core_edges_y_cmpnt,
-        core_pb_conn_l_pb_edges_x_cmpnt,
-        core_pb_conn_l_pb_edges_y_cmpnt
-    )
-
-def core_pb_conn_graph_l_edges_dim_3_cmpnts_calculation(
-        filename_prefix: str) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Three-dimensional length components of each edge calculated in
-    the graph capturing the periodic connections between the core nodes.
-
-    This function loads fundamental graph constituents, calculates the
-    three-dimensional length components of each edge in the graph
-    capturing the periodic connections between the core nodes, and
-    returns this information.
-
-    Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-    
-    Returns:
-        tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        Respective three-dimensional x-, y-, and z-length components of
-        each core and periodic edge calculated in the graph capturing
-        the periodic connections between the core nodes.
-    
-    """
-    # Generate filenames
-    core_pb_n_filename = filename_prefix + "-core_pb_n" + ".dat"
-    core_pb_edges_filename = filename_prefix + "-core_pb_edges" + ".dat"
-    core_pb_conn_edges_filename = (
-        filename_prefix + "-core_pb_conn_edges" + ".dat"
-    )
-    core_pb_x_filename = filename_prefix + "-core_pb_x" + ".dat"
-    core_pb_y_filename = filename_prefix + "-core_pb_y" + ".dat"
-    core_pb_z_filename = filename_prefix + "-core_pb_z" + ".dat"
-
-    # Load fundamental graph constituents
-    core_pb_n = np.loadtxt(core_pb_n_filename, dtype=int)
-    core_pb_edges = np.loadtxt(core_pb_edges_filename, dtype=int)
-    core_pb_conn_edges = np.loadtxt(core_pb_conn_edges_filename, dtype=int)
-
-    core_pb_nodes = np.arange(core_pb_n, dtype=int)
-    core_pb_conn_m = np.shape(core_pb_conn_edges)[0]
-
-    # Load the core and periodic boundary node x-, y-, and z-coordinates
-    core_pb_x = np.loadtxt(core_pb_x_filename)
-    core_pb_y = np.loadtxt(core_pb_y_filename)
-    core_pb_z = np.loadtxt(core_pb_z_filename)
-    
-    # Create nx.Graphs, and add nodes before edges
-    core_pb_graph = nx.Graph()
-    core_pb_graph.add_nodes_from(core_pb_nodes)
-    core_pb_graph.add_edges_from(core_pb_edges)
-
-    # Initialize lists for the length components of the core edges and
-    # the length components of the periodic boundary edges in the
-    # core_pb_conn_graph
-    core_pb_conn_l_core_edges_x_cmpnt = []
-    core_pb_conn_l_core_edges_y_cmpnt = []
-    core_pb_conn_l_core_edges_z_cmpnt = []
-    core_pb_conn_l_pb_edges_x_cmpnt = []
-    core_pb_conn_l_pb_edges_y_cmpnt = []
-    core_pb_conn_l_pb_edges_z_cmpnt = []
-
-    # Calculate and store the length components of each edge in the
-    # core_pb_conn_graph
-    for edge in range(core_pb_conn_m):
-        core_node_0 = core_pb_conn_edges[edge, 0]
-        core_node_1 = core_pb_conn_edges[edge, 1]
-
-        core_node_0_x = core_pb_x[core_node_0]
-        core_node_1_x = core_pb_x[core_node_1]
-        l_edge_x_cmpnt = core_node_1_x - core_node_0_x
-
-        core_node_0_y = core_pb_y[core_node_0]
-        core_node_1_y = core_pb_y[core_node_1]
-        l_edge_y_cmpnt = core_node_1_y - core_node_0_y
-
-        core_node_0_z = core_pb_z[core_node_0]
-        core_node_1_z = core_pb_z[core_node_1]
-        l_edge_z_cmpnt = core_node_1_z - core_node_0_z
-
-        if core_pb_graph.has_edge(core_node_0, core_node_1): # Core edge
-            core_pb_conn_l_core_edges_x_cmpnt.append(l_edge_x_cmpnt)
-            core_pb_conn_l_core_edges_y_cmpnt.append(l_edge_y_cmpnt)
-            core_pb_conn_l_core_edges_z_cmpnt.append(l_edge_z_cmpnt)
-        else: # Periodic edge
-            core_pb_conn_l_pb_edges_x_cmpnt.append(l_edge_x_cmpnt)
-            core_pb_conn_l_pb_edges_y_cmpnt.append(l_edge_y_cmpnt)
-            core_pb_conn_l_pb_edges_z_cmpnt.append(l_edge_z_cmpnt)
-    
-    # Convert lists for the length components of the core edges and the
-    # length components of the periodic boundary edges in the
-    # core_pb_conn_graph to np.ndarrays
-    core_pb_conn_l_core_edges_x_cmpnt = (
-        np.asarray(core_pb_conn_l_core_edges_x_cmpnt)
-    )
-    core_pb_conn_l_core_edges_y_cmpnt = (
-        np.asarray(core_pb_conn_l_core_edges_y_cmpnt)
-    )
-    core_pb_conn_l_core_edges_z_cmpnt = (
-        np.asarray(core_pb_conn_l_core_edges_z_cmpnt)
-    )
-    core_pb_conn_l_pb_edges_x_cmpnt = (
-        np.asarray(core_pb_conn_l_pb_edges_x_cmpnt)
-    )
-    core_pb_conn_l_pb_edges_y_cmpnt = (
-        np.asarray(core_pb_conn_l_pb_edges_y_cmpnt)
-    )
-    core_pb_conn_l_pb_edges_z_cmpnt = (
-        np.asarray(core_pb_conn_l_pb_edges_z_cmpnt)
-    )
-
-    # Return the length components of the core edges and the length
-    # components of the periodic boundary edges in the
-    # core_pb_conn_graph
-    return (
-        core_pb_conn_l_core_edges_x_cmpnt,
-        core_pb_conn_l_core_edges_y_cmpnt,
-        core_pb_conn_l_core_edges_z_cmpnt,
-        core_pb_conn_l_pb_edges_x_cmpnt,
-        core_pb_conn_l_pb_edges_y_cmpnt,
-        core_pb_conn_l_pb_edges_z_cmpnt
-    )
-
-def core_pb_graph_l_edges_dim_2_cmpnts(filename_prefix: str) -> None:
-    """Two-dimensional length components of each edge calculated in the
-    graph capturing the spatial topology of the core and periodic
-    boundary nodes and edges.
-
-    This function calls upon a helper function to calculate the
-    two-dimensional length components of each edge in the graph
-    capturing the spatial topology of the core and periodic boundary
-    nodes and edges, and saves this information.
-
-    Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-    
-    """
-    # Generate filenames
-    core_pb_l_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_l_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_l_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_l_edges_y_cmpnt" + ".dat"
-    )
-
-    # Length components of each distinct edge in the core_pb_graph
-    core_pb_l_edges_x_cmpnt, core_pb_l_edges_y_cmpnt = (
-        core_pb_graph_l_edges_dim_2_cmpnts_calculation(filename_prefix)
-    )
-
-    # Save length components of distinct edges in the core_pb_graph
-    np.savetxt(core_pb_l_edges_x_cmpnt_filename, core_pb_l_edges_x_cmpnt)
-    np.savetxt(core_pb_l_edges_y_cmpnt_filename, core_pb_l_edges_y_cmpnt)
-
-def core_pb_graph_l_edges_dim_3_cmpnts(filename_prefix: str) -> None:
-    """Three-dimensional length components of each edge calculated in
-    the graph capturing the spatial topology of the core and periodic
-    boundary nodes and edges.
-
-    This function calls upon a helper function to calculate the
-    three-dimensional length components of each edge in the graph
-    capturing the spatial topology of the core and periodic boundary
-    nodes and edges, and saves this information.
-
-    Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-    
-    """
-    # Generate filenames
-    core_pb_l_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_l_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_l_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_l_edges_y_cmpnt" + ".dat"
-    )
-    core_pb_l_edges_z_cmpnt_filename = (
-        filename_prefix + "-core_pb_l_edges_z_cmpnt" + ".dat"
-    )
-
-    # Length components of each distinct edge in the core_pb_graph
-    core_pb_l_edges_x_cmpnt, core_pb_l_edges_y_cmpnt, core_pb_l_edges_z_cmpnt = (
-        core_pb_graph_l_edges_dim_3_cmpnts_calculation(filename_prefix)
-    )
-
-    # Save length components of distinct edges in the core_pb_graph
-    np.savetxt(core_pb_l_edges_x_cmpnt_filename, core_pb_l_edges_x_cmpnt)
-    np.savetxt(core_pb_l_edges_y_cmpnt_filename, core_pb_l_edges_y_cmpnt)
-    np.savetxt(core_pb_l_edges_z_cmpnt_filename, core_pb_l_edges_z_cmpnt)
-
-def core_pb_conn_graph_l_edges_dim_2_cmpnts(filename_prefix: str) -> None:
-    """Two-dimensional length components of each edge calculated in the
-    graph capturing the periodic connections between the core nodes.
-
-    This function calls upon a helper function to calculate the
-    two-dimensional length components of each edge in the graph
-    capturing the periodic connections between the core nodes, and saves
-    this information.
-
-    Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-    
-    """
-    # Generate filenames
-    core_pb_conn_l_core_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_core_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_core_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_core_edges_y_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_pb_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_pb_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_pb_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_pb_edges_y_cmpnt" + ".dat"
-    )
-
-    # Length components of the core edges and length components of the
-    # periodic boundary edges in the core_pb_conn_graph
-    (core_pb_conn_l_core_edges_x_cmpnt, core_pb_conn_l_core_edges_y_cmpnt,
-     core_pb_conn_l_pb_edges_x_cmpnt, core_pb_conn_l_pb_edges_y_cmpnt) = (
-         core_pb_conn_graph_l_edges_dim_2_cmpnts_calculation(filename_prefix)
-    )
-
-    # Save the length components of the core edges and the length
-    # components of the periodic boundary edges in the
-    # core_pb_conn_graph
-    np.savetxt(
-        core_pb_conn_l_core_edges_x_cmpnt_filename,
-        core_pb_conn_l_core_edges_x_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_core_edges_y_cmpnt_filename,
-        core_pb_conn_l_core_edges_y_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_pb_edges_x_cmpnt_filename,
-        core_pb_conn_l_pb_edges_x_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_pb_edges_y_cmpnt_filename,
-        core_pb_conn_l_pb_edges_y_cmpnt)
-
-def core_pb_conn_graph_l_edges_dim_3_cmpnts(filename_prefix: str) -> None:
-    """Three-dimensional length components of each edge calculated in
-    the graph capturing the periodic connections between the core nodes.
-
-    This function calls upon a helper function to calculate the
-    three-dimensional length components of each edge in the graph
-    capturing the periodic connections between the core nodes, and saves
-    this information.
-
-    Args:
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-    
-    """
-    # Generate filenames
-    core_pb_conn_l_core_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_core_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_core_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_core_edges_y_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_core_edges_z_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_core_edges_z_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_pb_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_pb_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_pb_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_pb_edges_y_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_pb_edges_z_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_pb_edges_z_cmpnt" + ".dat"
-    )
-
-    # Length components of the core edges and length components of the
-    # periodic boundary edges in the core_pb_conn_graph
-    (core_pb_conn_l_core_edges_x_cmpnt, core_pb_conn_l_core_edges_y_cmpnt,
-     core_pb_conn_l_core_edges_z_cmpnt, core_pb_conn_l_pb_edges_x_cmpnt,
-     core_pb_conn_l_pb_edges_y_cmpnt, core_pb_conn_l_pb_edges_z_cmpnt) = (
-         core_pb_conn_graph_l_edges_dim_3_cmpnts_calculation(filename_prefix)
-    )
-
-    # Save the length components of the core edges and the length
-    # components of the periodic boundary edges in the
-    # core_pb_conn_graph
-    np.savetxt(
-        core_pb_conn_l_core_edges_x_cmpnt_filename,
-        core_pb_conn_l_core_edges_x_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_core_edges_y_cmpnt_filename,
-        core_pb_conn_l_core_edges_y_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_core_edges_z_cmpnt_filename,
-        core_pb_conn_l_core_edges_z_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_pb_edges_x_cmpnt_filename,
-        core_pb_conn_l_pb_edges_x_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_pb_edges_y_cmpnt_filename,
-        core_pb_conn_l_pb_edges_y_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_pb_edges_z_cmpnt_filename,
-        core_pb_conn_l_pb_edges_z_cmpnt)
-
-def swidt_network_graph_l_edges_cmpnts(
+def swidt_network_l_cmpnts_edges(
         network: str,
         date: str,
         batch: str,
@@ -3781,7 +3054,7 @@ def swidt_network_graph_l_edges_cmpnts(
         dim: int,
         config: int,
         pruning: int,
-        graph: str) -> None:
+        elastically_effective: bool) -> None:
     """Length components of each edge in spider web-inspired
     Delaunay-triangulated networks.
 
@@ -3805,12 +3078,8 @@ def swidt_network_graph_l_edges_cmpnts(
         (for two-dimensional or three-dimensional networks).
         config (int): Configuration number.
         pruning (int): Edge pruning procedure number.
-        graph (str): Graph type in which the length components of each
-        edge will be calculated; here, either "core_pb" (corresponding
-        to the graph capturing the spatial topology of the core and
-        periodic boundary nodes and edges) or "core_pb_conn"
-        (corresponding to the graph capturing the periodic connections
-        between the core nodes) are applicable.
+        elastically_effective (bool): Marker used to indicate if the
+        elastically-effective network should be analyzed.
     
     """
     # Edge length component calculation is only applicable for spider
@@ -3824,295 +3093,184 @@ def swidt_network_graph_l_edges_cmpnts(
         )
         sys.exit(error_str)
     # Generate filenames
-    swidt_filename_prefix = (
-        filename_str(network, date, batch, sample)
-        + f"C{config:d}" + f"P{pruning:d}"
-    )
-    # Calculate and save the length components of each edge in the
-    # spider web-inspired Delaunay-triangulated networks.
-    if graph == "core_pb":
-        # Graph capturing the spatial topology of the core and periodic
-        # boundary nodes and edges
-        if dim == 2:
-            core_pb_graph_l_edges_dim_2_cmpnts(swidt_filename_prefix)
-        elif dim == 3:
-            core_pb_graph_l_edges_dim_3_cmpnts(swidt_filename_prefix)
-    elif graph == "core_pb_conn":
-        # Graph capturing the periodic connections between the core
-        # cross-linker nodes.
-        if dim == 2:
-            core_pb_conn_graph_l_edges_dim_2_cmpnts(swidt_filename_prefix)
-        elif dim == 3:
-            core_pb_conn_graph_l_edges_dim_3_cmpnts(swidt_filename_prefix)
+    filename_prefix = filename_str(network, date, batch, sample)
+    L_filename = filename_prefix + "-L" + ".dat"
+    filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+    conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
+    core_z_filename = filename_prefix + "-core_z" + ".dat"
+    l_x_cmpnts_edges_filename = filename_prefix + "-l_x_cmpnts_edges" + ".dat"
+    l_y_cmpnts_edges_filename = filename_prefix + "-l_y_cmpnts_edges" + ".dat"
+    l_z_cmpnts_edges_filename = filename_prefix + "-l_z_cmpnts_edges" + ".dat"
 
-def core_pb_graph_l_nrmlzd_edges_dim_2_cmpnts(
-        filename: str,
-        filename_prefix: str) -> None:
-    """Two-dimensional normalized length components of each edge
-    calculated in the graph capturing the spatial topology of the core
-    and periodic boundary nodes and edges.
-
-    This function loads the simulation box size, calls upon a helper
-    function to calculate the two-dimensional length components of each
-    edge in the graph capturing the spatial topology of the core and
-    periodic boundary nodes and edges, normalizes the edge length
-    components by the simulation box size, and saves this information.
-
-    Args:
-        filename (str): Baseline filename for the simulation box size.
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-    
-    """
-    # Generate filenames
-    L_filename = filename + "-L" + ".dat"
-    core_pb_l_nrmlzd_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_l_nrmlzd_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_l_nrmlzd_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_l_nrmlzd_edges_y_cmpnt" + ".dat"
-    )
+    # Load fundamental graph constituents
+    core_nodes = np.arange(np.loadtxt(conn_n_filename, dtype=int), dtype=int)
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
 
     # Load L
     L = np.loadtxt(L_filename)
 
-    # Length components of each distinct edge in the core_pb_graph
-    core_pb_l_edges_x_cmpnt, core_pb_l_edges_y_cmpnt = (
-        core_pb_graph_l_edges_dim_2_cmpnts_calculation(filename_prefix)
-    )
+    # Load core node x- and y-coordinates
+    core_x = np.loadtxt(core_x_filename)
+    core_y = np.loadtxt(core_y_filename)
+    
+    # Create nx.Graphs, load fundamental graph constituents, and add
+    # nodes before edges
+    conn_core_graph = nx.Graph()
+    conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
+    conn_core_graph = add_edges_from_numpy_array(conn_core_graph, conn_core_edges)
 
-    # Edge length component normalization by L*sqrt(2)
-    core_pb_l_nrmlzd_edges_x_cmpnt = core_pb_l_edges_x_cmpnt / (L*np.sqrt(2))
-    core_pb_l_nrmlzd_edges_y_cmpnt = core_pb_l_edges_y_cmpnt / (L*np.sqrt(2))
+    conn_pb_graph = nx.Graph()
+    conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+    conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
 
-    # Save the normalized length components of distinct edges in the
-    # core_pb_graph
-    np.savetxt(
-        core_pb_l_nrmlzd_edges_x_cmpnt_filename, core_pb_l_nrmlzd_edges_x_cmpnt)
-    np.savetxt(
-        core_pb_l_nrmlzd_edges_y_cmpnt_filename, core_pb_l_nrmlzd_edges_y_cmpnt)
+    conn_graph = nx.Graph()
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
 
-def core_pb_graph_l_nrmlzd_edges_dim_3_cmpnts(
-        filename: str,
-        filename_prefix: str) -> None:
-    """Three-dimensional normalized length components of each edge
-    calculated in the graph capturing the spatial topology of the core
-    and periodic boundary nodes and edges.
+    # Yield the elastically-effective network graph, if called for
+    if elastically_effective:
+        l_x_cmpnts_edges_filename = (
+            filename_prefix + "-ee_l_x_cmpnts_edges" + ".dat"
+        )
+        l_y_cmpnts_edges_filename = (
+            filename_prefix + "-ee_l_y_cmpnts_edges" + ".dat"
+        )
+        l_z_cmpnts_edges_filename = (
+            filename_prefix + "-ee_l_z_cmpnts_edges" + ".dat"
+        )
+        conn_graph = elastically_effective_graph(conn_graph)
+    
+    if dim == 2:
+        # Calculate and save edge length components
+        l_x_cmpnts_edges, l_y_cmpnts_edges = (
+            dim_2_l_cmpnts_edges_calculation(
+                conn_core_graph, conn_pb_graph, conn_graph, core_x, core_y, L)
+        )
+        np.savetxt(l_x_cmpnts_edges_filename, l_x_cmpnts_edges)
+        np.savetxt(l_y_cmpnts_edges_filename, l_y_cmpnts_edges)
+    elif dim == 3:
+        # Load core node z-coordinates
+        core_z = np.loadtxt(core_z_filename)
+        # Calculate and save edge length components
+        l_x_cmpnts_edges, l_y_cmpnts_edges, l_z_cmpnts_edges = (
+            dim_3_l_cmpnts_edges_calculation(
+                conn_core_graph, conn_pb_graph, conn_graph,
+                core_x, core_y, core_z, L)
+        )
+        np.savetxt(l_x_cmpnts_edges_filename, l_x_cmpnts_edges)
+        np.savetxt(l_y_cmpnts_edges_filename, l_y_cmpnts_edges)
+        np.savetxt(l_z_cmpnts_edges_filename, l_z_cmpnts_edges)
 
-    This function loads the simulation box size, calls upon a helper
-    function to calculate the three-dimensional length components of
-    each edge in the graph capturing the spatial topology of the core
-    and periodic boundary nodes and edges, normalizes the edge length
-    components by the simulation box size, and saves this information.
+def dim_2_l_cmpnts_nrmlzd_edges_calculation(
+        conn_core_graph,
+        conn_pb_graph,
+        conn_graph,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        L: float) -> tuple[np.ndarray, np.ndarray]:
+    """Normalized edge length component calculation for two-dimensional
+    networks.
+
+    This function calculates the normalized length components of each
+    core and periodic boundary edge in a two-dimensional network. Note
+    that the length components of each edge are calculated as the true
+    spatial length components, not the naive length components present
+    in the graph.
 
     Args:
-        filename (str): Baseline filename for the simulation box size.
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
+        conn_core_graph: (Undirected) NetworkX graph that can be of
+        type nx.Graph or nx.MultiGraph. This graph represents the core
+        edges from the graph capturing the periodic connections between
+        the core cross-linkers.
+        conn_pb_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph represents the periodic
+        boundary edges from the graph capturing the periodic connections
+        between the core cross-linkers.
+        conn_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph captures the periodic
+        connections between the core cross-linkers.
+        core_x (np.ndarray): x-coordinates of the core cross-linkers.
+        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        L (float): Tessellation scaling distance (i.e., simulation box
+        size).
+    
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Normalized edge length x- and
+        y-components, respectively.
     
     """
-    # Generate filenames
-    L_filename = filename + "-L" + ".dat"
-    core_pb_l_nrmlzd_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_l_nrmlzd_edges_x_cmpnt" + ".dat"
+    # Edge length components
+    l_x_cmpnts_edges, l_y_cmpnts_edges = (
+        dim_2_l_cmpnts_edges_calculation(
+            conn_core_graph, conn_pb_graph, conn_graph, core_x, core_y, L)
     )
-    core_pb_l_nrmlzd_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_l_nrmlzd_edges_y_cmpnt" + ".dat"
-    )
-    core_pb_l_nrmlzd_edges_z_cmpnt_filename = (
-        filename_prefix + "-core_pb_l_nrmlzd_edges_z_cmpnt" + ".dat"
-    )
+    # Edge length normalization by L*sqrt(dim)
+    l_x_cmpnts_nrmlzd_edges = l_x_cmpnts_edges / (L*np.sqrt(2))
+    l_y_cmpnts_nrmlzd_edges = l_y_cmpnts_edges / (L*np.sqrt(2))
+    return (l_x_cmpnts_nrmlzd_edges, l_y_cmpnts_nrmlzd_edges)
 
-    # Load L
-    L = np.loadtxt(L_filename)
+def dim_3_l_cmpnts_nrmlzd_edges_calculation(
+        conn_core_graph,
+        conn_pb_graph,
+        conn_graph,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        core_z: np.ndarray,
+        L: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Normalized edge length component calculation for
+    three-dimensional networks.
 
-    # Length components of each distinct edge in the core_pb_graph
-    core_pb_l_edges_x_cmpnt, core_pb_l_edges_y_cmpnt, core_pb_l_edges_z_cmpnt = (
-        core_pb_graph_l_edges_dim_3_cmpnts_calculation(filename_prefix)
-    )
-
-    # Edge length component normalization by L*sqrt(3)
-    core_pb_l_nrmlzd_edges_x_cmpnt = core_pb_l_edges_x_cmpnt / (L*np.sqrt(3))
-    core_pb_l_nrmlzd_edges_y_cmpnt = core_pb_l_edges_y_cmpnt / (L*np.sqrt(3))
-    core_pb_l_nrmlzd_edges_z_cmpnt = core_pb_l_edges_z_cmpnt / (L*np.sqrt(3))
-
-    # Save the normalized length components of distinct edges in the
-    # core_pb_graph
-    np.savetxt(
-        core_pb_l_nrmlzd_edges_x_cmpnt_filename, core_pb_l_nrmlzd_edges_x_cmpnt)
-    np.savetxt(
-        core_pb_l_nrmlzd_edges_y_cmpnt_filename, core_pb_l_nrmlzd_edges_y_cmpnt)
-    np.savetxt(
-        core_pb_l_nrmlzd_edges_z_cmpnt_filename, core_pb_l_nrmlzd_edges_z_cmpnt)
-
-def core_pb_conn_graph_l_nrmlzd_edges_dim_2_cmpnts(
-        filename: str,
-        filename_prefix: str) -> None:
-    """Two-dimensional normalized length components of each edge
-    calculated in the graph capturing the periodic connections between
-    the core nodes.
-
-    This function loads the simulation box size, calls upon a helper
-    function to calculate the two-dimensional length components of each
-    edge in the graph capturing the periodic connections between the
-    core nodes, normalizes the edge length components by the simulation
-    box size, and saves this information.
+    This function calculates the normalized length components of each
+    core and periodic boundary edge in a three-dimensional network. Note
+    that the length components of each edge are calculated as the true
+    spatial length components, not the naive length components present
+    in the graph.
 
     Args:
-        filename (str): Baseline filename for the simulation box size.
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
+        conn_core_graph: (Undirected) NetworkX graph that can be of
+        type nx.Graph or nx.MultiGraph. This graph represents the core
+        edges from the graph capturing the periodic connections between
+        the core cross-linkers.
+        conn_pb_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph represents the periodic
+        boundary edges from the graph capturing the periodic connections
+        between the core cross-linkers.
+        conn_graph: (Undirected) NetworkX graph that can be of type
+        nx.Graph or nx.MultiGraph. This graph captures the periodic
+        connections between the core cross-linkers.
+        core_x (np.ndarray): x-coordinates of the core cross-linkers.
+        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        core_z (np.ndarray): z-coordinates of the core cross-linkers.
+        L (float): Tessellation scaling distance (i.e., simulation box
+        size).
+    
+    Returns:
+        tuple[np.ndarray, np.ndarray, np.ndarray]: Normalized edge
+        length x-, y-, and z-components, respectively.
     
     """
-    # Generate filenames
-    L_filename = filename + "-L" + ".dat"
-    core_pb_conn_l_nrmlzd_core_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_core_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_nrmlzd_core_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_core_edges_y_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_pb_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_pb_edges_y_cmpnt" + ".dat"
-    )
-
-    # Load L
-    L = np.loadtxt(L_filename)
-
-    # Length components of the core edges and length components of the
-    # periodic boundary edges in the core_pb_conn_graph
-    (core_pb_conn_l_core_edges_x_cmpnt, core_pb_conn_l_core_edges_y_cmpnt,
-     core_pb_conn_l_pb_edges_x_cmpnt, core_pb_conn_l_pb_edges_y_cmpnt) = (
-         core_pb_conn_graph_l_edges_dim_2_cmpnts_calculation(filename_prefix)
+    # Edge length components
+    l_x_cmpnts_edges, l_y_cmpnts_edges, l_z_cmpnts_edges = (
+        dim_3_l_cmpnts_edges_calculation(
+            conn_core_graph, conn_pb_graph, conn_graph,
+            core_x, core_y, core_z, L)
+    )# Edge length normalization by L*sqrt(dim)
+    l_x_cmpnts_nrmlzd_edges = l_x_cmpnts_edges / (L*np.sqrt(3))
+    l_y_cmpnts_nrmlzd_edges = l_y_cmpnts_edges / (L*np.sqrt(3))
+    l_z_cmpnts_nrmlzd_edges = l_z_cmpnts_edges / (L*np.sqrt(3))
+    return (
+        l_x_cmpnts_nrmlzd_edges,
+        l_y_cmpnts_nrmlzd_edges,
+        l_z_cmpnts_nrmlzd_edges
     )
 
-    # Edge length component normalization by L*sqrt(2)
-    core_pb_conn_l_nrmlzd_core_edges_x_cmpnt = (
-        core_pb_conn_l_core_edges_x_cmpnt / (L*np.sqrt(2))
-    )
-    core_pb_conn_l_nrmlzd_core_edges_y_cmpnt = (
-        core_pb_conn_l_core_edges_y_cmpnt / (L*np.sqrt(2))
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_x_cmpnt = (
-        core_pb_conn_l_pb_edges_x_cmpnt / (L*np.sqrt(2))
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_y_cmpnt = (
-        core_pb_conn_l_pb_edges_y_cmpnt / (L*np.sqrt(2))
-    )
-
-    # Save the normalized length components of the core edges and the
-    # normalized length components of the periodic boundary edges in the
-    # core_pb_conn_graph
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_core_edges_x_cmpnt_filename,
-        core_pb_conn_l_nrmlzd_core_edges_x_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_core_edges_y_cmpnt_filename,
-        core_pb_conn_l_nrmlzd_core_edges_y_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_pb_edges_x_cmpnt_filename,
-        core_pb_conn_l_nrmlzd_pb_edges_x_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_pb_edges_y_cmpnt_filename,
-        core_pb_conn_l_nrmlzd_pb_edges_y_cmpnt)
-
-def core_pb_conn_graph_l_nrmlzd_edges_dim_3_cmpnts(
-        filename: str,
-        filename_prefix: str) -> None:
-    """Three-dimensional normalized length components of each edge
-    calculated in the graph capturing the periodic connections between
-    the core nodes.
-
-    This function loads the simulation box size, calls upon a helper
-    function to calculate the three-dimensional length components of
-    each edge in the graph capturing the periodic connections between
-    the core nodes, normalizes the edge length components by the
-    simulation box size, and saves this information.
-
-    Args:
-        filename (str): Baseline filename for the simulation box size.
-        filename_prefix (str): Filename prefix for the files associated
-        with the fundamental graph constituents.
-    
-    """
-    # Generate filenames
-    L_filename = filename + "-L" + ".dat"
-    core_pb_conn_l_nrmlzd_core_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_core_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_nrmlzd_core_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_core_edges_y_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_nrmlzd_core_edges_z_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_core_edges_z_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_x_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_pb_edges_x_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_y_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_pb_edges_y_cmpnt" + ".dat"
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_z_cmpnt_filename = (
-        filename_prefix + "-core_pb_conn_l_nrmlzd_pb_edges_z_cmpnt" + ".dat"
-    )
-
-    # Load L
-    L = np.loadtxt(L_filename)
-
-    # Length components of the core edges and length components of the
-    # periodic boundary edges in the core_pb_conn_graph
-    (core_pb_conn_l_core_edges_x_cmpnt, core_pb_conn_l_core_edges_y_cmpnt,
-     core_pb_conn_l_core_edges_z_cmpnt, core_pb_conn_l_pb_edges_x_cmpnt,
-     core_pb_conn_l_pb_edges_y_cmpnt, core_pb_conn_l_pb_edges_z_cmpnt) = (
-         core_pb_conn_graph_l_edges_dim_3_cmpnts_calculation(filename_prefix)
-    )
-
-    # Edge length component normalization by L*sqrt(3)
-    core_pb_conn_l_nrmlzd_core_edges_x_cmpnt = (
-        core_pb_conn_l_core_edges_x_cmpnt / (L*np.sqrt(3))
-    )
-    core_pb_conn_l_nrmlzd_core_edges_y_cmpnt = (
-        core_pb_conn_l_core_edges_y_cmpnt / (L*np.sqrt(3))
-    )
-    core_pb_conn_l_nrmlzd_core_edges_z_cmpnt = (
-        core_pb_conn_l_core_edges_z_cmpnt / (L*np.sqrt(3))
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_x_cmpnt = (
-        core_pb_conn_l_pb_edges_x_cmpnt / (L*np.sqrt(3))
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_y_cmpnt = (
-        core_pb_conn_l_pb_edges_y_cmpnt / (L*np.sqrt(3))
-    )
-    core_pb_conn_l_nrmlzd_pb_edges_z_cmpnt = (
-        core_pb_conn_l_pb_edges_z_cmpnt / (L*np.sqrt(3))
-    )
-
-    # Save the normalized length components of the core edges and the
-    # normalized length components of the periodic boundary edges in the
-    # core_pb_conn_graph
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_core_edges_x_cmpnt_filename,
-        core_pb_conn_l_nrmlzd_core_edges_x_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_core_edges_y_cmpnt_filename,
-        core_pb_conn_l_nrmlzd_core_edges_y_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_core_edges_z_cmpnt_filename,
-        core_pb_conn_l_nrmlzd_core_edges_z_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_pb_edges_x_cmpnt_filename,
-        core_pb_conn_l_nrmlzd_pb_edges_x_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_pb_edges_y_cmpnt_filename,
-        core_pb_conn_l_nrmlzd_pb_edges_y_cmpnt)
-    np.savetxt(
-        core_pb_conn_l_nrmlzd_pb_edges_z_cmpnt_filename,
-        core_pb_conn_l_nrmlzd_pb_edges_z_cmpnt)
-
-def swidt_network_graph_l_nrmlzd_edges_cmpnts(
+def swidt_network_l_cmpnts_nrmlzd_edges(
         network: str,
         date: str,
         batch: str,
@@ -4120,7 +3278,7 @@ def swidt_network_graph_l_nrmlzd_edges_cmpnts(
         dim: int,
         config: int,
         pruning: int,
-        graph: str) -> None:
+        elastically_effective: bool) -> None:
     """Normalized length components of each edge in spider web-inspired
     Delaunay-triangulated networks.
 
@@ -4144,12 +3302,8 @@ def swidt_network_graph_l_nrmlzd_edges_cmpnts(
         (for two-dimensional or three-dimensional networks).
         config (int): Configuration number.
         pruning (int): Edge pruning procedure number.
-        graph (str): Graph type in which the normalized length
-        components of each edge will be calculated; here, either
-        "core_pb" (corresponding to the graph capturing the spatial
-        topology of the core and periodic boundary nodes and edges) or
-        "core_pb_conn" (corresponding to the graph capturing the
-        periodic connections between the core nodes) are applicable.
+        elastically_effective (bool): Marker used to indicate if the
+        elastically-effective network should be analyzed.
     
     """
     # Normalized edge length component calculation is only applicable
@@ -4164,28 +3318,82 @@ def swidt_network_graph_l_nrmlzd_edges_cmpnts(
         )
         sys.exit(error_str)
     # Generate filenames
-    filename = filename_str(network, date, batch, sample)
-    swidt_filename_prefix = (
-        filename_str(network, date, batch, sample)
-        + f"C{config:d}" + f"P{pruning:d}"
+    filename_prefix = filename_str(network, date, batch, sample)
+    L_filename = filename_prefix + "-L" + ".dat"
+    filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+    conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
+    core_z_filename = filename_prefix + "-core_z" + ".dat"
+    l_x_cmpnts_nrmlzd_edges_filename = (
+        filename_prefix + "-l_x_cmpnts_nrmlzd_edges" + ".dat"
     )
-    # Calculate and save the normalized length components of each edge
-    # in the spider web-inspired Delaunay-triangulated networks.
-    if graph == "core_pb":
-        # Graph capturing the spatial topology of the core and periodic
-        # boundary nodes and edges
-        if dim == 2:
-            core_pb_graph_l_nrmlzd_edges_dim_2_cmpnts(
-                filename, swidt_filename_prefix)
-        elif dim == 3:
-            core_pb_graph_l_nrmlzd_edges_dim_3_cmpnts(
-                filename, swidt_filename_prefix)
-    elif graph == "core_pb_conn":
-        # Graph capturing the periodic connections between the core
-        # cross-linker nodes.
-        if dim == 2:
-            core_pb_conn_graph_l_nrmlzd_edges_dim_2_cmpnts(
-                filename, swidt_filename_prefix)
-        elif dim == 3:
-            core_pb_conn_graph_l_nrmlzd_edges_dim_3_cmpnts(
-                filename, swidt_filename_prefix)
+    l_y_cmpnts_nrmlzd_edges_filename = (
+        filename_prefix + "-l_y_cmpnts_nrmlzd_edges" + ".dat"
+    )
+    l_z_cmpnts_nrmlzd_edges_filename = (
+        filename_prefix + "-l_z_cmpnts_nrmlzd_edges" + ".dat"
+    )
+
+    # Load fundamental graph constituents
+    core_nodes = np.arange(np.loadtxt(conn_n_filename, dtype=int), dtype=int)
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+
+    # Load L
+    L = np.loadtxt(L_filename)
+
+    # Load core node x- and y-coordinates
+    core_x = np.loadtxt(core_x_filename)
+    core_y = np.loadtxt(core_y_filename)
+    
+    # Create nx.Graphs, load fundamental graph constituents, and add
+    # nodes before edges
+    conn_core_graph = nx.Graph()
+    conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
+    conn_core_graph = add_edges_from_numpy_array(conn_core_graph, conn_core_edges)
+
+    conn_pb_graph = nx.Graph()
+    conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+    conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
+
+    conn_graph = nx.Graph()
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
+
+    # Yield the elastically-effective network graph, if called for
+    if elastically_effective:
+        l_x_cmpnts_nrmlzd_edges_filename = (
+            filename_prefix + "-ee_l_x_cmpnts_nrmlzd_edges" + ".dat"
+        )
+        l_y_cmpnts_nrmlzd_edges_filename = (
+            filename_prefix + "-ee_l_y_cmpnts_nrmlzd_edges" + ".dat"
+        )
+        l_z_cmpnts_nrmlzd_edges_filename = (
+            filename_prefix + "-ee_l_z_cmpnts_nrmlzd_edges" + ".dat"
+        )
+        conn_graph = elastically_effective_graph(conn_graph)
+    
+    if dim == 2:
+        # Calculate and save normalized edge length components
+        l_x_cmpnts_nrmlzd_edges, l_y_cmpnts_nrmlzd_edges = (
+            dim_2_l_cmpnts_nrmlzd_edges_calculation(
+                conn_core_graph, conn_pb_graph, conn_graph, core_x, core_y, L)
+        )
+        np.savetxt(l_x_cmpnts_nrmlzd_edges_filename, l_x_cmpnts_nrmlzd_edges)
+        np.savetxt(l_y_cmpnts_nrmlzd_edges_filename, l_y_cmpnts_nrmlzd_edges)
+    elif dim == 3:
+        # Load core node z-coordinates
+        core_z = np.loadtxt(core_z_filename)
+        # Calculate and save normalized edge length components
+        l_x_cmpnts_nrmlzd_edges, l_y_cmpnts_nrmlzd_edges, l_z_cmpnts_nrmlzd_edges = (
+            dim_3_l_cmpnts_nrmlzd_edges_calculation(
+                conn_core_graph, conn_pb_graph, conn_graph,
+                core_x, core_y, core_z, L)
+        )
+        np.savetxt(l_x_cmpnts_nrmlzd_edges_filename, l_x_cmpnts_nrmlzd_edges)
+        np.savetxt(l_y_cmpnts_nrmlzd_edges_filename, l_y_cmpnts_nrmlzd_edges)
+        np.savetxt(l_z_cmpnts_nrmlzd_edges_filename, l_z_cmpnts_nrmlzd_edges)

@@ -1,4 +1,4 @@
-# Edited by jasonmulderrig on 2024-08-23
+# Edited by jasonmulderrig on 2024-08-29
 
 ### Temporary files component of .gitignore
 *~
@@ -11,6 +11,9 @@
 
 # dat files
 *.dat
+
+# config files
+*.config
 
 # json files
 *.json

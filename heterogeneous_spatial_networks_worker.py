@@ -7,12 +7,12 @@ from heterogeneous_spatial_networks_funcs import (
     crosslinker_seeding,
     swidt_network_topology_initialization,
     swidt_network_edge_pruning_procedure,
-    swidt_network_graph_k_counts,
-    swidt_network_graph_h_counts,
-    swidt_network_graph_l_edges,
-    swidt_network_graph_l_nrmlzd_edges,
-    swidt_network_graph_l_edges_cmpnts,
-    swidt_network_graph_l_nrmlzd_edges_cmpnts
+    swidt_network_k_counts,
+    swidt_network_h_counts,
+    swidt_network_l_edges,
+    swidt_network_l_nrmlzd_edges,
+    swidt_network_l_cmpnts_edges,
+    swidt_network_l_cmpnts_nrmlzd_edges
 )
 
 def run_swidt_L(args):
@@ -27,23 +27,23 @@ def run_swidt_network_topology_initialization(args):
 def run_swidt_network_edge_pruning_procedure(args):
     swidt_network_edge_pruning_procedure(*args)
 
-def run_swidt_network_graph_k_counts(args):
-    swidt_network_graph_k_counts(*args)
+def run_swidt_network_k_counts(args):
+    swidt_network_k_counts(*args)
 
-def run_swidt_network_graph_h_counts(args):
-    swidt_network_graph_h_counts(*args)
+def run_swidt_network_h_counts(args):
+    swidt_network_h_counts(*args)
 
-def run_swidt_network_graph_l_edges(args):
-    swidt_network_graph_l_edges(*args)
+def run_swidt_network_l_edges(args):
+    swidt_network_l_edges(*args)
 
-def run_swidt_network_graph_l_nrmlzd_edges(args):
-    swidt_network_graph_l_nrmlzd_edges(*args)
+def run_swidt_network_l_nrmlzd_edges(args):
+    swidt_network_l_nrmlzd_edges(*args)
 
-def run_swidt_network_graph_l_edges_cmpnts(args):
-    swidt_network_graph_l_edges_cmpnts(*args)
+def run_swidt_network_l_cmpnts_edges(args):
+    swidt_network_l_cmpnts_edges(*args)
 
-def run_swidt_network_graph_l_nrmlzd_edges_cmpnts(args):
-    swidt_network_graph_l_nrmlzd_edges_cmpnts(*args)
+def run_swidt_network_l_cmpnts_nrmlzd_edges(args):
+    swidt_network_l_cmpnts_nrmlzd_edges(*args)
 
 def dim_2_swidt_topology_axes_formatter(
         ax: plt.axes,
@@ -121,7 +121,8 @@ def swidt_topology_synthesis_plotter(
     import networkx as nx
     from heterogeneous_spatial_networks_funcs import (
         tessellation_protocol,
-        core2pb_nodes_func
+        add_nodes_from_numpy_array,
+        add_edges_from_numpy_array
     )
 
     # Identification of the sample value for the desired network
@@ -134,15 +135,11 @@ def swidt_topology_synthesis_plotter(
     L_filename = filename_prefix + "-L" + ".dat"
     # Fundamental graph constituents filenames
     filename_prefix = filename_prefix + f"C{config:d}"
-    core_pb_n_filename = filename_prefix + "-core_pb_n" + ".dat"
-    core_pb_edges_filename = filename_prefix + "-core_pb_edges" + ".dat"
-    pb2core_nodes_filename = filename_prefix + "-pb2core_nodes" + ".dat"
-    core_pb_conn_edges_filename = (
-        filename_prefix + "-core_pb_conn_edges" + ".dat"
-    )
-    core_pb_x_filename = filename_prefix + "-core_pb_x" + ".dat"
-    core_pb_y_filename = filename_prefix + "-core_pb_y" + ".dat"
-    core_pb_z_filename = filename_prefix + "-core_pb_z" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
+    core_z_filename = filename_prefix + "-core_z" + ".dat"
     # Plots filenames
     core_node_coords_filename = filename_prefix + "-core_node_coords" + ".png"
     core_pb_node_coords_filename = (
@@ -154,11 +151,11 @@ def swidt_topology_synthesis_plotter(
     core_pb_graph_colored_topology_synthesis_filename = (
         filename_prefix + "-core_pb_graph_colored_topology_synthesis" + ".png"
     )
-    core_pb_conn_graph_topology_synthesis_filename = (
-        filename_prefix + "-core_pb_conn_graph_topology_synthesis" + ".png"
+    conn_graph_topology_synthesis_filename = (
+        filename_prefix + "-conn_graph_topology_synthesis" + ".png"
     )
-    core_pb_conn_graph_colored_topology_synthesis_filename = (
-        filename_prefix + "-core_pb_conn_graph_colored_topology_synthesis"
+    conn_graph_colored_topology_synthesis_filename = (
+        filename_prefix + "-conn_graph_colored_topology_synthesis"
         + ".png"
     )
     tsslltd_core_node_coords_filename = (
@@ -173,8 +170,8 @@ def swidt_topology_synthesis_plotter(
     pruned_core_pb_graph_topology_synthesis_filename = (
         filename_prefix + "-pruned_core_pb_graph_topology_synthesis" + ".png"
     )
-    pruned_core_pb_conn_graph_topology_synthesis_filename = (
-        filename_prefix + "-pruned_core_pb_conn_graph_topology_synthesis" + ".png"
+    pruned_conn_graph_topology_synthesis_filename = (
+        filename_prefix + "-pruned_conn_graph_topology_synthesis" + ".png"
     )
     mx_cmp_pruned_core_pb_graph_topology_synthesis_filename = (
         filename_prefix + "-mx_cmp_pruned_core_pb_graph_topology_synthesis" + ".png"
@@ -182,52 +179,30 @@ def swidt_topology_synthesis_plotter(
     mx_cmp_pruned_core_pb_graph_colored_topology_synthesis_filename = (
         filename_prefix + "-mx_cmp_pruned_core_pb_graph_colored_topology_synthesis" + ".png"
     )
-    mx_cmp_pruned_core_pb_conn_graph_topology_synthesis_filename = (
-        filename_prefix + "-mx_cmp_pruned_core_pb_conn_graph_topology_synthesis" + ".png"
+    mx_cmp_pruned_conn_graph_topology_synthesis_filename = (
+        filename_prefix + "-mx_cmp_pruned_conn_graph_topology_synthesis" + ".png"
     )
-    mx_cmp_pruned_core_pb_conn_graph_colored_topology_synthesis_filename = (
-        filename_prefix + "-mx_cmp_pruned_core_pb_conn_graph_colored_topology_synthesis" + ".png"
+    mx_cmp_pruned_conn_graph_colored_topology_synthesis_filename = (
+        filename_prefix + "-mx_cmp_pruned_conn_graph_colored_topology_synthesis" + ".png"
     )
 
     # Load fundamental graph constituents
     L = np.loadtxt(L_filename)
-    core_pb_n = np.loadtxt(core_pb_n_filename, dtype=int)
-    core_pb_edges = np.loadtxt(core_pb_edges_filename, dtype=int)
-    pb2core_nodes = np.loadtxt(pb2core_nodes_filename, dtype=int)
-    core_pb_conn_edges = np.loadtxt(core_pb_conn_edges_filename, dtype=int)
-    core_pb_nodes = np.arange(core_pb_n, dtype=int)
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
     core_nodes = np.arange(n, dtype=int)
-    core_pb_conn_nodes = core_nodes.copy()
-    core2pb_nodes = core2pb_nodes_func(core_nodes, pb2core_nodes)
-    core_pb_x = np.loadtxt(core_pb_x_filename)
-    core_pb_y = np.loadtxt(core_pb_y_filename)
-    core_pb_z = np.asarray([])    
-    # Extract core node coordinates
-    core_x = core_pb_x[core_nodes]
-    core_y = core_pb_y[core_nodes]
+    core_x = np.loadtxt(core_x_filename)
+    core_y = np.loadtxt(core_y_filename)
     core_z = np.asarray([])
     # Tessellated core node coordinates
     tsslltd_core_x = core_x.copy()
     tsslltd_core_y = core_y.copy()
     tsslltd_core_z = np.asarray([])
 
-    # Isolate core edges and periodic boundary edges
-    core_edges_indcs = (
-        np.where(np.logical_and(core_pb_edges[:, 0] < n, core_pb_edges[:, 1] < n))[0]
-    )
-    pb_edges_indcs = (
-        np.where(np.logical_or(core_pb_edges[:, 0] >= n, core_pb_edges[:, 1] >= n))[0]
-    )
-    core_edges = core_pb_edges[core_edges_indcs]
-    pb_edges = core_pb_edges[pb_edges_indcs]
-    
-    # Number of edges
-    core_pb_m = np.shape(core_pb_edges)[0]
-    core_pb_conn_m = np.shape(core_pb_conn_edges)[0]
-
     # Number of core edges and periodic boundary edges
-    core_m = np.shape(core_edges)[0]
-    pb_m = np.shape(pb_edges)[0]
+    core_m = np.shape(conn_core_edges)[0]
+    pb_m = np.shape(conn_pb_edges)[0]
 
     # Plot preformatting parameters
     plt_pad = plt_pad_prefactor * L
@@ -273,7 +248,8 @@ def swidt_topology_synthesis_plotter(
     core_square = np.asarray(
         [
             [0, 0], [L, 0], [L, L], [0, L], [0, 0]
-        ])
+        ]
+    )
     core_square_color = "red"
     core_square_linewidth = 0.5
 
@@ -286,13 +262,38 @@ def swidt_topology_synthesis_plotter(
             [[L, 0, 0], [L, L, 0], [L, L, L], [L, 0, L], [L, 0, 0]],
             [[L, L, 0], [0, L, 0], [0, L, L], [L, L, L], [L, L, 0]],
             [[0, L, 0], [0, 0, 0], [0, 0, L], [0, L, L], [0, L, 0]]
-        ])
+        ]
+    )
     core_cube_color = "red"
     core_cube_linewidth = 0.5
 
     if dim == 2:
-        # Import two-dimension specific function
-        from heterogeneous_spatial_networks_funcs import dim_2_tessellation
+        # Import two-dimension specific functions
+        from heterogeneous_spatial_networks_funcs import (
+            dim_2_tessellation,
+            dim_2_core_pb_edge_identification
+        )
+        
+        # Extract two-dimensional periodic boundary node coordinates
+        pb_x = []
+        pb_y = []
+        for edge in range(pb_m):
+            core_node_0_x = core_x[conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
+            pb_x.append(pb_node_0_x)
+            pb_x.append(pb_node_1_x)
+            pb_y.append(pb_node_0_y)
+            pb_y.append(pb_node_1_y)
+        pb_x = np.asarray(pb_x)
+        pb_y = np.asarray(pb_y)
+        pb_n = np.shape(pb_x)[0]
+        
         # Plot preformatting for non-intersecting circles
         from matplotlib.collections import PatchCollection
 
@@ -430,12 +431,12 @@ def swidt_topology_synthesis_plotter(
         # and show a zoomed in portion of the left boundary
         fig, ax = plt.subplots()
         ax.scatter(core_x, core_y, marker=".", color="black")
-        circles_left = list(
-            plt.Circle((core_x[node], core_y[node]), radius=b/2, fill=False) for node in np.nditer(core_nodes))
-        collection_circles_left = (
-            PatchCollection(circles_left, match_original=True)
+        core_circles_left = list(
+            plt.Circle((core_x[node], core_y[node]), radius=b/2, fill=False) for node in range(n))
+        collection_core_circles_left = (
+            PatchCollection(core_circles_left, match_original=True)
         )
-        ax.add_collection(collection_circles_left)
+        ax.add_collection(collection_core_circles_left)
         ax = dim_2_swidt_topology_axes_formatter(
             ax, core_square, core_square_color, core_square_linewidth,
             core_circle_left_xlim, core_circle_left_ylim,
@@ -450,12 +451,12 @@ def swidt_topology_synthesis_plotter(
         # and show a zoomed in portion of the right boundary
         fig, ax = plt.subplots()
         ax.scatter(core_x, core_y, marker=".", color="black")
-        circles_right = list(
-            plt.Circle((core_x[node], core_y[node]), radius=b/2, fill=False) for node in np.nditer(core_nodes))
-        collection_circles_right = (
-            PatchCollection(circles_right, match_original=True)
+        core_circles_right = list(
+            plt.Circle((core_x[node], core_y[node]), radius=b/2, fill=False) for node in range(n))
+        collection_core_circles_right = (
+            PatchCollection(core_circles_right, match_original=True)
         )
-        ax.add_collection(collection_circles_right)
+        ax.add_collection(collection_core_circles_right)
         ax = dim_2_swidt_topology_axes_formatter(
             ax, core_square, core_square_color, core_square_linewidth,
             core_circle_right_xlim, core_circle_right_ylim,
@@ -468,7 +469,8 @@ def swidt_topology_synthesis_plotter(
 
         # Plot core and periodic boundary nodes
         fig, ax = plt.subplots()
-        ax.scatter(core_pb_x, core_pb_y, marker=".", color="black")
+        ax.scatter(core_x, core_y, marker=".", color="black")
+        ax.scatter(pb_x, pb_y, marker=".", color="black")
         ax = dim_2_swidt_topology_axes_formatter(
             ax, core_square, core_square_color, core_square_linewidth,
             core_xlim, core_ylim, core_xticks, core_yticks, xlabel, ylabel,
@@ -481,13 +483,20 @@ def swidt_topology_synthesis_plotter(
         # circles of diameter = b, and show a zoomed in portion of the
         # left boundary
         fig, ax = plt.subplots()
-        ax.scatter(core_pb_x, core_pb_y, marker=".", color="black")
-        circles_left = list(
-            plt.Circle((core_pb_x[node], core_pb_y[node]), radius=b/2, fill=False) for node in np.nditer(core_pb_nodes))
-        collection_circles_left = (
-            PatchCollection(circles_left, match_original=True)
+        ax.scatter(core_x, core_y, marker=".", color="black")
+        ax.scatter(pb_x, pb_y, marker=".", color="black")
+        core_circles_left = list(
+            plt.Circle((core_x[node], core_y[node]), radius=b/2, fill=False) for node in range(n))
+        collection_core_circles_left = (
+            PatchCollection(core_circles_left, match_original=True)
         )
-        ax.add_collection(collection_circles_left)
+        pb_circles_left = list(
+            plt.Circle((pb_x[node], pb_y[node]), radius=b/2, fill=False) for node in range(pb_n))
+        collection_pb_circles_left = (
+            PatchCollection(pb_circles_left, match_original=True)
+        )
+        ax.add_collection(collection_core_circles_left)
+        ax.add_collection(collection_pb_circles_left)
         ax = dim_2_swidt_topology_axes_formatter(
             ax, core_square, core_square_color, core_square_linewidth,
             core_pb_circle_left_xlim, core_pb_circle_left_ylim,
@@ -502,13 +511,20 @@ def swidt_topology_synthesis_plotter(
         # circles of diameter = b, and show a zoomed in portion of the
         # right boundary
         fig, ax = plt.subplots()
-        ax.scatter(core_pb_x, core_pb_y, marker=".", color="black")
-        circles_right = list(
-            plt.Circle((core_pb_x[node], core_pb_y[node]), radius=b/2, fill=False) for node in np.nditer(core_pb_nodes))
-        collection_circles_right = (
-            PatchCollection(circles_right, match_original=True)
+        ax.scatter(core_x, core_y, marker=".", color="black")
+        ax.scatter(pb_x, pb_y, marker=".", color="black")
+        core_circles_right = list(
+            plt.Circle((core_x[node], core_y[node]), radius=b/2, fill=False) for node in range(n))
+        collection_core_circles_right = (
+            PatchCollection(core_circles_right, match_original=True)
         )
-        ax.add_collection(collection_circles_right)
+        pb_circles_right = list(
+            plt.Circle((pb_x[node], pb_y[node]), radius=b/2, fill=False) for node in range(pb_n))
+        collection_pb_circles_right = (
+            PatchCollection(pb_circles_right, match_original=True)
+        )
+        ax.add_collection(collection_core_circles_right)
+        ax.add_collection(collection_pb_circles_right)
         ax = dim_2_swidt_topology_axes_formatter(
             ax, core_square, core_square_color, core_square_linewidth,
             core_pb_circle_right_xlim, core_pb_circle_right_ylim,
@@ -523,17 +539,58 @@ def swidt_topology_synthesis_plotter(
         # and edges for the graph capturing the spatial topology of the
         # core and periodic boundary nodes and edges
         fig, ax = plt.subplots()
-        for edge in range(core_pb_m):
+        for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_edges[edge, 0]],
-                    core_pb_x[core_pb_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_edges[edge, 0]],
-                    core_pb_y[core_pb_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pb_m):
+            core_node_0_x = core_x[conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
+            edge_x = np.asarray(
+                [
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -554,28 +611,55 @@ def swidt_topology_synthesis_plotter(
         for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_edges[edge, 0]],
-                    core_pb_x[core_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_edges[edge, 0]],
-                    core_pb_y[core_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(pb_m):
+            core_node_0_x = core_x[conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
             edge_x = np.asarray(
                 [
-                    core_pb_x[pb_edges[edge, 0]],
-                    core_pb_x[pb_edges[edge, 1]]
-                ])
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[pb_edges[edge, 0]],
-                    core_pb_y[pb_edges[edge, 1]]
-                ])
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:olive", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -591,17 +675,35 @@ def swidt_topology_synthesis_plotter(
         # and edges for the graph capturing the periodic connections
         # between the core nodes
         fig, ax = plt.subplots()
-        for edge in range(core_pb_conn_m):
+        for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_conn_edges[edge, 0]],
-                    core_pb_x[core_pb_conn_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_conn_edges[edge, 0]],
-                    core_pb_y[core_pb_conn_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pb_m):
+            edge_x = np.asarray(
+                [
+                    core_x[conn_pb_edges[edge, 0]],
+                    core_x[conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_y[conn_pb_edges[edge, 0]],
+                    core_y[conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -610,7 +712,7 @@ def swidt_topology_synthesis_plotter(
             core_xlim, core_ylim, core_xticks, core_yticks, xlabel, ylabel,
             grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(core_pb_conn_graph_topology_synthesis_filename)
+        fig.savefig(conn_graph_topology_synthesis_filename)
         plt.close()
 
         # Plot of the unpruned core and periodic boundary cross-linkers
@@ -622,28 +724,32 @@ def swidt_topology_synthesis_plotter(
         for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_edges[edge, 0]],
-                    core_pb_x[core_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_edges[edge, 0]],
-                    core_pb_y[core_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(pb_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[pb2core_nodes[pb_edges[edge, 0]]],
-                    core_pb_x[pb2core_nodes[pb_edges[edge, 1]]]
-                ])
+                    core_x[conn_pb_edges[edge, 0]],
+                    core_x[conn_pb_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[pb2core_nodes[pb_edges[edge, 0]]],
-                    core_pb_y[pb2core_nodes[pb_edges[edge, 1]]]
-                ])
+                    core_y[conn_pb_edges[edge, 0]],
+                    core_y[conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -652,15 +758,15 @@ def swidt_topology_synthesis_plotter(
             core_xlim, core_ylim, core_xticks, core_yticks, xlabel, ylabel,
             grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(core_pb_conn_graph_colored_topology_synthesis_filename)
+        fig.savefig(conn_graph_colored_topology_synthesis_filename)
         plt.close()
 
         # Tessellated Delaunay triangulation
         dim_2_tsslltn, dim_2_tsslltn_num = tessellation_protocol(2)
         
-        for tsslltn_indx in range(dim_2_tsslltn_num):
-            x_tsslltn = dim_2_tsslltn[tsslltn_indx, 0]
-            y_tsslltn = dim_2_tsslltn[tsslltn_indx, 1]
+        for tsslltn in range(dim_2_tsslltn_num):
+            x_tsslltn = dim_2_tsslltn[tsslltn, 0]
+            y_tsslltn = dim_2_tsslltn[tsslltn, 1]
             if (x_tsslltn == 0) and (y_tsslltn == 0): continue
             else:
                 core_tsslltn_x, core_tsslltn_y = (
@@ -669,7 +775,7 @@ def swidt_topology_synthesis_plotter(
                 tsslltd_core_x = np.concatenate((tsslltd_core_x, core_tsslltn_x))
                 tsslltd_core_y = np.concatenate((tsslltd_core_y, core_tsslltn_y))
         
-        del core_tsslltn_x, core_tsslltn_y, core_nodes
+        del core_tsslltn_x, core_tsslltn_y
 
         tsslltd_core = np.column_stack((tsslltd_core_x, tsslltd_core_y))
 
@@ -718,14 +824,46 @@ def swidt_topology_synthesis_plotter(
 
     elif dim == 3:
         # Import three-dimension specific functions
-        from heterogeneous_spatial_networks_funcs import dim_3_tessellation
+        from heterogeneous_spatial_networks_funcs import (
+            dim_3_tessellation,
+            dim_3_core_pb_edge_identification
+        )
         
         # Load fundamental z-dimensional graph constituents
-        core_pb_z = np.loadtxt(core_pb_z_filename)
-        # Extract core node z-coordinates
-        core_z = core_pb_z[core_nodes]
+        core_z = np.loadtxt(core_z_filename)
         # Tessellated core node z-coordinates
         tsslltd_core_z = core_z.copy()
+
+        # Extract three-dimensional periodic boundary node coordinates
+        pb_x = []
+        pb_y = []
+        pb_z = []
+        for edge in range(pb_m):
+            core_node_0_x = core_x[conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[conn_pb_edges[edge, 0]]
+            core_node_0_z = core_z[conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[conn_pb_edges[edge, 1]]
+            core_node_1_z = core_z[conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_1_x, core_node_1_y, core_node_1_z,
+                    core_node_0_x, core_node_0_y, core_node_0_z, L)
+            )
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
+            pb_x.append(pb_node_0_x)
+            pb_x.append(pb_node_1_x)
+            pb_y.append(pb_node_0_y)
+            pb_y.append(pb_node_1_y)
+            pb_z.append(pb_node_0_z)
+            pb_z.append(pb_node_1_z)
+        pb_x = np.asarray(pb_x)
+        pb_y = np.asarray(pb_y)
+        pb_z = np.asarray(pb_z)
 
         # Plot core nodes
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
@@ -741,7 +879,8 @@ def swidt_topology_synthesis_plotter(
 
         # Plot core and periodic boundary nodes
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        ax.scatter(core_pb_x, core_pb_y, core_pb_z, marker=".", color="black")
+        ax.scatter(core_x, core_y, core_z, marker=".", color="black")
+        ax.scatter(pb_x, pb_y, pb_z, marker=".", color="black")
         ax = dim_3_swidt_topology_axes_formatter(
             ax, core_cube, core_cube_color, core_cube_linewidth,
             core_xlim, core_ylim, core_zlim,
@@ -755,22 +894,84 @@ def swidt_topology_synthesis_plotter(
         # and edges for the graph capturing the spatial topology of the
         # core and periodic boundary nodes and edges
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(core_pb_m):
+        for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_edges[edge, 0]],
-                    core_pb_x[core_pb_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_edges[edge, 0]],
-                    core_pb_y[core_pb_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[core_pb_edges[edge, 0]],
-                    core_pb_z[core_pb_edges[edge, 1]]
-                ])
+                    core_z[conn_core_edges[edge, 0]],
+                    core_z[conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pb_m):
+            core_node_0_x = core_x[conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[conn_pb_edges[edge, 0]]
+            core_node_0_z = core_z[conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[conn_pb_edges[edge, 1]]
+            core_node_1_z = core_z[conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_1_x, core_node_1_y, core_node_1_z,
+                    core_node_0_x, core_node_0_y, core_node_0_z, L)
+            )
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
+            edge_x = np.asarray(
+                [
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    core_node_0_z,
+                    pb_node_1_z
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    pb_node_0_z,
+                    core_node_1_z
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -792,38 +993,81 @@ def swidt_topology_synthesis_plotter(
         for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_edges[edge, 0]],
-                    core_pb_x[core_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_edges[edge, 0]],
-                    core_pb_y[core_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[core_edges[edge, 0]],
-                    core_pb_z[core_edges[edge, 1]]
-                ])
+                    core_z[conn_core_edges[edge, 0]],
+                    core_z[conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(pb_m):
+            core_node_0_x = core_x[conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[conn_pb_edges[edge, 0]]
+            core_node_0_z = core_z[conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[conn_pb_edges[edge, 1]]
+            core_node_1_z = core_z[conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_1_x, core_node_1_y, core_node_1_z,
+                    core_node_0_x, core_node_0_y, core_node_0_z, L)
+            )
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
             edge_x = np.asarray(
                 [
-                    core_pb_x[pb_edges[edge, 0]],
-                    core_pb_x[pb_edges[edge, 1]]
-                ])
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[pb_edges[edge, 0]],
-                    core_pb_y[pb_edges[edge, 1]]
-                ])
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[pb_edges[edge, 0]],
-                    core_pb_z[pb_edges[edge, 1]]
-                ])
+                    core_node_0_z,
+                    pb_node_1_z
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    pb_node_0_z,
+                    core_node_1_z
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -840,22 +1084,47 @@ def swidt_topology_synthesis_plotter(
         # and edges for the graph capturing the periodic connections
         # between the core nodes
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(core_pb_conn_m):
+        for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_conn_edges[edge, 0]],
-                    core_pb_x[core_pb_conn_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_conn_edges[edge, 0]],
-                    core_pb_y[core_pb_conn_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[core_pb_conn_edges[edge, 0]],
-                    core_pb_z[core_pb_conn_edges[edge, 1]]
-                ])
+                    core_z[conn_core_edges[edge, 0]],
+                    core_z[conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pb_m):
+            edge_x = np.asarray(
+                [
+                    core_x[conn_pb_edges[edge, 0]],
+                    core_x[conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_y[conn_pb_edges[edge, 0]],
+                    core_y[conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    core_z[conn_pb_edges[edge, 0]],
+                    core_z[conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -865,7 +1134,7 @@ def swidt_topology_synthesis_plotter(
             core_xticks, core_yticks, core_zticks, xlabel, ylabel, zlabel,
             grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(core_pb_conn_graph_topology_synthesis_filename)
+        fig.savefig(conn_graph_topology_synthesis_filename)
         plt.close()
 
         # Plot of the unpruned core and periodic boundary cross-linkers
@@ -877,38 +1146,44 @@ def swidt_topology_synthesis_plotter(
         for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_edges[edge, 0]],
-                    core_pb_x[core_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_edges[edge, 0]],
-                    core_pb_y[core_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[core_edges[edge, 0]],
-                    core_pb_z[core_edges[edge, 1]]
-                ])
+                    core_z[conn_core_edges[edge, 0]],
+                    core_z[conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(pb_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[pb2core_nodes[pb_edges[edge, 0]]],
-                    core_pb_x[pb2core_nodes[pb_edges[edge, 1]]]
-                ])
+                    core_x[conn_pb_edges[edge, 0]],
+                    core_x[conn_pb_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[pb2core_nodes[pb_edges[edge, 0]]],
-                    core_pb_y[pb2core_nodes[pb_edges[edge, 1]]]
-                ])
+                    core_y[conn_pb_edges[edge, 0]],
+                    core_y[conn_pb_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[pb2core_nodes[pb_edges[edge, 0]]],
-                    core_pb_z[pb2core_nodes[pb_edges[edge, 1]]]
-                ])
+                    core_z[conn_pb_edges[edge, 0]],
+                    core_z[conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -918,16 +1193,16 @@ def swidt_topology_synthesis_plotter(
             core_xticks, core_yticks, core_zticks, xlabel, ylabel, zlabel,
             grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(core_pb_conn_graph_colored_topology_synthesis_filename)
+        fig.savefig(conn_graph_colored_topology_synthesis_filename)
         plt.close()
 
         # Tessellated Delaunay triangulation
         dim_3_tsslltn, dim_3_tsslltn_num = tessellation_protocol(3)
         
-        for tsslltn_indx in range(dim_3_tsslltn_num):
-            x_tsslltn = dim_3_tsslltn[tsslltn_indx, 0]
-            y_tsslltn = dim_3_tsslltn[tsslltn_indx, 1]
-            z_tsslltn = dim_3_tsslltn[tsslltn_indx, 2]
+        for tsslltn in range(dim_3_tsslltn_num):
+            x_tsslltn = dim_3_tsslltn[tsslltn, 0]
+            y_tsslltn = dim_3_tsslltn[tsslltn, 1]
+            z_tsslltn = dim_3_tsslltn[tsslltn, 2]
             if (x_tsslltn == 0) and (y_tsslltn == 0) and (z_tsslltn == 0): continue
             else:
                 core_tsslltn_x, core_tsslltn_y, core_tsslltn_z = (
@@ -938,7 +1213,7 @@ def swidt_topology_synthesis_plotter(
                 tsslltd_core_y = np.concatenate((tsslltd_core_y, core_tsslltn_y))
                 tsslltd_core_z = np.concatenate((tsslltd_core_z, core_tsslltn_z))
         
-        del core_tsslltn_x, core_tsslltn_y, core_tsslltn_z, core_nodes
+        del core_tsslltn_x, core_tsslltn_y, core_tsslltn_z
 
         tsslltd_core = (
             np.column_stack((tsslltd_core_x, tsslltd_core_y, tsslltd_core_z))
@@ -1043,95 +1318,123 @@ def swidt_topology_synthesis_plotter(
     # Edge pruning procedure
     rng = np.random.default_rng()
 
-    core_pb_graph = nx.Graph()
-    core_pb_graph.add_nodes_from(core_pb_nodes)
-    core_pb_graph.add_edges_from(core_pb_edges)
+    # Initialize node number integer constants
+    core_node_0 = 0
+    core_node_1 = 0
 
-    core_pb_conn_graph = nx.Graph()
-    core_pb_conn_graph.add_nodes_from(core_pb_conn_nodes)
-    core_pb_conn_graph.add_edges_from(core_pb_conn_edges)
+    conn_core_graph = nx.Graph()
+    conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
+    conn_core_graph = add_edges_from_numpy_array(conn_core_graph, conn_core_edges)
 
-    core_pb_conn_graph_k = (
-        np.asarray(list(core_pb_conn_graph.degree()), dtype=int)[:, 1]
-    )
+    conn_pb_graph = nx.Graph()
+    conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+    conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
+
+    conn_graph = nx.Graph()
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
+
+    conn_graph_k = np.asarray(list(conn_graph.degree()), dtype=int)[:, 1]
 
     # Explicit edge pruning procedure
-    if np.any(core_pb_conn_graph_k > k):
-        while np.any(core_pb_conn_graph_k > k):
-            core_pb_conn_graph_hyprconn_nodes = (
-                np.where(core_pb_conn_graph_k > k)[0]
+    if np.any(conn_graph_k > k):
+        while np.any(conn_graph_k > k):
+            conn_graph_hyprconn_nodes = np.where(conn_graph_k > k)[0]
+            conn_graph_hyprconn_edge_indcs_0 = (
+                np.where(np.isin(conn_edges[:, 0], conn_graph_hyprconn_nodes))[0]
             )
-            core_pb_conn_graph_hyprconn_edge_indcs_0 = (
-                np.where(np.isin(core_pb_conn_edges[:, 0], core_pb_conn_graph_hyprconn_nodes))[0]
+            conn_graph_hyprconn_edge_indcs_1 = (
+                np.where(np.isin(conn_edges[:, 1], conn_graph_hyprconn_nodes))[0]
             )
-            core_pb_conn_graph_hyprconn_edge_indcs_1 = (
-                np.where(np.isin(core_pb_conn_edges[:, 1], core_pb_conn_graph_hyprconn_nodes))[0]
-            )
-            core_pb_conn_graph_hyprconn_edge_indcs = (
+            conn_graph_hyprconn_edge_indcs = (
                 np.unique(
                     np.concatenate(
-                        (core_pb_conn_graph_hyprconn_edge_indcs_0, core_pb_conn_graph_hyprconn_edge_indcs_1)))
+                        (conn_graph_hyprconn_edge_indcs_0, conn_graph_hyprconn_edge_indcs_1),
+                        dtype=int))
             )
             edge_indcs_indx2remove_indx = (
                 rng.integers(
-                    np.shape(core_pb_conn_graph_hyprconn_edge_indcs)[0], dtype=int)
+                    np.shape(conn_graph_hyprconn_edge_indcs)[0], dtype=int)
             )
             edge_indx2remove = (
-                core_pb_conn_graph_hyprconn_edge_indcs[edge_indcs_indx2remove_indx]
+                conn_graph_hyprconn_edge_indcs[edge_indcs_indx2remove_indx]
             )
-            edge2remove = core_pb_conn_edges[edge_indx2remove]
-            core_node_0 = edge2remove[0]
-            core_node_1 = edge2remove[1]
+            core_node_0 = int(conn_edges[edge_indx2remove, 0])
+            core_node_1 = int(conn_edges[edge_indx2remove, 1])
 
-            core_pb_conn_graph.remove_edge(core_node_0, core_node_1)
-            core_pb_conn_edges = (
-                np.delete(core_pb_conn_edges, edge_indx2remove, axis=0)
-            )
-            
-            if core_pb_graph.has_edge(core_node_0, core_node_1):
-                core_pb_graph.remove_edge(core_node_0, core_node_1)
-            else:
-                pb_nodes_0 = core2pb_nodes[core_node_0]
-                pb_nodes_1 = core2pb_nodes[core_node_1]
-                for pb_node_0 in np.nditer(pb_nodes_0):
-                    pb_node_0 = int(pb_node_0)
-                    if core_pb_graph.has_edge(pb_node_0, core_node_1):
-                        core_pb_graph.remove_edge(pb_node_0, core_node_1)
-                        break
-                    else: pass
-                for pb_node_1 in np.nditer(pb_nodes_1):
-                    pb_node_1 = int(pb_node_1)
-                    if core_pb_graph.has_edge(core_node_0, pb_node_1):
-                        core_pb_graph.remove_edge(core_node_0, pb_node_1)
-                        break
-                    else: pass
+            conn_graph.remove_edge(core_node_0, core_node_1)
+            conn_edges = np.delete(conn_edges, edge_indx2remove, axis=0)
+            if conn_core_graph.has_edge(core_node_0, core_node_1):
+                conn_core_graph.remove_edge(core_node_0, core_node_1)
+            if conn_pb_graph.has_edge(core_node_0, core_node_1):
+                conn_pb_graph.remove_edge(core_node_0, core_node_1)
 
-            core_pb_conn_graph_k[core_node_0] -= 1
-            core_pb_conn_graph_k[core_node_1] -= 1
-
-    core_pb_graph_edges = np.asarray(list(core_pb_graph.edges()), dtype=int)
-    core_pb_conn_graph_edges = np.asarray(
-        list(core_pb_conn_graph.edges()), dtype=int)
+            conn_graph_k[core_node_0] -= 1
+            conn_graph_k[core_node_1] -= 1
     
-    core_pb_graph_m = np.shape(core_pb_graph_edges)[0]
-    core_pb_conn_graph_m = np.shape(core_pb_conn_graph_edges)[0]
+    pruned_conn_core_edges = np.asarray(list(conn_core_graph.edges()), dtype=int)
+    pruned_conn_pb_edges = np.asarray(list(conn_pb_graph.edges()), dtype=int)
+
+    pruned_core_m = np.shape(pruned_conn_core_edges)[0]
+    pruned_pb_m = np.shape(pruned_conn_pb_edges)[0]
     
     if dim == 2:
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the spatial
         # topology of the core and periodic boundary nodes and edges
         fig, ax = plt.subplots()
-        for edge in range(core_pb_graph_m):
+        for edge in range(pruned_core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_graph_edges[edge, 0]],
-                    core_pb_x[core_pb_graph_edges[edge, 1]]
-                ])
+                    core_x[pruned_conn_core_edges[edge, 0]],
+                    core_x[pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_graph_edges[edge, 0]],
-                    core_pb_y[core_pb_graph_edges[edge, 1]]
-                ])
+                    core_y[pruned_conn_core_edges[edge, 0]],
+                    core_y[pruned_conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pruned_pb_m):
+            core_node_0_x = core_x[pruned_conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[pruned_conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[pruned_conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[pruned_conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
+            edge_x = np.asarray(
+                [
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1147,17 +1450,35 @@ def swidt_topology_synthesis_plotter(
         # cross-linkers and edges for the graph capturing the periodic
         # connections between the core nodes
         fig, ax = plt.subplots()
-        for edge in range(core_pb_conn_graph_m):
+        for edge in range(pruned_core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_conn_graph_edges[edge, 0]],
-                    core_pb_x[core_pb_conn_graph_edges[edge, 1]]
-                ])
+                    core_x[pruned_conn_core_edges[edge, 0]],
+                    core_x[pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_conn_graph_edges[edge, 0]],
-                    core_pb_y[core_pb_conn_graph_edges[edge, 1]]
-                ])
+                    core_y[pruned_conn_core_edges[edge, 0]],
+                    core_y[pruned_conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pruned_pb_m):
+            edge_x = np.asarray(
+                [
+                    core_x[pruned_conn_pb_edges[edge, 0]],
+                    core_x[pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_y[pruned_conn_pb_edges[edge, 0]],
+                    core_y[pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1166,29 +1487,91 @@ def swidt_topology_synthesis_plotter(
             core_xlim, core_ylim, core_xticks, core_yticks, xlabel, ylabel,
             grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(pruned_core_pb_conn_graph_topology_synthesis_filename)
+        fig.savefig(pruned_conn_graph_topology_synthesis_filename)
         plt.close()
     elif dim == 3:
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the spatial
         # topology of the core and periodic boundary nodes and edges
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(core_pb_graph_m):
+        for edge in range(pruned_core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_graph_edges[edge, 0]],
-                    core_pb_x[core_pb_graph_edges[edge, 1]]
-                ])
+                    core_x[pruned_conn_core_edges[edge, 0]],
+                    core_x[pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_graph_edges[edge, 0]],
-                    core_pb_y[core_pb_graph_edges[edge, 1]]
-                ])
+                    core_y[pruned_conn_core_edges[edge, 0]],
+                    core_y[pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[core_pb_graph_edges[edge, 0]],
-                    core_pb_z[core_pb_graph_edges[edge, 1]]
-                ])
+                    core_z[pruned_conn_core_edges[edge, 0]],
+                    core_z[pruned_conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pruned_pb_m):
+            core_node_0_x = core_x[pruned_conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[pruned_conn_pb_edges[edge, 0]]
+            core_node_0_z = core_z[pruned_conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[pruned_conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[pruned_conn_pb_edges[edge, 1]]
+            core_node_1_z = core_z[pruned_conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_1_x, core_node_1_y, core_node_1_z,
+                    core_node_0_x, core_node_0_y, core_node_0_z, L)
+            )
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
+            edge_x = np.asarray(
+                [
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    core_node_0_z,
+                    pb_node_1_z
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    pb_node_0_z,
+                    core_node_1_z
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1205,22 +1588,47 @@ def swidt_topology_synthesis_plotter(
         # cross-linkers and edges for the graph capturing the periodic
         # connections between the core nodes
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(core_pb_conn_graph_m):
+        for edge in range(pruned_core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_conn_graph_edges[edge, 0]],
-                    core_pb_x[core_pb_conn_graph_edges[edge, 1]]
-                ])
+                    core_x[pruned_conn_core_edges[edge, 0]],
+                    core_x[pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_conn_graph_edges[edge, 0]],
-                    core_pb_y[core_pb_conn_graph_edges[edge, 1]]
-                ])
+                    core_y[pruned_conn_core_edges[edge, 0]],
+                    core_y[pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[core_pb_conn_graph_edges[edge, 0]],
-                    core_pb_z[core_pb_conn_graph_edges[edge, 1]]
-                ])
+                    core_z[pruned_conn_core_edges[edge, 0]],
+                    core_z[pruned_conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pruned_pb_m):
+            edge_x = np.asarray(
+                [
+                    core_x[pruned_conn_pb_edges[edge, 0]],
+                    core_x[pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_y[pruned_conn_pb_edges[edge, 0]],
+                    core_y[pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    core_z[pruned_conn_pb_edges[edge, 0]],
+                    core_z[pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1230,121 +1638,111 @@ def swidt_topology_synthesis_plotter(
             core_xticks, core_yticks, core_zticks, xlabel, ylabel, zlabel,
             grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(pruned_core_pb_conn_graph_topology_synthesis_filename)
+        fig.savefig(pruned_conn_graph_topology_synthesis_filename)
         plt.close()
     
     # Isolate largest/maximum connected component from the
     # core_pb_conn_graph
-    mx_cmp_core_pb_conn_graph_nodes = max(
-        nx.connected_components(core_pb_conn_graph), key=len)
-    mx_cmp_core_pb_conn_graph = (
-        core_pb_conn_graph.subgraph(mx_cmp_core_pb_conn_graph_nodes).copy()
+    mx_cmp_conn_graph_nodes = max(
+        nx.connected_components(conn_graph), key=len)
+    mx_cmp_conn_core_graph = (
+        conn_core_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
     )
-    mx_cmp_core_pb_conn_graph_nodes = (
-        np.sort(np.fromiter(mx_cmp_core_pb_conn_graph_nodes, dtype=int))
+    mx_cmp_conn_pb_graph = (
+        conn_pb_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
     )
-    mx_cmp_core_pb_conn_graph_edges = (
-        np.asarray(list(mx_cmp_core_pb_conn_graph.edges()), dtype=int)
+    mx_cmp_conn_graph_nodes = (
+        np.sort(np.fromiter(mx_cmp_conn_graph_nodes, dtype=int))
     )
-    mx_cmp_core_pb_conn_graph_n = np.shape(mx_cmp_core_pb_conn_graph_nodes)[0]
-    mx_cmp_core_pb_conn_graph_m = np.shape(mx_cmp_core_pb_conn_graph_edges)[0]
-    
-    mx_cmp_core_pb_graph_nodes = []
-    mx_cmp_core_pb_graph_edges = []
+    mx_cmp_conn_core_graph_edges = (
+        np.asarray(list(mx_cmp_conn_core_graph.edges()), dtype=int)
+    )
+    mx_cmp_conn_pb_graph_edges = (
+        np.asarray(list(mx_cmp_conn_pb_graph.edges()), dtype=int)
+    )
+    mx_cmp_conn_core_graph_m = np.shape(mx_cmp_conn_core_graph_edges)[0]
+    mx_cmp_conn_pb_graph_m = np.shape(mx_cmp_conn_pb_graph_edges)[0]
 
-    for edge in range(mx_cmp_core_pb_conn_graph_m):
-        core_node_0 = mx_cmp_core_pb_conn_graph_edges[edge, 0]
-        core_node_1 = mx_cmp_core_pb_conn_graph_edges[edge, 1]
+    mx_cmp_core_x = core_x[mx_cmp_conn_graph_nodes]
+    mx_cmp_core_y = core_y[mx_cmp_conn_graph_nodes]
+    mx_cmp_core_z = np.asarray([])
 
-        if core_pb_graph.has_edge(core_node_0, core_node_1):
-            mx_cmp_core_pb_graph_nodes.append(core_node_0)
-            mx_cmp_core_pb_graph_nodes.append(core_node_1)
-            mx_cmp_core_pb_graph_edges.append((core_node_0, core_node_1))
-        else:
-            pb_nodes_0 = core2pb_nodes[core_node_0]
-            pb_nodes_1 = core2pb_nodes[core_node_1]
-            for pb_node_0 in np.nditer(pb_nodes_0):
-                pb_node_0 = int(pb_node_0)
-                if core_pb_graph.has_edge(pb_node_0, core_node_1):
-                    mx_cmp_core_pb_graph_nodes.append(pb_node_0)
-                    mx_cmp_core_pb_graph_nodes.append(core_node_1)
-                    mx_cmp_core_pb_graph_edges.append((pb_node_0, core_node_1))
-                    break
-                else: pass
-            for pb_node_1 in np.nditer(pb_nodes_1):
-                pb_node_1 = int(pb_node_1)
-                if core_pb_graph.has_edge(core_node_0, pb_node_1):
-                    mx_cmp_core_pb_graph_nodes.append(core_node_0)
-                    mx_cmp_core_pb_graph_nodes.append(pb_node_1)
-                    mx_cmp_core_pb_graph_edges.append((core_node_0, pb_node_1))
-                    break
-                else: pass
-    
-    mx_cmp_core_pb_graph_nodes = (
-        np.unique(np.asarray(mx_cmp_core_pb_graph_nodes, dtype=int))
-    )
-    mx_cmp_core_pb_graph_edges = (
-        np.unique(np.asarray(mx_cmp_core_pb_graph_edges, dtype=int), axis=0)
-    )
-    mx_cmp_core_pb_graph_n = np.shape(mx_cmp_core_pb_graph_nodes)[0]
-    mx_cmp_core_pb_graph_m = np.shape(mx_cmp_core_pb_graph_edges)[0]
+    for edge in range(mx_cmp_conn_core_graph_m):
+        mx_cmp_conn_core_graph_edges[edge, 0] = (
+            int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 0])[0][0])
+        )
+        mx_cmp_conn_core_graph_edges[edge, 1] = (
+            int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 1])[0][0])
+        )
 
-    mx_cmp_core_pb_x = core_pb_x[mx_cmp_core_pb_graph_nodes]
-    mx_cmp_core_pb_y = core_pb_y[mx_cmp_core_pb_graph_nodes]
-    if dim == 3:
-        mx_cmp_core_pb_z = core_pb_z[mx_cmp_core_pb_graph_nodes]
-    
-    mx_cmp_pb2core_nodes = pb2core_nodes[mx_cmp_core_pb_graph_nodes]
-
-    for edge in range(mx_cmp_core_pb_conn_graph_m):
-        mx_cmp_core_pb_conn_graph_edges[edge, 0] = (
-            int(np.where(mx_cmp_core_pb_conn_graph_nodes == mx_cmp_core_pb_conn_graph_edges[edge, 0])[0][0])
+    for edge in range(mx_cmp_conn_pb_graph_m):
+        mx_cmp_conn_pb_graph_edges[edge, 0] = (
+            int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 0])[0][0])
         )
-        mx_cmp_core_pb_conn_graph_edges[edge, 1] = (
-            int(np.where(mx_cmp_core_pb_conn_graph_nodes == mx_cmp_core_pb_conn_graph_edges[edge, 1])[0][0])
+        mx_cmp_conn_pb_graph_edges[edge, 1] = (
+            int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 1])[0][0])
         )
     
-    for node in range(mx_cmp_core_pb_graph_n):
-        mx_cmp_pb2core_nodes[node] = (
-            int(np.where(mx_cmp_core_pb_conn_graph_nodes == mx_cmp_pb2core_nodes[node])[0][0])
-        )
-    
-    for edge in range(mx_cmp_core_pb_graph_m):
-        mx_cmp_core_pb_graph_edges[edge, 0] = (
-            int(np.where(mx_cmp_core_pb_graph_nodes == mx_cmp_core_pb_graph_edges[edge, 0])[0][0])
-        )
-        mx_cmp_core_pb_graph_edges[edge, 1] = (
-            int(np.where(mx_cmp_core_pb_graph_nodes == mx_cmp_core_pb_graph_edges[edge, 1])[0][0])
-        )
-    
-    mx_cmp_core_edges_indcs = (
-        np.where(np.logical_and(mx_cmp_core_pb_graph_edges[:, 0] < mx_cmp_core_pb_conn_graph_n, mx_cmp_core_pb_graph_edges[:, 1] < mx_cmp_core_pb_conn_graph_n))[0]
-    )
-    mx_cmp_pb_edges_indcs = (
-        np.where(np.logical_or(mx_cmp_core_pb_graph_edges[:, 0] >= mx_cmp_core_pb_conn_graph_n, mx_cmp_core_pb_graph_edges[:, 1] >= mx_cmp_core_pb_conn_graph_n))[0]
-    )
-    mx_cmp_core_edges = mx_cmp_core_pb_graph_edges[mx_cmp_core_edges_indcs]
-    mx_cmp_pb_edges = mx_cmp_core_pb_graph_edges[mx_cmp_pb_edges_indcs]
-    
-    mx_cmp_core_m = np.shape(mx_cmp_core_edges)[0]
-    mx_cmp_pb_m = np.shape(mx_cmp_pb_edges)[0]
+    mx_cmp_core_m = mx_cmp_conn_core_graph_m
+    mx_cmp_pb_m = mx_cmp_conn_pb_graph_m
     
     if dim == 2:
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the spatial
         # topology of the core and periodic boundary nodes and edges
         fig, ax = plt.subplots()
-        for edge in range(mx_cmp_core_pb_graph_m):
+        for edge in range(mx_cmp_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_core_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_pb_x[mx_cmp_core_pb_graph_edges[edge, 1]]
-                ])
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_core_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_pb_y[mx_cmp_core_pb_graph_edges[edge, 1]]
-                ])
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(mx_cmp_pb_m):
+            core_node_0_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]]
+            core_node_0_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]]
+            core_node_1_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+            core_node_1_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
+            edge_x = np.asarray(
+                [
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1365,28 +1763,55 @@ def swidt_topology_synthesis_plotter(
         for edge in range(mx_cmp_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_core_edges[edge, 0]],
-                    mx_cmp_core_pb_x[mx_cmp_core_edges[edge, 1]]
-                ])
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_core_edges[edge, 0]],
-                    mx_cmp_core_pb_y[mx_cmp_core_edges[edge, 1]]
-                ])
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(mx_cmp_pb_m):
+            core_node_0_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]]
+            core_node_0_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]]
+            core_node_1_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+            core_node_1_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_pb_edges[edge, 0]],
-                    mx_cmp_core_pb_x[mx_cmp_pb_edges[edge, 1]]
-                ])
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_pb_edges[edge, 0]],
-                    mx_cmp_core_pb_y[mx_cmp_pb_edges[edge, 1]]
-                ])
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:olive", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1402,17 +1827,35 @@ def swidt_topology_synthesis_plotter(
         # cross-linkers and edges for the graph capturing the periodic
         # connections between the core nodes
         fig, ax = plt.subplots()
-        for edge in range(mx_cmp_core_pb_conn_graph_m):
+        for edge in range(mx_cmp_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_core_pb_conn_graph_edges[edge, 0]],
-                    mx_cmp_core_pb_x[mx_cmp_core_pb_conn_graph_edges[edge, 1]]
-                ])
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_core_pb_conn_graph_edges[edge, 0]],
-                    mx_cmp_core_pb_y[mx_cmp_core_pb_conn_graph_edges[edge, 1]]
-                ])
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(mx_cmp_pb_m):
+            edge_x = np.asarray(
+                [
+                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1421,7 +1864,7 @@ def swidt_topology_synthesis_plotter(
             core_xlim, core_ylim, core_xticks, core_yticks, xlabel, ylabel,
             grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(mx_cmp_pruned_core_pb_conn_graph_topology_synthesis_filename)
+        fig.savefig(mx_cmp_pruned_conn_graph_topology_synthesis_filename)
         plt.close()
 
         # Plot of the edge pruned core and periodic boundary
@@ -1433,28 +1876,32 @@ def swidt_topology_synthesis_plotter(
         for edge in range(mx_cmp_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_core_edges[edge, 0]],
-                    mx_cmp_core_pb_x[mx_cmp_core_edges[edge, 1]]
-                ])
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_core_edges[edge, 0]],
-                    mx_cmp_core_pb_y[mx_cmp_core_edges[edge, 1]]
-                ])
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(mx_cmp_pb_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_pb2core_nodes[mx_cmp_pb_edges[edge, 0]]],
-                    mx_cmp_core_pb_x[mx_cmp_pb2core_nodes[mx_cmp_pb_edges[edge, 1]]]
-                ])
+                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_pb2core_nodes[mx_cmp_pb_edges[edge, 0]]],
-                    mx_cmp_core_pb_y[mx_cmp_pb2core_nodes[mx_cmp_pb_edges[edge, 1]]]
-                ])
+                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1463,29 +1910,93 @@ def swidt_topology_synthesis_plotter(
             core_xlim, core_ylim, core_xticks, core_yticks, xlabel, ylabel,
             grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(mx_cmp_pruned_core_pb_conn_graph_colored_topology_synthesis_filename)
+        fig.savefig(mx_cmp_pruned_conn_graph_colored_topology_synthesis_filename)
         plt.close()
     elif dim == 3:
+        mx_cmp_core_z = core_z[mx_cmp_conn_graph_nodes]
+
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the spatial
         # topology of the core and periodic boundary nodes and edges
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(mx_cmp_core_pb_graph_m):
+        for edge in range(mx_cmp_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_core_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_pb_x[mx_cmp_core_pb_graph_edges[edge, 1]]
-                ])
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_core_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_pb_y[mx_cmp_core_pb_graph_edges[edge, 1]]
-                ])
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_pb_z[mx_cmp_core_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_pb_z[mx_cmp_core_pb_graph_edges[edge, 1]]
-                ])
+                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(mx_cmp_pb_m):
+            core_node_0_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]]
+            core_node_0_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]]
+            core_node_0_z = mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 0]]
+            core_node_1_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+            core_node_1_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+            core_node_1_z = mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_1_x, core_node_1_y, core_node_1_z,
+                    core_node_0_x, core_node_0_y, core_node_0_z, L)
+            )
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
+            edge_x = np.asarray(
+                [
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    core_node_0_z,
+                    pb_node_1_z
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    pb_node_0_z,
+                    core_node_1_z
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1507,38 +2018,81 @@ def swidt_topology_synthesis_plotter(
         for edge in range(mx_cmp_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_core_edges[edge, 0]],
-                    mx_cmp_core_pb_x[mx_cmp_core_edges[edge, 1]]
-                ])
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_core_edges[edge, 0]],
-                    mx_cmp_core_pb_y[mx_cmp_core_edges[edge, 1]]
-                ])
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_pb_z[mx_cmp_core_edges[edge, 0]],
-                    mx_cmp_core_pb_z[mx_cmp_core_edges[edge, 1]]
-                ])
+                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(mx_cmp_pb_m):
+            core_node_0_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]]
+            core_node_0_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]]
+            core_node_0_z = mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 0]]
+            core_node_1_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+            core_node_1_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+            core_node_1_z = mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_1_x, core_node_1_y, core_node_1_z,
+                    core_node_0_x, core_node_0_y, core_node_0_z, L)
+            )
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_pb_edges[edge, 0]],
-                    mx_cmp_core_pb_x[mx_cmp_pb_edges[edge, 1]]
-                ])
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_pb_edges[edge, 0]],
-                    mx_cmp_core_pb_y[mx_cmp_pb_edges[edge, 1]]
-                ])
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_pb_z[mx_cmp_pb_edges[edge, 0]],
-                    mx_cmp_core_pb_z[mx_cmp_pb_edges[edge, 1]]
-                ])
+                    core_node_0_z,
+                    pb_node_1_z
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    pb_node_0_z,
+                    core_node_1_z
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1555,22 +2109,47 @@ def swidt_topology_synthesis_plotter(
         # cross-linkers and edges for the graph capturing the periodic
         # connections between the core nodes
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(mx_cmp_core_pb_conn_graph_m):
+        for edge in range(mx_cmp_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_core_pb_conn_graph_edges[edge, 0]],
-                    mx_cmp_core_pb_x[mx_cmp_core_pb_conn_graph_edges[edge, 1]]
-                ])
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_core_pb_conn_graph_edges[edge, 0]],
-                    mx_cmp_core_pb_y[mx_cmp_core_pb_conn_graph_edges[edge, 1]]
-                ])
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_pb_z[mx_cmp_core_pb_conn_graph_edges[edge, 0]],
-                    mx_cmp_core_pb_z[mx_cmp_core_pb_conn_graph_edges[edge, 1]]
-                ])
+                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(mx_cmp_pb_m):
+            edge_x = np.asarray(
+                [
+                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1580,7 +2159,7 @@ def swidt_topology_synthesis_plotter(
             core_xticks, core_yticks, core_zticks, xlabel, ylabel, zlabel,
             grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(mx_cmp_pruned_core_pb_conn_graph_topology_synthesis_filename)
+        fig.savefig(mx_cmp_pruned_conn_graph_topology_synthesis_filename)
         plt.close()
 
         # Plot of the edge pruned core and periodic boundary
@@ -1592,38 +2171,44 @@ def swidt_topology_synthesis_plotter(
         for edge in range(mx_cmp_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_core_edges[edge, 0]],
-                    mx_cmp_core_pb_x[mx_cmp_core_edges[edge, 1]]
-                ])
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_core_edges[edge, 0]],
-                    mx_cmp_core_pb_y[mx_cmp_core_edges[edge, 1]]
-                ])
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_pb_z[mx_cmp_core_edges[edge, 0]],
-                    mx_cmp_core_pb_z[mx_cmp_core_edges[edge, 1]]
-                ])
+                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(mx_cmp_pb_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_pb_x[mx_cmp_pb2core_nodes[mx_cmp_pb_edges[edge, 0]]],
-                    mx_cmp_core_pb_x[mx_cmp_pb2core_nodes[mx_cmp_pb_edges[edge, 1]]]
-                ])
+                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_pb_y[mx_cmp_pb2core_nodes[mx_cmp_pb_edges[edge, 0]]],
-                    mx_cmp_core_pb_y[mx_cmp_pb2core_nodes[mx_cmp_pb_edges[edge, 1]]]
-                ])
+                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_pb_z[mx_cmp_pb2core_nodes[mx_cmp_pb_edges[edge, 0]]],
-                    mx_cmp_core_pb_z[mx_cmp_pb2core_nodes[mx_cmp_pb_edges[edge, 1]]]
-                ])
+                    mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1633,7 +2218,7 @@ def swidt_topology_synthesis_plotter(
             core_xticks, core_yticks, core_zticks, xlabel, ylabel, zlabel,
             grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(mx_cmp_pruned_core_pb_conn_graph_colored_topology_synthesis_filename)
+        fig.savefig(mx_cmp_pruned_conn_graph_colored_topology_synthesis_filename)
         plt.close()
 
 def run_swidt_topology_synthesis_plotter(args):
@@ -1653,127 +2238,83 @@ def swidt_topology_plotter(
         config: int,
         pruning: int,
         params_arr: np.ndarray) -> None:
+    # Import function
+    from heterogeneous_spatial_networks_funcs import tessellation_protocol
     # Identification of the sample value for the desired network
     sample = (
         int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
     )
 
     # Generate filenames
-    baseline_filename_prefix = filename_str(network, date, batch, sample)
-    L_filename = baseline_filename_prefix + "-L" + ".dat"
-    # Fundamental graph constituents for unpruned topology
-    unpruned_filename_prefix = baseline_filename_prefix + f"C{config:d}"
-    core_pb_edges_filename = (
-        unpruned_filename_prefix + "-core_pb_edges" + ".dat"
-    )
-    pb2core_nodes_filename = (
-        unpruned_filename_prefix + "-pb2core_nodes" + ".dat"
-    )
-    core_pb_conn_edges_filename = (
-        unpruned_filename_prefix + "-core_pb_conn_edges" + ".dat"
-    )
-    core_pb_x_filename = unpruned_filename_prefix + "-core_pb_x" + ".dat"
-    core_pb_y_filename = unpruned_filename_prefix + "-core_pb_y" + ".dat"
-    if dim == 3:
-        core_pb_z_filename = unpruned_filename_prefix + "-core_pb_z" + ".dat"
-    # Plots for unpruned topology
+    filename_prefix = filename_str(network, date, batch, sample)
+    L_filename = filename_prefix + "-L" + ".dat"
+    # Filenames for fundamental graph constituents for unpruned topology
+    filename_prefix = filename_prefix + f"C{config:d}"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
+    core_z_filename = filename_prefix + "-core_z" + ".dat"
+    # Filenames for plots for unpruned topology
     core_pb_graph_topology_filename = (
-        unpruned_filename_prefix + "-core_pb_graph_topology" + ".png"
+        filename_prefix + "-core_pb_graph_topology" + ".png"
     )
     core_pb_graph_colored_topology_filename = (
-        unpruned_filename_prefix + "-core_pb_graph_colored_topology" + ".png"
+        filename_prefix + "-core_pb_graph_colored_topology" + ".png"
     )
-    core_pb_conn_graph_topology_filename = (
-        unpruned_filename_prefix + "-core_pb_conn_graph_topology" + ".png"
+    conn_graph_topology_filename = (
+        filename_prefix + "-conn_graph_topology" + ".png"
     )
-    core_pb_conn_graph_colored_topology_filename = (
-        unpruned_filename_prefix + "-core_pb_conn_graph_colored_topology" + ".png"
+    conn_graph_colored_topology_filename = (
+        filename_prefix + "-conn_graph_colored_topology" + ".png"
     )
-    # Fundamental graph constituents for edge pruned topology
-    pruned_filename_prefix = unpruned_filename_prefix + f"P{pruning:d}"
-    pruned_core_pb_edges_filename = (
-        pruned_filename_prefix + "-core_pb_edges" + ".dat"
+    # Filenames for fundamental graph constituents for pruned topology
+    filename_prefix = filename_prefix + f"P{pruning:d}"
+    mx_cmp_pruned_conn_core_edges_filename = (
+        filename_prefix + "-conn_core_edges" + ".dat"
     )
-    pruned_pb2core_nodes_filename = (
-        pruned_filename_prefix + "-pb2core_nodes" + ".dat"
+    mx_cmp_pruned_conn_pb_edges_filename = (
+        filename_prefix + "-conn_pb_edges" + ".dat"
     )
-    pruned_core_pb_conn_n_filename = (
-        pruned_filename_prefix + "-core_pb_conn_n" + ".dat"
+    mx_cmp_pruned_core_x_filename = filename_prefix + "-core_x" + ".dat"
+    mx_cmp_pruned_core_y_filename = filename_prefix + "-core_y" + ".dat"
+    mx_cmp_pruned_core_z_filename = filename_prefix + "-core_z" + ".dat"
+    # Filenames for plots for pruned topology
+    mx_cmp_pruned_core_pb_graph_topology_filename = (
+        filename_prefix + "-core_pb_graph_topology" + ".png"
     )
-    pruned_core_pb_conn_edges_filename = (
-        pruned_filename_prefix + "-core_pb_conn_edges" + ".dat"
+    mx_cmp_pruned_core_pb_graph_colored_topology_filename = (
+        filename_prefix + "-core_pb_graph_colored_topology" + ".png"
     )
-    pruned_core_pb_x_filename = pruned_filename_prefix + "-core_pb_x" + ".dat"
-    pruned_core_pb_y_filename = pruned_filename_prefix + "-core_pb_y" + ".dat"
-    if dim == 3:
-        pruned_core_pb_z_filename = (
-            pruned_filename_prefix + "-core_pb_z" + ".dat"
-        )
-    # Plots for pruned topology
-    pruned_core_pb_graph_topology_filename = (
-        pruned_filename_prefix + "-core_pb_graph_topology" + ".png"
+    mx_cmp_pruned_conn_graph_topology_filename = (
+        filename_prefix + "-conn_graph_topology" + ".png"
     )
-    pruned_core_pb_graph_colored_topology_filename = (
-        pruned_filename_prefix + "-core_pb_graph_colored_topology" + ".png"
-    )
-    pruned_core_pb_conn_graph_topology_filename = (
-        pruned_filename_prefix + "-core_pb_conn_graph_topology" + ".png"
-    )
-    pruned_core_pb_conn_graph_colored_topology_filename = (
-        pruned_filename_prefix + "-core_pb_conn_graph_colored_topology" + ".png"
+    mx_cmp_pruned_conn_graph_colored_topology_filename = (
+        filename_prefix + "-conn_graph_colored_topology" + ".png"
     )
 
     # Load fundamental graph constituents
     L = np.loadtxt(L_filename)
     # Fundamental graph constituents for unpruned topology
-    core_pb_edges = np.loadtxt(core_pb_edges_filename, dtype=int)
-    pb2core_nodes = np.loadtxt(pb2core_nodes_filename, dtype=int)
-    core_pb_conn_edges = np.loadtxt(core_pb_conn_edges_filename, dtype=int)
-    core_pb_x = np.loadtxt(core_pb_x_filename)
-    core_pb_y = np.loadtxt(core_pb_y_filename)
-    if dim == 3:
-        core_pb_z = np.loadtxt(core_pb_z_filename)
-    # Fundamental graph constituents for edge pruned topology
-    pruned_core_pb_edges = np.loadtxt(pruned_core_pb_edges_filename, dtype=int)
-    pruned_pb2core_nodes = np.loadtxt(pruned_pb2core_nodes_filename, dtype=int)
-    pruned_core_pb_conn_n = np.loadtxt(pruned_core_pb_conn_n_filename, dtype=int)
-    pruned_core_pb_conn_edges = (
-        np.loadtxt(pruned_core_pb_conn_edges_filename, dtype=int)
-    )
-    pruned_core_pb_x = np.loadtxt(pruned_core_pb_x_filename)
-    pruned_core_pb_y = np.loadtxt(pruned_core_pb_y_filename)
-    if dim == 3:
-        pruned_core_pb_z = np.loadtxt(pruned_core_pb_z_filename)
-
-    # Isolate core edges and periodic boundary edges
-    core_edges_indcs = (
-        np.where(np.logical_and(core_pb_edges[:, 0] < n, core_pb_edges[:, 1] < n))[0]
-    )
-    pb_edges_indcs = (
-        np.where(np.logical_or(core_pb_edges[:, 0] >= n, core_pb_edges[:, 1] >= n))[0]
-    )
-    core_edges = core_pb_edges[core_edges_indcs]
-    pb_edges = core_pb_edges[pb_edges_indcs]
-    pruned_core_edges_indcs = (
-        np.where(np.logical_and(pruned_core_pb_edges[:, 0] < pruned_core_pb_conn_n, pruned_core_pb_edges[:, 1] < pruned_core_pb_conn_n))[0]
-    )
-    pruned_pb_edges_indcs = (
-        np.where(np.logical_or(pruned_core_pb_edges[:, 0] >= pruned_core_pb_conn_n, pruned_core_pb_edges[:, 1] >= pruned_core_pb_conn_n))[0]
-    )
-    pruned_core_edges = pruned_core_pb_edges[pruned_core_edges_indcs]
-    pruned_pb_edges = pruned_core_pb_edges[pruned_pb_edges_indcs]
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    core_x = np.loadtxt(core_x_filename)
+    core_y = np.loadtxt(core_y_filename)
+    core_z = np.asarray([])
+    # Fundamental graph constituents for unpruned topology
+    mx_cmp_pruned_conn_core_edges = np.loadtxt(
+        mx_cmp_pruned_conn_core_edges_filename, dtype=int)
+    mx_cmp_pruned_conn_pb_edges = np.loadtxt(
+        mx_cmp_pruned_conn_pb_edges_filename, dtype=int)
+    mx_cmp_pruned_core_x = np.loadtxt(mx_cmp_pruned_core_x_filename)
+    mx_cmp_pruned_core_y = np.loadtxt(mx_cmp_pruned_core_y_filename)
+    mx_cmp_pruned_core_z = np.asarray([])
     
-    # Number of edges
-    core_pb_m = np.shape(core_pb_edges)[0]
-    core_pb_conn_m = np.shape(core_pb_conn_edges)[0]
-    pruned_core_pb_m = np.shape(pruned_core_pb_edges)[0]
-    pruned_core_pb_conn_m = np.shape(pruned_core_pb_conn_edges)[0]
-
     # Number of core edges and periodic boundary edges
-    core_m = np.shape(core_edges)[0]
-    pb_m = np.shape(pb_edges)[0]
-    pruned_core_m = np.shape(pruned_core_edges)[0]
-    pruned_pb_m = np.shape(pruned_pb_edges)[0]
+    core_m = np.shape(conn_core_edges)[0]
+    pb_m = np.shape(conn_pb_edges)[0]
+    mx_cmp_pruned_core_m = np.shape(mx_cmp_pruned_conn_core_edges)[0]
+    mx_cmp_pruned_pb_m = np.shape(mx_cmp_pruned_conn_pb_edges)[0]
 
     # Plot formatting parameters
     plt_pad = plt_pad_prefactor * L
@@ -1794,30 +2335,97 @@ def swidt_topology_plotter(
     grid_alpha = 0.25
     grid_zorder = 0
 
+    # Core square box coordinates and preformating
+    core_square = np.asarray(
+        [
+            [0, 0], [L, 0], [L, L], [0, L], [0, 0]
+        ]
+    )
+    core_square_color = "red"
+    core_square_linewidth = 0.5
+
+    # Plot formatting parameters and preformatting
+    zlim = np.asarray([min_core, max_core])
+    zticks = np.linspace(min_core, max_core, core_tick_steps)
+    zlabel = "z"
+
+    # Core cube box coordinates and preformating
+    core_cube = np.asarray(
+        [
+            [[0, 0, 0], [L, 0, 0], [L, L, 0], [0, L, 0], [0, 0, 0]],
+            [[0, 0, L], [L, 0, L], [L, L, L], [0, L, L], [0, 0, L]],
+            [[0, 0, 0], [L, 0, 0], [L, 0, L], [0, 0, L], [0, 0, 0]],
+            [[L, 0, 0], [L, L, 0], [L, L, L], [L, 0, L], [L, 0, 0]],
+            [[L, L, 0], [0, L, 0], [0, L, L], [L, L, L], [L, L, 0]],
+            [[0, L, 0], [0, 0, 0], [0, 0, L], [0, L, L], [0, L, 0]]
+
+        ]
+    )
+    core_cube_color = "red"
+    core_cube_linewidth = 0.5
+
     if dim == 2:
-        # Core square box coordinates and preformating
-        core_square = np.asarray(
-            [
-                [0, 0], [L, 0], [L, L], [0, L], [0, 0]
-            ])
-        core_square_color = "red"
-        core_square_linewidth = 0.5
+        # Import two-dimension specific function
+        from heterogeneous_spatial_networks_funcs import (
+            dim_2_core_pb_edge_identification
+        )
 
         # Plot of the unpruned core and periodic boundary cross-linkers
         # and edges for the graph capturing the spatial topology of the
         # core and periodic boundary nodes and edges
         fig, ax = plt.subplots()
-        for edge in range(core_pb_m):
+        for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_edges[edge, 0]],
-                    core_pb_x[core_pb_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_edges[edge, 0]],
-                    core_pb_y[core_pb_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pb_m):
+            core_node_0_x = core_x[conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
+            edge_x = np.asarray(
+                [
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1827,7 +2435,7 @@ def swidt_topology_plotter(
         fig.tight_layout()
         fig.savefig(core_pb_graph_topology_filename)
         plt.close()
-
+        
         # Plot of the unpruned core and periodic boundary cross-linkers
         # and edges for the graph capturing the spatial topology of the
         # core and periodic boundary nodes and edges. Here, core edges
@@ -1837,28 +2445,55 @@ def swidt_topology_plotter(
         for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_edges[edge, 0]],
-                    core_pb_x[core_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_edges[edge, 0]],
-                    core_pb_y[core_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(pb_m):
+            core_node_0_x = core_x[conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
             edge_x = np.asarray(
                 [
-                    core_pb_x[pb_edges[edge, 0]],
-                    core_pb_x[pb_edges[edge, 1]]
-                ])
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[pb_edges[edge, 0]],
-                    core_pb_y[pb_edges[edge, 1]]
-                ])
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:olive", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1873,17 +2508,35 @@ def swidt_topology_plotter(
         # and edges for the graph capturing the periodic connections
         # between the core nodes
         fig, ax = plt.subplots()
-        for edge in range(core_pb_conn_m):
+        for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_conn_edges[edge, 0]],
-                    core_pb_x[core_pb_conn_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_conn_edges[edge, 0]],
-                    core_pb_y[core_pb_conn_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pb_m):
+            edge_x = np.asarray(
+                [
+                    core_x[conn_pb_edges[edge, 0]],
+                    core_x[conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_y[conn_pb_edges[edge, 0]],
+                    core_y[conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1891,9 +2544,9 @@ def swidt_topology_plotter(
             ax, core_square, core_square_color, core_square_linewidth,
             xlim, ylim, xticks, yticks, xlabel, ylabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(core_pb_conn_graph_topology_filename)
+        fig.savefig(conn_graph_topology_filename)
         plt.close()
-
+        
         # Plot of the unpruned core and periodic boundary cross-linkers
         # and edges for the graph capturing the periodic connections
         # between the core nodes. Here, core edges are distinguished by
@@ -1903,28 +2556,32 @@ def swidt_topology_plotter(
         for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_edges[edge, 0]],
-                    core_pb_x[core_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_edges[edge, 0]],
-                    core_pb_y[core_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(pb_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[pb2core_nodes[pb_edges[edge, 0]]],
-                    core_pb_x[pb2core_nodes[pb_edges[edge, 1]]]
-                ])
+                    core_x[conn_pb_edges[edge, 0]],
+                    core_x[conn_pb_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[pb2core_nodes[pb_edges[edge, 0]]],
-                    core_pb_y[pb2core_nodes[pb_edges[edge, 1]]]
-                ])
+                    core_y[conn_pb_edges[edge, 0]],
+                    core_y[conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1932,24 +2589,65 @@ def swidt_topology_plotter(
             ax, core_square, core_square_color, core_square_linewidth,
             xlim, ylim, xticks, yticks, xlabel, ylabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(core_pb_conn_graph_colored_topology_filename)
+        fig.savefig(conn_graph_colored_topology_filename)
         plt.close()
-
+        
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the spatial
         # topology of the core and periodic boundary nodes and edges
         fig, ax = plt.subplots()
-        for edge in range(pruned_core_pb_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_core_pb_edges[edge, 0]],
-                    pruned_core_pb_x[pruned_core_pb_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_core_pb_edges[edge, 0]],
-                    pruned_core_pb_y[pruned_core_pb_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(mx_cmp_pruned_pb_m):
+            core_node_0_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 0]]
+            core_node_0_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 0]]
+            core_node_1_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+            core_node_1_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
+            edge_x = np.asarray(
+                [
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1957,40 +2655,67 @@ def swidt_topology_plotter(
             ax, core_square, core_square_color, core_square_linewidth,
             xlim, ylim, xticks, yticks, xlabel, ylabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(pruned_core_pb_graph_topology_filename)
+        fig.savefig(mx_cmp_pruned_core_pb_graph_topology_filename)
         plt.close()
-
+        
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the spatial
         # topology of the core and periodic boundary nodes and edges.
         # Here, core edges are distinguished by purple lines, and
         # periodic boundary edges are distinguished by olive lines.
         fig, ax = plt.subplots()
-        for edge in range(pruned_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_core_edges[edge, 0]],
-                    pruned_core_pb_x[pruned_core_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_core_edges[edge, 0]],
-                    pruned_core_pb_y[pruned_core_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(pruned_pb_m):
+        for edge in range(mx_cmp_pruned_pb_m):
+            core_node_0_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 0]]
+            core_node_0_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 0]]
+            core_node_1_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+            core_node_1_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
+            pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
+                core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_pb_edges[edge, 0]],
-                    pruned_core_pb_x[pruned_pb_edges[edge, 1]]
-                ])
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_pb_edges[edge, 0]],
-                    pruned_core_pb_y[pruned_pb_edges[edge, 1]]
-                ])
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:olive", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -1998,24 +2723,42 @@ def swidt_topology_plotter(
             ax, core_square, core_square_color, core_square_linewidth,
             xlim, ylim, xticks, yticks, xlabel, ylabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(pruned_core_pb_graph_colored_topology_filename)
+        fig.savefig(mx_cmp_pruned_core_pb_graph_colored_topology_filename)
         plt.close()
-
+        
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the periodic
         # connections between the core nodes
         fig, ax = plt.subplots()
-        for edge in range(pruned_core_pb_conn_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_core_pb_conn_edges[edge, 0]],
-                    pruned_core_pb_x[pruned_core_pb_conn_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_core_pb_conn_edges[edge, 0]],
-                    pruned_core_pb_y[pruned_core_pb_conn_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(mx_cmp_pruned_pb_m):
+            edge_x = np.asarray(
+                [
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -2023,40 +2766,44 @@ def swidt_topology_plotter(
             ax, core_square, core_square_color, core_square_linewidth,
             xlim, ylim, xticks, yticks, xlabel, ylabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(pruned_core_pb_conn_graph_topology_filename)
+        fig.savefig(mx_cmp_pruned_conn_graph_topology_filename)
         plt.close()
-
+        
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the periodic
         # connections between the core nodes. Here, core edges are
         # distinguished by purple lines, and periodic boundary edges are
         # distinguished by olive lines.
         fig, ax = plt.subplots()
-        for edge in range(pruned_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_core_edges[edge, 0]],
-                    pruned_core_pb_x[pruned_core_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_core_edges[edge, 0]],
-                    pruned_core_pb_y[pruned_core_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(pruned_pb_m):
+        for edge in range(mx_cmp_pruned_pb_m):
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_pb2core_nodes[pruned_pb_edges[edge, 0]]],
-                    pruned_core_pb_x[pruned_pb2core_nodes[pruned_pb_edges[edge, 1]]]
-                ])
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_pb2core_nodes[pruned_pb_edges[edge, 0]]],
-                    pruned_core_pb_y[pruned_pb2core_nodes[pruned_pb_edges[edge, 1]]]
-                ])
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
@@ -2064,55 +2811,107 @@ def swidt_topology_plotter(
             ax, core_square, core_square_color, core_square_linewidth,
             xlim, ylim, xticks, yticks, xlabel, ylabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(pruned_core_pb_conn_graph_colored_topology_filename)
+        fig.savefig(mx_cmp_pruned_conn_graph_colored_topology_filename)
         plt.close()
     elif dim == 3:
-        # Plot formatting parameters and preformatting
-        zlim = np.asarray([min_core, max_core])
-        zticks = np.linspace(min_core, max_core, core_tick_steps)
-        zlabel = "z"
-
-        # Core cube box coordinates and preformating
-        core_cube = np.asarray(
-            [
-                [[0, 0, 0], [L, 0, 0], [L, L, 0], [0, L, 0], [0, 0, 0]],
-                [[0, 0, L], [L, 0, L], [L, L, L], [0, L, L], [0, 0, L]],
-                [[0, 0, 0], [L, 0, 0], [L, 0, L], [0, 0, L], [0, 0, 0]],
-                [[L, 0, 0], [L, L, 0], [L, L, L], [L, 0, L], [L, 0, 0]],
-                [[L, L, 0], [0, L, 0], [0, L, L], [L, L, L], [L, L, 0]],
-                [[0, L, 0], [0, 0, 0], [0, 0, L], [0, L, L], [0, L, 0]]
-
-            ])
-        core_cube_color = "red"
-        core_cube_linewidth = 0.5
+        # Import three-dimension specific function
+        from heterogeneous_spatial_networks_funcs import (
+            dim_3_core_pb_edge_identification
+        )
+        
+        # Load fundamental z-dimensional graph constituents
+        core_z = np.loadtxt(core_z_filename)
+        mx_cmp_pruned_core_z = np.loadtxt(mx_cmp_pruned_core_z_filename)
 
         # Plot of the unpruned core and periodic boundary cross-linkers
         # and edges for the graph capturing the spatial topology of the
         # core and periodic boundary nodes and edges
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(core_pb_m):
+        for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_edges[edge, 0]],
-                    core_pb_x[core_pb_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_edges[edge, 0]],
-                    core_pb_y[core_pb_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[core_pb_edges[edge, 0]],
-                    core_pb_z[core_pb_edges[edge, 1]]
-                ])
+                    core_z[conn_core_edges[edge, 0]],
+                    core_z[conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pb_m):
+            core_node_0_x = core_x[conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[conn_pb_edges[edge, 0]]
+            core_node_0_z = core_z[conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[conn_pb_edges[edge, 1]]
+            core_node_1_z = core_z[conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_1_x, core_node_1_y, core_node_1_z,
+                    core_node_0_x, core_node_0_y, core_node_0_z, L)
+            )
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
+            edge_x = np.asarray(
+                [
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    core_node_0_z,
+                    pb_node_1_z
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    pb_node_0_z,
+                    core_node_1_z
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         ax = dim_3_swidt_topology_axes_formatter(
             ax, core_cube, core_cube_color, core_cube_linewidth,
-            xlim, ylim, zlim, xticks, yticks, zticks, xlabel, ylabel, zlabel,
-            grid_alpha, grid_zorder)
+            xlim, ylim, zlim, xticks, yticks, zticks,
+            xlabel, ylabel, zlabel, grid_alpha, grid_zorder)
         fig.tight_layout()
         fig.savefig(core_pb_graph_topology_filename)
         plt.close()
@@ -2126,78 +2925,146 @@ def swidt_topology_plotter(
         for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_edges[edge, 0]],
-                    core_pb_x[core_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_edges[edge, 0]],
-                    core_pb_y[core_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[core_edges[edge, 0]],
-                    core_pb_z[core_edges[edge, 1]]
-                ])
+                    core_z[conn_core_edges[edge, 0]],
+                    core_z[conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(pb_m):
+            core_node_0_x = core_x[conn_pb_edges[edge, 0]]
+            core_node_0_y = core_y[conn_pb_edges[edge, 0]]
+            core_node_0_z = core_z[conn_pb_edges[edge, 0]]
+            core_node_1_x = core_x[conn_pb_edges[edge, 1]]
+            core_node_1_y = core_y[conn_pb_edges[edge, 1]]
+            core_node_1_z = core_z[conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_1_x, core_node_1_y, core_node_1_z,
+                    core_node_0_x, core_node_0_y, core_node_0_z, L)
+            )
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
             edge_x = np.asarray(
                 [
-                    core_pb_x[pb_edges[edge, 0]],
-                    core_pb_x[pb_edges[edge, 1]]
-                ])
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[pb_edges[edge, 0]],
-                    core_pb_y[pb_edges[edge, 1]]
-                ])
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[pb_edges[edge, 0]],
-                    core_pb_z[pb_edges[edge, 1]]
-                ])
+                    core_node_0_z,
+                    pb_node_1_z
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    pb_node_0_z,
+                    core_node_1_z
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         ax = dim_3_swidt_topology_axes_formatter(
             ax, core_cube, core_cube_color, core_cube_linewidth,
-            xlim, ylim, zlim, xticks, yticks, zticks, xlabel, ylabel, zlabel,
-            grid_alpha, grid_zorder)
+            xlim, ylim, zlim, xticks, yticks, zticks,
+            xlabel, ylabel, zlabel, grid_alpha, grid_zorder)
         fig.tight_layout()
         fig.savefig(core_pb_graph_colored_topology_filename)
         plt.close()
-
+        
         # Plot of the unpruned core and periodic boundary cross-linkers
         # and edges for the graph capturing the periodic connections
         # between the core nodes
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(core_pb_conn_m):
+        for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_pb_conn_edges[edge, 0]],
-                    core_pb_x[core_pb_conn_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_pb_conn_edges[edge, 0]],
-                    core_pb_y[core_pb_conn_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[core_pb_conn_edges[edge, 0]],
-                    core_pb_z[core_pb_conn_edges[edge, 1]]
-                ])
+                    core_z[conn_core_edges[edge, 0]],
+                    core_z[conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(pb_m):
+            edge_x = np.asarray(
+                [
+                    core_x[conn_pb_edges[edge, 0]],
+                    core_x[conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_y[conn_pb_edges[edge, 0]],
+                    core_y[conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    core_z[conn_pb_edges[edge, 0]],
+                    core_z[conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         ax = dim_3_swidt_topology_axes_formatter(
             ax, core_cube, core_cube_color, core_cube_linewidth,
-            xlim, ylim, zlim, xticks, yticks, zticks, xlabel, ylabel, zlabel,
-            grid_alpha, grid_zorder)
+            xlim, ylim, zlim, xticks, yticks, zticks,
+            xlabel, ylabel, zlabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(core_pb_conn_graph_topology_filename)
+        fig.savefig(conn_graph_topology_filename)
         plt.close()
 
         # Plot of the unpruned core and periodic boundary cross-linkers
@@ -2209,213 +3076,355 @@ def swidt_topology_plotter(
         for edge in range(core_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[core_edges[edge, 0]],
-                    core_pb_x[core_edges[edge, 1]]
-                ])
+                    core_x[conn_core_edges[edge, 0]],
+                    core_x[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[core_edges[edge, 0]],
-                    core_pb_y[core_edges[edge, 1]]
-                ])
+                    core_y[conn_core_edges[edge, 0]],
+                    core_y[conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[core_edges[edge, 0]],
-                    core_pb_z[core_edges[edge, 1]]
-                ])
+                    core_z[conn_core_edges[edge, 0]],
+                    core_z[conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         for edge in range(pb_m):
             edge_x = np.asarray(
                 [
-                    core_pb_x[pb2core_nodes[pb_edges[edge, 0]]],
-                    core_pb_x[pb2core_nodes[pb_edges[edge, 1]]]
-                ])
+                    core_x[conn_pb_edges[edge, 0]],
+                    core_x[conn_pb_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    core_pb_y[pb2core_nodes[pb_edges[edge, 0]]],
-                    core_pb_y[pb2core_nodes[pb_edges[edge, 1]]]
-                ])
+                    core_y[conn_pb_edges[edge, 0]],
+                    core_y[conn_pb_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    core_pb_z[pb2core_nodes[pb_edges[edge, 0]]],
-                    core_pb_z[pb2core_nodes[pb_edges[edge, 1]]]
-                ])
+                    core_z[conn_pb_edges[edge, 0]],
+                    core_z[conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         ax = dim_3_swidt_topology_axes_formatter(
             ax, core_cube, core_cube_color, core_cube_linewidth,
-            xlim, ylim, zlim, xticks, yticks, zticks, xlabel, ylabel, zlabel,
-            grid_alpha, grid_zorder)
+            xlim, ylim, zlim, xticks, yticks, zticks,
+            xlabel, ylabel, zlabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(core_pb_conn_graph_colored_topology_filename)
+        fig.savefig(conn_graph_colored_topology_filename)
         plt.close()
-
+        
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the spatial
         # topology of the core and periodic boundary nodes and edges
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(pruned_core_pb_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_core_pb_edges[edge, 0]],
-                    pruned_core_pb_x[pruned_core_pb_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_core_pb_edges[edge, 0]],
-                    pruned_core_pb_y[pruned_core_pb_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    pruned_core_pb_z[pruned_core_pb_edges[edge, 0]],
-                    pruned_core_pb_z[pruned_core_pb_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(mx_cmp_pruned_pb_m):
+            core_node_0_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 0]]
+            core_node_0_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 0]]
+            core_node_0_z = mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_edges[edge, 0]]
+            core_node_1_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+            core_node_1_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+            core_node_1_z = mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_1_x, core_node_1_y, core_node_1_z,
+                    core_node_0_x, core_node_0_y, core_node_0_z, L)
+            )
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
+            edge_x = np.asarray(
+                [
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    core_node_0_z,
+                    pb_node_1_z
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    pb_node_0_z,
+                    core_node_1_z
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         ax = dim_3_swidt_topology_axes_formatter(
             ax, core_cube, core_cube_color, core_cube_linewidth,
-            xlim, ylim, zlim, xticks, yticks, zticks, xlabel, ylabel, zlabel,
-            grid_alpha, grid_zorder)
+            xlim, ylim, zlim, xticks, yticks, zticks,
+            xlabel, ylabel, zlabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(pruned_core_pb_graph_topology_filename)
+        fig.savefig(mx_cmp_pruned_core_pb_graph_topology_filename)
         plt.close()
-
+        
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the spatial
         # topology of the core and periodic boundary nodes and edges.
         # Here, core edges are distinguished by purple lines, and
         # periodic boundary edges are distinguished by olive lines.
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(pruned_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_core_edges[edge, 0]],
-                    pruned_core_pb_x[pruned_core_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_core_edges[edge, 0]],
-                    pruned_core_pb_y[pruned_core_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    pruned_core_pb_z[pruned_core_edges[edge, 0]],
-                    pruned_core_pb_z[pruned_core_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(pruned_pb_m):
+        for edge in range(mx_cmp_pruned_pb_m):
+            core_node_0_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 0]]
+            core_node_0_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 0]]
+            core_node_0_z = mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_edges[edge, 0]]
+            core_node_1_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+            core_node_1_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+            core_node_1_z = mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+            pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_1_x, core_node_1_y, core_node_1_z,
+                    core_node_0_x, core_node_0_y, core_node_0_z, L)
+            )
+            pb_node_1_x, pb_node_1_y, pb_node_1_z, l_pb_edge = (
+                dim_3_core_pb_edge_identification(
+                    core_node_0_x, core_node_0_y, core_node_0_z,
+                    core_node_1_x, core_node_1_y, core_node_1_z, L)
+            )
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_pb_edges[edge, 0]],
-                    pruned_core_pb_x[pruned_pb_edges[edge, 1]]
-                ])
+                    core_node_0_x,
+                    pb_node_1_x
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_pb_edges[edge, 0]],
-                    pruned_core_pb_y[pruned_pb_edges[edge, 1]]
-                ])
+                    core_node_0_y,
+                    pb_node_1_y
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    pruned_core_pb_z[pruned_pb_edges[edge, 0]],
-                    pruned_core_pb_z[pruned_pb_edges[edge, 1]]
-                ])
+                    core_node_0_z,
+                    pb_node_1_z
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+            edge_x = np.asarray(
+                [
+                    pb_node_0_x,
+                    core_node_1_x
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    pb_node_0_y,
+                    core_node_1_y
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    pb_node_0_z,
+                    core_node_1_z
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         ax = dim_3_swidt_topology_axes_formatter(
             ax, core_cube, core_cube_color, core_cube_linewidth,
-            xlim, ylim, zlim, xticks, yticks, zticks, xlabel, ylabel, zlabel,
-            grid_alpha, grid_zorder)
+            xlim, ylim, zlim, xticks, yticks, zticks,
+            xlabel, ylabel, zlabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(pruned_core_pb_graph_colored_topology_filename)
+        fig.savefig(mx_cmp_pruned_core_pb_graph_colored_topology_filename)
         plt.close()
-
+        
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the periodic
         # connections between the core nodes
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(pruned_core_pb_conn_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_core_pb_conn_edges[edge, 0]],
-                    pruned_core_pb_x[pruned_core_pb_conn_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_core_pb_conn_edges[edge, 0]],
-                    pruned_core_pb_y[pruned_core_pb_conn_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    pruned_core_pb_z[pruned_core_pb_conn_edges[edge, 0]],
-                    pruned_core_pb_z[pruned_core_pb_conn_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
+            ax.plot(
+                edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
+                marker=".", markerfacecolor="black", markeredgecolor="black")
+        for edge in range(mx_cmp_pruned_pb_m):
+            edge_x = np.asarray(
+                [
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_y = np.asarray(
+                [
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
+            edge_z = np.asarray(
+                [
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         ax = dim_3_swidt_topology_axes_formatter(
             ax, core_cube, core_cube_color, core_cube_linewidth,
-            xlim, ylim, zlim, xticks, yticks, zticks, xlabel, ylabel, zlabel,
-            grid_alpha, grid_zorder)
+            xlim, ylim, zlim, xticks, yticks, zticks,
+            xlabel, ylabel, zlabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(pruned_core_pb_conn_graph_topology_filename)
+        fig.savefig(mx_cmp_pruned_conn_graph_topology_filename)
         plt.close()
-
+        
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the periodic
         # connections between the core nodes. Here, core edges are
         # distinguished by purple lines, and periodic boundary edges are
         # distinguished by olive lines.
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(pruned_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_core_edges[edge, 0]],
-                    pruned_core_pb_x[pruned_core_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_core_edges[edge, 0]],
-                    pruned_core_pb_y[pruned_core_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    pruned_core_pb_z[pruned_core_edges[edge, 0]],
-                    pruned_core_pb_z[pruned_core_edges[edge, 1]]
-                ])
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(pruned_pb_m):
+        for edge in range(mx_cmp_pruned_pb_m):
             edge_x = np.asarray(
                 [
-                    pruned_core_pb_x[pruned_pb2core_nodes[pruned_pb_edges[edge, 0]]],
-                    pruned_core_pb_x[pruned_pb2core_nodes[pruned_pb_edges[edge, 1]]]
-                ])
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
             edge_y = np.asarray(
                 [
-                    pruned_core_pb_y[pruned_pb2core_nodes[pruned_pb_edges[edge, 0]]],
-                    pruned_core_pb_y[pruned_pb2core_nodes[pruned_pb_edges[edge, 1]]]
-                ])
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
             edge_z = np.asarray(
                 [
-                    pruned_core_pb_z[pruned_pb2core_nodes[pruned_pb_edges[edge, 0]]],
-                    pruned_core_pb_z[pruned_pb2core_nodes[pruned_pb_edges[edge, 1]]]
-                ])
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_edges[edge, 1]]
+                ]
+            )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:olive", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
         ax = dim_3_swidt_topology_axes_formatter(
             ax, core_cube, core_cube_color, core_cube_linewidth,
-            xlim, ylim, zlim, xticks, yticks, zticks, xlabel, ylabel, zlabel,
-            grid_alpha, grid_zorder)
+            xlim, ylim, zlim, xticks, yticks, zticks,
+            xlabel, ylabel, zlabel, grid_alpha, grid_zorder)
         fig.tight_layout()
-        fig.savefig(pruned_core_pb_conn_graph_colored_topology_filename)
+        fig.savefig(mx_cmp_pruned_conn_graph_colored_topology_filename)
         plt.close()
 
 def run_swidt_topology_plotter(args):
@@ -2452,13 +3461,15 @@ def swidt_graph_k_density_histogram_plotter(
     yticks = np.linspace(k_dnstyhist_min, k_dnstyhist_max, k_dnstyhist_steps)
 
     title = f"{dim:d}D, n = {n:d}, k_max = {k:d}, eta_n = {eta_n:0.3f}"
-    filename = filename_str(network, date, batch, sample)
-    k_dnstyhist_filename = filename + "-" + graph + "_k" + "-dnstyhist" + ".png"
+    filename_prefix = filename_str(network, date, batch, sample)
+    k_dnstyhist_filename = (
+        filename_prefix + "-" + graph + "_k" + "-dnstyhist" + ".png"
+    )
 
     graph_k_counts = np.zeros(8, dtype=int)
     for config in np.nditer(config_arr):
         for pruning in np.nditer(pruning_arr):
-            filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+            filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
             graph_k_counts_filename =  (
                 filename_prefix + "-" + graph + "_k_counts" + ".dat"
             )
@@ -2512,13 +3523,15 @@ def swidt_graph_h_density_histogram_plotter(
     yticks = np.linspace(h_dnstyhist_min, h_dnstyhist_max, h_dnstyhist_steps)
 
     title = f"{dim:d}D, n = {n:d}, k_max = {k:d}, eta_n = {eta_n:0.3f}"
-    filename = filename_str(network, date, batch, sample)
-    h_dnstyhist_filename = filename + "-" + graph + "_h" + "-dnstyhist" + ".png"
+    filename_prefix = filename_str(network, date, batch, sample)
+    h_dnstyhist_filename = (
+        filename_prefix + "-" + graph + "_h" + "-dnstyhist" + ".png"
+    )
 
     graph_h_counts = np.zeros(l_bound, dtype=int)
     for config in np.nditer(config_arr):
         for pruning in np.nditer(pruning_arr):
-            filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+            filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
             graph_h_counts_filename =  (
                 filename_prefix + "-" + graph + "_h_counts" + ".dat"
             )
@@ -2601,17 +3614,18 @@ def swidt_graph_l_edges_variant_density_histogram_plotter(
         elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt": xlabel = "l_z/(L*sqrt(dim))"
         
         title = f"{dim:d}D, n = {n:d}, k_max = {k:d}, eta_n = {eta_n:0.3f}"
-        filename = filename_str(network, date, batch, sample)
+        filename_prefix = filename_str(network, date, batch, sample)
         
         if graph == "core_pb":
             core_pb_l_edges_vrnt_dnstyhist_filename = (
-                filename + "-core_pb_" + l_edges_vrnt + "-dnstyhist" + ".png"
+                filename_prefix + "-core_pb_"
+                + l_edges_vrnt + "-dnstyhist" + ".png"
             )
 
             core_pb_l_edges_vrnt = np.asarray([])
             for config in np.nditer(config_arr):
                 for pruning in np.nditer(pruning_arr):
-                    filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                    filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
                     core_pb_l_edges_vrnt_filename = (
                         filename_prefix + "-core_pb_" + l_edges_vrnt + ".dat"
                     )
@@ -2669,10 +3683,12 @@ def swidt_graph_l_edges_variant_density_histogram_plotter(
                 l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_z_cmpnt"
             
             core_pb_conn_l_edges_vrnt_dnstyhist_filename = (
-                filename + "-core_pb_conn_" + l_edges_vrnt + "-dnstyhist" + ".png"
+                filename_prefix + "-core_pb_conn_"
+                + l_edges_vrnt + "-dnstyhist" + ".png"
             )
             core_pb_conn_l_core_and_pb_edges_vrnt_dnstyhist_filename = (
-                filename + "-core_pb_conn_" + l_core_and_pb_edges_vrnt + "-dnstyhist" + ".png"
+                filename_prefix + "-core_pb_conn_"
+                + l_core_and_pb_edges_vrnt + "-dnstyhist" + ".png"
             )
 
             core_pb_conn_l_edges_vrnt = np.asarray([])
@@ -2680,12 +3696,14 @@ def swidt_graph_l_edges_variant_density_histogram_plotter(
             core_pb_conn_l_pb_edges_vrnt = np.asarray([])
             for config in np.nditer(config_arr):
                 for pruning in np.nditer(pruning_arr):
-                    filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                    filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
                     core_pb_conn_l_core_edges_vrnt_filename = (
-                        filename_prefix + "-core_pb_conn_" + l_core_edges_vrnt + ".dat"
+                        filename_prefix + "-core_pb_conn_"
+                        + l_core_edges_vrnt + ".dat"
                     )
                     core_pb_conn_l_pb_edges_vrnt_filename = (
-                        filename_prefix + "-core_pb_conn_" + l_pb_edges_vrnt + ".dat"
+                        filename_prefix + "-core_pb_conn_"
+                        + l_pb_edges_vrnt + ".dat"
                     )
                     core_pb_conn_l_core_edges_vrnt = np.concatenate(
                         (core_pb_conn_l_core_edges_vrnt, np.loadtxt(core_pb_conn_l_core_edges_vrnt_filename)))
@@ -2759,10 +3777,10 @@ def swidt_graph_k_christmas_tree_plot_plotter(
     ylabel = "k"
     
     title = f"{dim:d}D, n = {n:d}, eta_n = {eta_n:0.3f}"
-    xmastreeplt_filename_prefix = filename_str(network, date, batch, unique_sample)
+    filename_prefix = filename_str(network, date, batch, unique_sample)
 
     k_xmastreeplt_filename = (
-        xmastreeplt_filename_prefix + "-" + graph + "_k" + "-xmastreeplt" + ".png"
+        filename_prefix + "-" + graph + "_k" + "-xmastreeplt" + ".png"
     )
 
     k_indx = 0
@@ -2770,12 +3788,14 @@ def swidt_graph_k_christmas_tree_plot_plotter(
         sample = (
             int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
         )
-        filename = filename_str(network, date, batch, sample)
+        filename_prefix = filename_str(network, date, batch, sample)
 
         graph_k_counts = np.zeros(8, dtype=int)
         for config in np.nditer(config_arr):
             for pruning in np.nditer(pruning_arr):
-                filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                filename_prefix = (
+                    filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                )
                 graph_k_counts_filename =  (
                     filename_prefix + "-" + graph + "_k_counts" + ".dat"
                 )
@@ -2841,10 +3861,10 @@ def swidt_graph_k_dim_christmas_tree_plot_plotter(
     ylabel = "k"
 
     title = f"{dim:d}D"
-    xmastreeplt_filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
+    filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
 
     k_xmastreeplt_filename = (
-        xmastreeplt_filename_prefix + "-" + graph + "_k" + "-xmastreeplt" + ".png"
+        filename_prefix + "-" + graph + "_k" + "-xmastreeplt" + ".png"
     )
 
     for n in np.nditer(n_arr):
@@ -2854,12 +3874,14 @@ def swidt_graph_k_dim_christmas_tree_plot_plotter(
                 sample = (
                     int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
                 )
-                filename = filename_str(network, date, batch, sample)
+                filename_prefix = filename_str(network, date, batch, sample)
 
                 graph_k_counts = np.zeros(8, dtype=int)
                 for config in np.nditer(config_arr):
                     for pruning in np.nditer(pruning_arr):
-                        filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                        filename_prefix = (
+                            filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                        )
                         graph_k_counts_filename = (
                             filename_prefix + "-" + graph + "_k_counts" + ".dat"
                         )
@@ -2929,13 +3951,10 @@ def swidt_graph_k_dim_dist_stats_plotter(
     ylabel = "k"
 
     title = f"{dim:d}D"
-    dist_stats_plt_filename_prefix = (
-        filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
-    )
+    filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
 
     k_dist_stats_plt_filename = (
-        dist_stats_plt_filename_prefix + "-" + graph + "_k" + "-dist_stats_plt"
-        + ".png"
+        filename_prefix + "-" + graph + "_k" + "-dist_stats_plt" + ".png"
     )
 
     graph_k_min_arr = np.empty(k_num)
@@ -2951,11 +3970,13 @@ def swidt_graph_k_dim_dist_stats_plotter(
                 sample = (
                     int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
                 )
-                filename = filename_str(network, date, batch, sample)
+                filename_prefix = filename_str(network, date, batch, sample)
 
                 for config in np.nditer(config_arr):
                     for pruning in np.nditer(pruning_arr):
-                        filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                        filename_prefix = (
+                            filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                        )
                         graph_k_counts_filename =  (
                             filename_prefix + "-" + graph + "_k_counts" + ".dat"
                         )
@@ -3027,10 +4048,10 @@ def swidt_graph_h_christmas_tree_plot_plotter(
     ylabel = "h"
     
     title = f"{dim:d}D, n = {n:d}, eta_n = {eta_n:0.3f}"
-    xmastreeplt_filename_prefix = filename_str(network, date, batch, unique_sample)
+    filename_prefix = filename_str(network, date, batch, unique_sample)
 
     h_xmastreeplt_filename = (
-        xmastreeplt_filename_prefix + "-" + graph + "_h" + "-xmastreeplt" + ".png"
+        filename_prefix + "-" + graph + "_h" + "-xmastreeplt" + ".png"
     )
 
     l_bound = 0
@@ -3039,7 +4060,7 @@ def swidt_graph_h_christmas_tree_plot_plotter(
         sample = (
             int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
         )
-        filename = filename_str(network, date, batch, sample)
+        filename_prefix = filename_str(network, date, batch, sample)
 
         if k == 3: l_bound = 25
         elif k == 4: l_bound = 15
@@ -3051,7 +4072,9 @@ def swidt_graph_h_christmas_tree_plot_plotter(
         graph_h_counts = np.zeros(l_bound, dtype=int)
         for config in np.nditer(config_arr):
             for pruning in np.nditer(pruning_arr):
-                filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                filename_prefix = (
+                    filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                )
                 graph_h_counts_filename =  (
                     filename_prefix + "-" + graph + "_h_counts" + ".dat"
                 )
@@ -3118,10 +4141,10 @@ def swidt_graph_h_dim_christmas_tree_plot_plotter(
     ylabel = "h"
 
     title = f"{dim:d}D"
-    xmastreeplt_filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
+    filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
 
     h_xmastreeplt_filename = (
-        xmastreeplt_filename_prefix + "-" + graph + "_h" + "-xmastreeplt" + ".png"
+        filename_prefix + "-" + graph + "_h" + "-xmastreeplt" + ".png"
     )
 
     for n in np.nditer(n_arr):
@@ -3132,7 +4155,7 @@ def swidt_graph_h_dim_christmas_tree_plot_plotter(
                 sample = (
                     int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
                 )
-                filename = filename_str(network, date, batch, sample)
+                filename_prefix = filename_str(network, date, batch, sample)
 
                 if k == 3: l_bound = 25
                 elif k == 4: l_bound = 15
@@ -3144,7 +4167,9 @@ def swidt_graph_h_dim_christmas_tree_plot_plotter(
                 graph_h_counts = np.zeros(l_bound, dtype=int)
                 for config in np.nditer(config_arr):
                     for pruning in np.nditer(pruning_arr):
-                        filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                        filename_prefix = (
+                            filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                        )
                         graph_h_counts_filename = (
                             filename_prefix + "-" + graph + "_h_counts" + ".dat"
                         )
@@ -3215,13 +4240,12 @@ def swidt_graph_h_dim_dist_stats_plotter(
     ylabel = "h"
 
     title = f"{dim:d}D"
-    dist_stats_plt_filename_prefix = (
+    filename_prefix = (
         filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
     )
 
     h_dist_stats_plt_filename = (
-        dist_stats_plt_filename_prefix + "-" + graph + "_h" + "-dist_stats_plt"
-        + ".png"
+        filename_prefix + "-" + graph + "_h" + "-dist_stats_plt" + ".png"
     )
 
     graph_h_min_arr = np.empty(k_num)
@@ -3246,11 +4270,13 @@ def swidt_graph_h_dim_dist_stats_plotter(
                 sample = (
                     int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
                 )
-                filename = filename_str(network, date, batch, sample)
+                filename_prefix = filename_str(network, date, batch, sample)
 
                 for config in np.nditer(config_arr):
                     for pruning in np.nditer(pruning_arr):
-                        filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                        filename_prefix = (
+                            filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                        )
                         graph_h_counts_filename =  (
                             filename_prefix + "-" + graph + "_h_counts" + ".dat"
                         )
@@ -3337,11 +4363,11 @@ def swidt_graph_l_edges_variant_violinplot_plotter(
         elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt": ylabel = "l_z/(L*sqrt(dim))"
         
         title = f"{dim:d}D, k_max = {k:d}, eta_n = {eta_n:0.3f}"
-        vlnplt_filename_prefix = filename_str(network, date, batch, unique_sample)
+        filename_prefix = filename_str(network, date, batch, unique_sample)
         
         if graph == "core_pb":
             core_pb_l_edges_vrnt_vlnplt_filename = (
-                vlnplt_filename_prefix + "-core_pb_" + l_edges_vrnt + "-vlnplt" + ".png"
+                filename_prefix + "-core_pb_" + l_edges_vrnt + "-vlnplt" + ".png"
             )
 
             core_pb_l_edges_vrnt_list = []
@@ -3350,12 +4376,14 @@ def swidt_graph_l_edges_variant_violinplot_plotter(
                 sample = (
                     int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
                 )
-                filename = filename_str(network, date, batch, sample)
+                filename_prefix = filename_str(network, date, batch, sample)
 
                 core_pb_l_edges_vrnt = np.asarray([])
                 for config in np.nditer(config_arr):
                     for pruning in np.nditer(pruning_arr):
-                        filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                        filename_prefix = (
+                            filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                        )
                         core_pb_l_edges_vrnt_filename = (
                             filename_prefix + "-core_pb_" + l_edges_vrnt + ".dat"
                         )
@@ -3418,10 +4446,12 @@ def swidt_graph_l_edges_variant_violinplot_plotter(
                 l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_z_cmpnt"
             
             core_pb_conn_l_edges_vrnt_vlnplt_filename = (
-                vlnplt_filename_prefix + "-core_pb_conn_" + l_edges_vrnt + "-vlnplt" + ".png"
+                filename_prefix + "-core_pb_conn_"
+                + l_edges_vrnt + "-vlnplt" + ".png"
             )
             core_pb_conn_l_core_and_pb_edges_vrnt_vlnplt_filename = (
-                vlnplt_filename_prefix + "-core_pb_conn_" + l_core_and_pb_edges_vrnt + "-vlnplt" + ".png"
+                filename_prefix + "-core_pb_conn_"
+                + l_core_and_pb_edges_vrnt + "-vlnplt" + ".png"
             )
 
             core_pb_conn_l_edges_vrnt_list = []
@@ -3432,7 +4462,7 @@ def swidt_graph_l_edges_variant_violinplot_plotter(
                 sample = (
                     int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
                 )
-                filename = filename_str(network, date, batch, sample)
+                filename_prefix = filename_str(network, date, batch, sample)
 
                 core_pb_conn_l_edges_vrnt = np.asarray([])
                 core_pb_conn_l_core_edges_vrnt = np.asarray([])
@@ -3440,7 +4470,9 @@ def swidt_graph_l_edges_variant_violinplot_plotter(
 
                 for config in np.nditer(config_arr):
                     for pruning in np.nditer(pruning_arr):
-                        filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                        filename_prefix = (
+                            filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                        )
                         core_pb_conn_l_core_edges_vrnt_filename = (
                             filename_prefix + "-core_pb_conn_" + l_core_edges_vrnt + ".dat"
                         )
@@ -3544,11 +4576,11 @@ def swidt_graph_l_edges_variant_dim_violinplot_plotter(
         elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt": ylabel = "l_z/(L*sqrt(dim))"
         
         title = f"{dim:d}D"
-        vlnplt_filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
+        filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
         
         if graph == "core_pb":
             core_pb_l_edges_vrnt_vlnplt_filename = (
-                vlnplt_filename_prefix + "-core_pb_" + l_edges_vrnt + "-vlnplt" + ".png"
+                filename_prefix + "-core_pb_" + l_edges_vrnt + "-vlnplt" + ".png"
             )
 
             for k in np.nditer(k_arr):
@@ -3559,12 +4591,14 @@ def swidt_graph_l_edges_variant_dim_violinplot_plotter(
                         sample = (
                             int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
                         )
-                        filename = filename_str(network, date, batch, sample)
+                        filename_prefix = filename_str(network, date, batch, sample)
 
                         core_pb_l_edges_vrnt = np.asarray([])
                         for config in np.nditer(config_arr):
                             for pruning in np.nditer(pruning_arr):
-                                filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                                filename_prefix = (
+                                    filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                                )
                                 core_pb_l_edges_vrnt_filename = (
                                     filename_prefix + "-core_pb_" + l_edges_vrnt + ".dat"
                                 )
@@ -3628,10 +4662,12 @@ def swidt_graph_l_edges_variant_dim_violinplot_plotter(
                 l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_z_cmpnt"
             
             core_pb_conn_l_edges_vrnt_vlnplt_filename = (
-                vlnplt_filename_prefix + "-core_pb_conn_" + l_edges_vrnt + "-vlnplt" + ".png"
+                filename_prefix + "-core_pb_conn_"
+                + l_edges_vrnt + "-vlnplt" + ".png"
             )
             core_pb_conn_l_core_and_pb_edges_vrnt_vlnplt_filename = (
-                vlnplt_filename_prefix + "-core_pb_conn_" + l_core_and_pb_edges_vrnt + "-vlnplt" + ".png"
+                filename_prefix + "-core_pb_conn_"
+                + l_core_and_pb_edges_vrnt + "-vlnplt" + ".png"
             )
 
             fig_edges_vlnplt, ax_edges_vlnplt = plt.subplots()
@@ -3647,7 +4683,7 @@ def swidt_graph_l_edges_variant_dim_violinplot_plotter(
                         sample = (
                             int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
                         )
-                        filename = filename_str(network, date, batch, sample)
+                        filename_prefix = filename_str(network, date, batch, sample)
 
                         core_pb_conn_l_edges_vrnt = np.asarray([])
                         core_pb_conn_l_core_edges_vrnt = np.asarray([])
@@ -3655,7 +4691,10 @@ def swidt_graph_l_edges_variant_dim_violinplot_plotter(
 
                         for config in np.nditer(config_arr):
                             for pruning in np.nditer(pruning_arr):
-                                filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                                filename_prefix = (
+                                    filename_prefix + f"C{config:d}"
+                                    + f"P{pruning:d}"
+                                )
                                 core_pb_conn_l_core_edges_vrnt_filename = (
                                     filename_prefix + "-core_pb_conn_" + l_core_edges_vrnt + ".dat"
                                 )
@@ -3766,13 +4805,11 @@ def swidt_graph_l_edges_variant_dim_dist_stats_plotter(
         elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt": ylabel = "l_z/(L*sqrt(dim))"
         
         title = f"{dim:d}D"
-        dist_stats_plt_filename_prefix = (
-            filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
-        )
+        filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
         
         if graph == "core_pb":
             core_pb_l_edges_vrnt_dist_stats_plt_filename = (
-                dist_stats_plt_filename_prefix + "-core_pb_"
+                filename_prefix + "-core_pb_"
                 + l_edges_vrnt + "-dist_stats_plt" + ".png"
             )
 
@@ -3789,11 +4826,14 @@ def swidt_graph_l_edges_variant_dim_dist_stats_plotter(
                         sample = (
                             int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
                         )
-                        filename = filename_str(network, date, batch, sample)
+                        filename_prefix = filename_str(network, date, batch, sample)
 
                         for config in np.nditer(config_arr):
                             for pruning in np.nditer(pruning_arr):
-                                filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                                filename_prefix = (
+                                    filename_prefix + f"C{config:d}"
+                                    + f"P{pruning:d}"
+                                )
                                 core_pb_l_edges_vrnt_filename = (
                                     filename_prefix + "-core_pb_" + l_edges_vrnt + ".dat"
                                 )
@@ -3899,11 +4939,11 @@ def swidt_graph_l_edges_variant_dim_dist_stats_plotter(
                 l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_z_cmpnt"
             
             core_pb_conn_l_edges_vrnt_dist_stats_plt_filename = (
-                dist_stats_plt_filename_prefix + "-core_pb_conn_"
+                filename_prefix + "-core_pb_conn_"
                 + l_edges_vrnt + "-dist_stats_plt" + ".png"
             )
             core_pb_conn_l_core_and_pb_edges_vrnt_dist_stats_plt_filename = (
-                dist_stats_plt_filename_prefix + "-core_pb_conn_"
+                filename_prefix + "-core_pb_conn_"
                 + l_core_and_pb_edges_vrnt + "-dist_stats_plt" + ".png"
             )
 
@@ -3934,11 +4974,14 @@ def swidt_graph_l_edges_variant_dim_dist_stats_plotter(
                         sample = (
                             int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
                         )
-                        filename = filename_str(network, date, batch, sample)
+                        filename_prefix = filename_str(network, date, batch, sample)
 
                         for config in np.nditer(config_arr):
                             for pruning in np.nditer(pruning_arr):
-                                filename_prefix = filename + f"C{config:d}" + f"P{pruning:d}"
+                                filename_prefix = (
+                                    filename_prefix + f"C{config:d}"
+                                    + f"P{pruning:d}"
+                                )
                                 core_pb_conn_l_core_edges_vrnt_filename = (
                                     filename_prefix + "-core_pb_conn_" + l_core_edges_vrnt + ".dat"
                                 )
