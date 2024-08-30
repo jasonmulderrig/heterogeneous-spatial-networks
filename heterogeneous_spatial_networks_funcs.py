@@ -1678,13 +1678,13 @@ def swidt_network_edge_pruning_procedure(
     if dim == 3:
         core_z_filename = filename_prefix + "-core_z" + ".dat"
     filename_prefix = filename_prefix + f"P{pruning:d}"
-    mx_cmp_conn_n_filename = filename_prefix + "-conn_n" + ".dat"
-    mx_cmp_conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
-    mx_cmp_conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
-    mx_cmp_core_x_filename = filename_prefix + "-core_x" + ".dat"
-    mx_cmp_core_y_filename = filename_prefix + "-core_y" + ".dat"
+    mx_cmp_pruned_conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    mx_cmp_pruned_conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    mx_cmp_pruned_conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    mx_cmp_pruned_core_x_filename = filename_prefix + "-core_x" + ".dat"
+    mx_cmp_pruned_core_y_filename = filename_prefix + "-core_y" + ".dat"
     if dim == 3:
-        mx_cmp_core_z_filename = filename_prefix + "-core_z" + ".dat"
+        mx_cmp_pruned_core_z_filename = filename_prefix + "-core_z" + ".dat"
     
     # Load fundamental graph constituents
     core_nodes = np.arange(n, dtype=int)
@@ -1753,7 +1753,7 @@ def swidt_network_edge_pruning_procedure(
             conn_edges = np.delete(conn_edges, edge_indx2remove, axis=0)
             if conn_core_graph.has_edge(core_node_0, core_node_1):
                 conn_core_graph.remove_edge(core_node_0, core_node_1)
-            if conn_pb_graph.has_edge(core_node_0, core_node_1):
+            elif conn_pb_graph.has_edge(core_node_0, core_node_1):
                 conn_pb_graph.remove_edge(core_node_0, core_node_1)
 
             # Update degree of cross-linker nodes in the graph
@@ -1761,86 +1761,92 @@ def swidt_network_edge_pruning_procedure(
             conn_graph_k[core_node_1] -= 1
                 
         # Isolate largest/maximum connected component in a nodewise
-        # fashion. Note that
-        # mx_cmp_conn_graph_nodes[updated_node] = original_node
-        mx_cmp_conn_graph_nodes = max(
+        # fashion
+        mx_cmp_pruned_conn_graph_nodes = max(
             nx.connected_components(conn_graph), key=len)
-        mx_cmp_conn_core_graph = (
-            conn_core_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
+        mx_cmp_pruned_conn_core_graph = (
+            conn_core_graph.subgraph(mx_cmp_pruned_conn_graph_nodes).copy()
         )
-        mx_cmp_conn_pb_graph = (
-            conn_pb_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
+        mx_cmp_pruned_conn_pb_graph = (
+            conn_pb_graph.subgraph(mx_cmp_pruned_conn_graph_nodes).copy()
+        )
+        mx_cmp_pruned_conn_core_graph_edges = np.asarray(
+            list(mx_cmp_pruned_conn_core_graph.edges()), dtype=int)
+        mx_cmp_pruned_conn_pb_graph_edges = np.asarray(
+            list(mx_cmp_pruned_conn_pb_graph.edges()), dtype=int)
+        # Number of edges in the largest/maximum connected component
+        mx_cmp_pruned_conn_core_graph_m = (
+            np.shape(mx_cmp_pruned_conn_core_graph_edges)[0]
+        )
+        mx_cmp_pruned_conn_pb_graph_m = (
+            np.shape(mx_cmp_pruned_conn_pb_graph_edges)[0]
         )
         # Nodes from the largest/maximum connected component, sorted in
         # ascending order
-        mx_cmp_conn_graph_nodes = (
-            np.sort(np.fromiter(mx_cmp_conn_graph_nodes, dtype=int))
-        )
-        # Edges from the largest/maximum connected component
-        mx_cmp_conn_core_graph_edges = (
-            np.asarray(list(mx_cmp_conn_core_graph.edges()), dtype=int)
-        )
-        mx_cmp_conn_pb_graph_edges = (
-            np.asarray(list(mx_cmp_conn_pb_graph.edges()), dtype=int)
+        mx_cmp_pruned_conn_graph_nodes = (
+            np.sort(np.fromiter(mx_cmp_pruned_conn_graph_nodes, dtype=int))
         )
         # Number of nodes in the largest/maximum connected component
-        mx_cmp_conn_graph_n = np.shape(mx_cmp_conn_graph_nodes)[0]
-        # Number of edges in the largest/maximum connected component
-        mx_cmp_conn_core_graph_m = np.shape(mx_cmp_conn_core_graph_edges)[0]
-        mx_cmp_conn_pb_graph_m = np.shape(mx_cmp_conn_pb_graph_edges)[0]
+        mx_cmp_pruned_conn_graph_n = np.shape(mx_cmp_pruned_conn_graph_nodes)[0]
 
         # Isolate the cross-linker coordinates for the largest/maximum
         # connected component
         # updated_node
-        mx_cmp_core_x = core_x[mx_cmp_conn_graph_nodes]
-        mx_cmp_core_y = core_y[mx_cmp_conn_graph_nodes]
+        mx_cmp_pruned_core_x = core_x[mx_cmp_pruned_conn_graph_nodes]
+        mx_cmp_pruned_core_y = core_y[mx_cmp_pruned_conn_graph_nodes]
         if dim == 3:
-            mx_cmp_core_z = core_z[mx_cmp_conn_graph_nodes]
+            mx_cmp_pruned_core_z = core_z[mx_cmp_pruned_conn_graph_nodes]
 
         # Update all original_node values with updated_node values
-        for edge in range(mx_cmp_conn_core_graph_m):
+        for edge in range(mx_cmp_pruned_conn_core_graph_m):
             # updated_node
-            mx_cmp_conn_core_graph_edges[edge, 0] = (
-                int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 0])[0][0])
+            mx_cmp_pruned_conn_core_graph_edges[edge, 0] = (
+                int(np.where(mx_cmp_pruned_conn_graph_nodes == mx_cmp_pruned_conn_core_graph_edges[edge, 0])[0][0])
             )
-            mx_cmp_conn_core_graph_edges[edge, 1] = (
-                int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 1])[0][0])
+            mx_cmp_pruned_conn_core_graph_edges[edge, 1] = (
+                int(np.where(mx_cmp_pruned_conn_graph_nodes == mx_cmp_pruned_conn_core_graph_edges[edge, 1])[0][0])
             )
 
-        for edge in range(mx_cmp_conn_pb_graph_m):
+        for edge in range(mx_cmp_pruned_conn_pb_graph_m):
             # updated_node
-            mx_cmp_conn_pb_graph_edges[edge, 0] = (
-                int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 0])[0][0])
+            mx_cmp_pruned_conn_pb_graph_edges[edge, 0] = (
+                int(np.where(mx_cmp_pruned_conn_graph_nodes == mx_cmp_pruned_conn_pb_graph_edges[edge, 0])[0][0])
             )
-            mx_cmp_conn_pb_graph_edges[edge, 1] = (
-                int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 1])[0][0])
+            mx_cmp_pruned_conn_pb_graph_edges[edge, 1] = (
+                int(np.where(mx_cmp_pruned_conn_graph_nodes == mx_cmp_pruned_conn_pb_graph_edges[edge, 1])[0][0])
             )
                 
         # Save fundamental graph constituents from this topology
-        np.savetxt(mx_cmp_conn_n_filename, [mx_cmp_conn_graph_n], fmt="%d")
         np.savetxt(
-            mx_cmp_conn_core_edges_filename, mx_cmp_conn_core_graph_edges, fmt="%d")
+            mx_cmp_pruned_conn_n_filename,
+            [mx_cmp_pruned_conn_graph_n], fmt="%d")
         np.savetxt(
-            mx_cmp_conn_pb_edges_filename, mx_cmp_conn_pb_graph_edges, fmt="%d")
+            mx_cmp_pruned_conn_core_edges_filename,
+            mx_cmp_pruned_conn_core_graph_edges, fmt="%d")
+        np.savetxt(
+            mx_cmp_pruned_conn_pb_edges_filename,
+            mx_cmp_pruned_conn_pb_graph_edges, fmt="%d")
         
         # Save the core cross-linker x- and y-coordinates
-        np.savetxt(mx_cmp_core_x_filename, mx_cmp_core_x)
-        np.savetxt(mx_cmp_core_y_filename, mx_cmp_core_y)
+        np.savetxt(mx_cmp_pruned_core_x_filename, mx_cmp_pruned_core_x)
+        np.savetxt(mx_cmp_pruned_core_y_filename, mx_cmp_pruned_core_y)
         if dim == 3:
             # Save the core cross-linker z-coordinates
-            np.savetxt(mx_cmp_core_z_filename, mx_cmp_core_z)
+            np.savetxt(mx_cmp_pruned_core_z_filename, mx_cmp_pruned_core_z)
     else:
         # Save fundamental graph constituents from this topology
-        np.savetxt(mx_cmp_conn_n_filename, [n], fmt="%d")
-        np.savetxt(mx_cmp_conn_core_edges_filename, conn_core_edges, fmt="%d")
-        np.savetxt(mx_cmp_conn_pb_edges_filename, conn_pb_edges, fmt="%d")
+        np.savetxt(mx_cmp_pruned_conn_n_filename, [n], fmt="%d")
+        np.savetxt(
+            mx_cmp_pruned_conn_core_edges_filename, conn_core_edges, fmt="%d")
+        np.savetxt(
+            mx_cmp_pruned_conn_pb_edges_filename, conn_pb_edges, fmt="%d")
         
         # Save the core cross-linker x- and y-coordinates
-        np.savetxt(mx_cmp_core_x_filename, core_x)
-        np.savetxt(mx_cmp_core_y_filename, core_y)
+        np.savetxt(mx_cmp_pruned_core_x_filename, core_x)
+        np.savetxt(mx_cmp_pruned_core_y_filename, core_y)
         if dim == 3:
             # Save the core cross-linker z-coordinates
-            np.savetxt(mx_cmp_core_z_filename, core_z)
+            np.savetxt(mx_cmp_pruned_core_z_filename, core_z)
 
 # To realize the elastically-effective network from the original
 # network, I need to remove self-loops, and dangling chains repeatedly
@@ -1852,12 +1858,6 @@ def swidt_network_edge_pruning_procedure(
 # (being the other node), then remove the multiedge entirely. This needs
 # to be performed in the same protocol as the dangling edge removal
 # (where this is repeatedly checked until no dangling edges exist).
-
-# Make sure/Check that node numbers that are being extracted from
-# np.nditer AND any node numbers being provided to any NetworkX function
-# or graph are always wrapped with the int() function!! Node numbers
-# that are coming from numpy arrays also need to be wrapped with the
-# int() function.
 
 def elastically_effective_graph(graph):
     """Elastically-effective graph.
@@ -1884,10 +1884,12 @@ def elastically_effective_graph(graph):
     # pruning redundant edges
     graph_edges = np.asarray([])
     graph_edges_counts = np.asarray([])
-    if graph.is_multigraph():    
+    if graph.is_multigraph():
         # Gather edges and edges counts
         graph_edges, graph_edges_counts = (
-            np.unique(np.sort(np.asarray(list(graph.edges()), dtype=int), axis=1), return_counts=True, axis=0)
+            np.unique(
+                np.sort(np.asarray(list(graph.edges()), dtype=int), axis=1),
+                return_counts=True, axis=0)
         )
 
         # Address multi-edges by pruning redundant edges
@@ -1910,21 +1912,26 @@ def elastically_effective_graph(graph):
     # Dangling edge pruning procedure
     while np.any(graph_k == 1):
         # Extract dangling nodes (with k = 1)
-        dangling_nodes = np.where(graph_k == 1)[0]
-        for dangling_node in np.nditer(dangling_nodes):
-            dangling_node = int(dangling_node)
+        dangling_node_indcs = np.where(graph_k == 1)[0]
+        for dangling_node_indx in np.nditer(dangling_node_indcs):
+            dangling_node_indx = int(dangling_node_indx)
             # Dangling node (with k = 1)
-            node = int(graph_nodes_k[dangling_node, 0])
+            dangling_node = int(graph_nodes_k[dangling_node_indx, 0])
             # Neighbor of dangling node (with k = 1)
-            node_nghbr_arr = np.asarray(list(graph.neighbors(node)), dtype=int)
+            dangling_node_nghbr_arr = np.asarray(
+                list(graph.neighbors(dangling_node)), dtype=int)
             # Check to see if the dangling edge was previously removed
-            if np.shape(node_nghbr_arr)[0] == 0: continue
+            if np.shape(dangling_node_nghbr_arr)[0] == 0: continue
             else:
                 # Remove dangling edge
-                graph.remove_edge(node, int(node_nghbr_arr[0]))
+                graph.remove_edge(dangling_node, int(dangling_node_nghbr_arr[0]))
         # Update degree of nodes
         graph_nodes_k = np.asarray(list(graph.degree()), dtype=int)
         graph_k = graph_nodes_k[:, 1]
+    
+    # Isolate node pruning procedure
+    if nx.number_of_isolates(graph) > 0:
+        graph.remove_nodes_from(list(nx.isolates(graph)))
     
     # If the graph is of type nx.MultiGraph, then address multi-edges by
     # adding back elastically-effective redundant edges
@@ -1945,10 +1952,23 @@ def elastically_effective_graph(graph):
                 if graph.has_edge(node_0, node_1):
                     graph.add_edges_from(
                         list((node_0, node_1) for _ in range(edge_num-1)))
-    
+
     return graph
 
-def proportion_elastically_effective_nodes(graph):
+def proportion_elastically_effective_nodes(graph) -> float:
+    """Proportion of elastically-effective nodes in a given graph.
+
+    This function calculates and returns the proportion of
+    elastically-effective nodes in a given graph.
+
+    Args:
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph
+        or nx.MultiGraph.
+    
+    Returns:
+        float: (Undirected) Proportion of elastically-effective nodes.
+    
+    """
     # Number of nodes involved in the given graph
     graph_n = np.shape(np.unique(np.asarray(list(graph.edges()), dtype=int)))[0]
     # Elastically-effective graph
@@ -1961,18 +1981,17 @@ def proportion_elastically_effective_nodes(graph):
     return ee_graph_n / graph_n
 
 def proportion_elastically_effective_edges(graph):
-    """Node degree counts.
+    """Proportion of elastically-effective edges in a given graph.
 
-    This function calculates the node degree counts in an (undirected)
-    graph, where the node degree can be between 1 and 8, inclusive.
+    This function calculates and returns the proportion of
+    elastically-effective edges in a given graph.
 
     Args:
         graph: (Undirected) NetworkX graph that can be of type nx.Graph
         or nx.MultiGraph.
     
     Returns:
-        np.ndarray: Node degree counts, where the node degree can be
-        between 1 and 8, inclusive.
+        float: (Undirected) Proportion of elastically-effective edges.
     
     """
     # Number of edges in given graph
@@ -2011,7 +2030,8 @@ def k_counts_calculation(graph) -> np.ndarray:
 
     # Store the node degree counts
     for k_indx in range(np.shape(graph_k)[0]):
-        k_counts[graph_k[k_indx]-1] = graph_k_counts[k_indx]
+        if graph_k[k_indx] == 0: continue
+        else: k_counts[graph_k[k_indx]-1] = graph_k_counts[k_indx]
     
     return k_counts
 
@@ -2119,7 +2139,7 @@ def h_counts_calculation(graph, l_bound: int) -> np.ndarray:
     h_counts = np.zeros(l_bound, dtype=int)
 
     # Calculate and store the number of self-loops
-    self_loop_num = nx.number_of_selfloops(graph)
+    self_loop_num = int(nx.number_of_selfloops(graph))
     h_counts[0] = self_loop_num
 
     # Self-loop pruning procedure
@@ -2132,7 +2152,9 @@ def h_counts_calculation(graph, l_bound: int) -> np.ndarray:
     if graph.is_multigraph():    
         # Gather edges and edges counts
         graph_edges, graph_edges_counts = (
-            np.unique(np.sort(np.asarray(list(graph.edges()), dtype=int), axis=1), return_counts=True, axis=0)
+            np.unique(
+                np.sort(np.asarray(list(graph.edges()), dtype=int), axis=1),
+                return_counts=True, axis=0)
         )
         
         # Address multi-edges by calculating and storing the number of
@@ -2162,21 +2184,26 @@ def h_counts_calculation(graph, l_bound: int) -> np.ndarray:
     # Dangling edge pruning procedure
     while np.any(graph_k == 1):
         # Extract dangling nodes (with k = 1)
-        dangling_nodes = np.where(graph_k == 1)[0]
-        for dangling_node in np.nditer(dangling_nodes):
-            dangling_node = int(dangling_node)
+        dangling_node_indcs = np.where(graph_k == 1)[0]
+        for dangling_node_indx in np.nditer(dangling_node_indcs):
+            dangling_node_indx = int(dangling_node_indx)
             # Dangling node (with k = 1)
-            node = int(graph_nodes_k[dangling_node, 0])
+            dangling_node = int(graph_nodes_k[dangling_node_indx, 0])
             # Neighbor of dangling node (with k = 1)
-            node_nghbr_arr = np.asarray(list(graph.neighbors(node)), dtype=int)
+            dangling_node_nghbr_arr = np.asarray(
+                list(graph.neighbors(dangling_node)), dtype=int)
             # Check to see if the dangling edge was previously removed
-            if np.shape(node_nghbr_arr)[0] == 0: continue
+            if np.shape(dangling_node_nghbr_arr)[0] == 0: continue
             else:
                 # Remove dangling edge
-                graph.remove_edge(node, int(node_nghbr_arr[0]))
+                graph.remove_edge(dangling_node, int(dangling_node_nghbr_arr[0]))
         # Update degree of nodes
         graph_nodes_k = np.asarray(list(graph.degree()), dtype=int)
         graph_k = graph_nodes_k[:, 1]
+    
+    # Remove isolate nodes
+    if nx.number_of_isolates(graph) > 0:
+        graph.remove_nodes_from(list(nx.isolates(graph)))
     
     # Find chordless cycles
     chrdls_cycls = list(nx.chordless_cycles(graph, length_bound=l_bound))
@@ -2188,7 +2215,8 @@ def h_counts_calculation(graph, l_bound: int) -> np.ndarray:
 
     # Store the chordless cycle counts
     for h_indx in range(np.shape(graph_h)[0]):
-        h_counts[graph_h[h_indx]-1] = graph_h_counts[h_indx]
+        if graph_h[h_indx] == 0: continue
+        else: h_counts[graph_h[h_indx]-1] = graph_h_counts[h_indx]
     
     return h_counts
 
@@ -2917,12 +2945,12 @@ def dim_2_l_cmpnts_edges_calculation(
         respectively.
     
     """
-    # Gather edges and initialize l_x_cmpnts_edges and l_y_cmpnts_edges
+    # Gather edges and initialize l_x_cmpnt_edges and l_y_cmpnt_edges
     # np.ndarrays
     conn_edges = list(conn_graph.edges())
     conn_m = len(conn_edges)
-    l_x_cmpnts_edges = np.empty(conn_m)
-    l_y_cmpnts_edges = np.empty(conn_m)
+    l_x_cmpnt_edges = np.empty(conn_m)
+    l_y_cmpnt_edges = np.empty(conn_m)
 
     # Calculate and store the length of each edge
     for edge_indx, edge in enumerate(conn_edges):
@@ -2939,15 +2967,15 @@ def dim_2_l_cmpnts_edges_calculation(
         # Edge is a core edge
         if conn_core_graph.has_edge(core_node_0, core_node_1):
             # Calculate and store core edge length components
-            l_x_cmpnts_edges[edge_indx] = core_node_1_x - core_node_0_x
-            l_y_cmpnts_edges[edge_indx] = core_node_1_y - core_node_0_y
+            l_x_cmpnt_edges[edge_indx] = core_node_1_x - core_node_0_x
+            l_y_cmpnt_edges[edge_indx] = core_node_1_y - core_node_0_y
         # Edge is a periodic boundary edge
         elif conn_pb_graph.has_edge(core_node_0, core_node_1):
             # Calculate and store periodic boundary edge length
             pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
                 core_node_0_x, core_node_0_y, core_node_1_x, core_node_1_y, L)
-            l_x_cmpnts_edges[edge_indx] = pb_node_1_x - core_node_0_x
-            l_y_cmpnts_edges[edge_indx] = pb_node_1_y - core_node_0_y
+            l_x_cmpnt_edges[edge_indx] = pb_node_1_x - core_node_0_x
+            l_y_cmpnt_edges[edge_indx] = pb_node_1_y - core_node_0_y
         else:
             error_str = (
                 "The edge in the overall graph was not detected in "
@@ -2956,7 +2984,7 @@ def dim_2_l_cmpnts_edges_calculation(
             )
             sys.exit(error_str)
         
-    return (l_x_cmpnts_edges, l_y_cmpnts_edges)
+    return (l_x_cmpnt_edges, l_y_cmpnt_edges)
 
 def dim_3_l_cmpnts_edges_calculation(
         conn_core_graph,
@@ -2997,13 +3025,13 @@ def dim_3_l_cmpnts_edges_calculation(
         and z-components, respectively.
     
     """
-    # Gather edges and initialize l_x_cmpnts_edges, l_y_cmpnts_edges,
-    # and l_z_cmpnts_edges np.ndarrays
+    # Gather edges and initialize l_x_cmpnt_edges, l_y_cmpnt_edges,
+    # and l_z_cmpnt_edges np.ndarrays
     conn_edges = list(conn_graph.edges())
     conn_m = len(conn_edges)
-    l_x_cmpnts_edges = np.empty(conn_m)
-    l_y_cmpnts_edges = np.empty(conn_m)
-    l_z_cmpnts_edges = np.empty(conn_m)
+    l_x_cmpnt_edges = np.empty(conn_m)
+    l_y_cmpnt_edges = np.empty(conn_m)
+    l_z_cmpnt_edges = np.empty(conn_m)
 
     # Calculate and store the length of each edge
     for edge_indx, edge in enumerate(conn_edges):
@@ -3022,9 +3050,9 @@ def dim_3_l_cmpnts_edges_calculation(
         # Edge is a core edge
         if conn_core_graph.has_edge(core_node_0, core_node_1):
             # Calculate and store core edge length components
-            l_x_cmpnts_edges[edge_indx] = core_node_1_x - core_node_0_x
-            l_y_cmpnts_edges[edge_indx] = core_node_1_y - core_node_0_y
-            l_z_cmpnts_edges[edge_indx] = core_node_1_z - core_node_0_z
+            l_x_cmpnt_edges[edge_indx] = core_node_1_x - core_node_0_x
+            l_y_cmpnt_edges[edge_indx] = core_node_1_y - core_node_0_y
+            l_z_cmpnt_edges[edge_indx] = core_node_1_z - core_node_0_z
         # Edge is a periodic boundary edge
         elif conn_pb_graph.has_edge(core_node_0, core_node_1):
             # Calculate and store periodic boundary edge length
@@ -3033,9 +3061,9 @@ def dim_3_l_cmpnts_edges_calculation(
                     core_node_0_x, core_node_0_y, core_node_0_z,
                     core_node_1_x, core_node_1_y, core_node_1_z, L)
             )
-            l_x_cmpnts_edges[edge_indx] = pb_node_1_x - core_node_0_x
-            l_y_cmpnts_edges[edge_indx] = pb_node_1_y - core_node_0_y
-            l_z_cmpnts_edges[edge_indx] = pb_node_1_z - core_node_0_z
+            l_x_cmpnt_edges[edge_indx] = pb_node_1_x - core_node_0_x
+            l_y_cmpnt_edges[edge_indx] = pb_node_1_y - core_node_0_y
+            l_z_cmpnt_edges[edge_indx] = pb_node_1_z - core_node_0_z
         else:
             error_str = (
                 "The edge in the overall graph was not detected in "
@@ -3044,7 +3072,7 @@ def dim_3_l_cmpnts_edges_calculation(
             )
             sys.exit(error_str)
         
-    return (l_x_cmpnts_edges, l_y_cmpnts_edges, l_z_cmpnts_edges)
+    return (l_x_cmpnt_edges, l_y_cmpnt_edges, l_z_cmpnt_edges)
 
 def swidt_network_l_cmpnts_edges(
         network: str,
@@ -3102,9 +3130,9 @@ def swidt_network_l_cmpnts_edges(
     core_x_filename = filename_prefix + "-core_x" + ".dat"
     core_y_filename = filename_prefix + "-core_y" + ".dat"
     core_z_filename = filename_prefix + "-core_z" + ".dat"
-    l_x_cmpnts_edges_filename = filename_prefix + "-l_x_cmpnts_edges" + ".dat"
-    l_y_cmpnts_edges_filename = filename_prefix + "-l_y_cmpnts_edges" + ".dat"
-    l_z_cmpnts_edges_filename = filename_prefix + "-l_z_cmpnts_edges" + ".dat"
+    l_x_cmpnt_edges_filename = filename_prefix + "-l_x_cmpnt_edges" + ".dat"
+    l_y_cmpnt_edges_filename = filename_prefix + "-l_y_cmpnt_edges" + ".dat"
+    l_z_cmpnt_edges_filename = filename_prefix + "-l_z_cmpnt_edges" + ".dat"
 
     # Load fundamental graph constituents
     core_nodes = np.arange(np.loadtxt(conn_n_filename, dtype=int), dtype=int)
@@ -3135,37 +3163,37 @@ def swidt_network_l_cmpnts_edges(
 
     # Yield the elastically-effective network graph, if called for
     if elastically_effective:
-        l_x_cmpnts_edges_filename = (
-            filename_prefix + "-ee_l_x_cmpnts_edges" + ".dat"
+        l_x_cmpnt_edges_filename = (
+            filename_prefix + "-ee_l_x_cmpnt_edges" + ".dat"
         )
-        l_y_cmpnts_edges_filename = (
-            filename_prefix + "-ee_l_y_cmpnts_edges" + ".dat"
+        l_y_cmpnt_edges_filename = (
+            filename_prefix + "-ee_l_y_cmpnt_edges" + ".dat"
         )
-        l_z_cmpnts_edges_filename = (
-            filename_prefix + "-ee_l_z_cmpnts_edges" + ".dat"
+        l_z_cmpnt_edges_filename = (
+            filename_prefix + "-ee_l_z_cmpnt_edges" + ".dat"
         )
         conn_graph = elastically_effective_graph(conn_graph)
     
     if dim == 2:
         # Calculate and save edge length components
-        l_x_cmpnts_edges, l_y_cmpnts_edges = (
+        l_x_cmpnt_edges, l_y_cmpnt_edges = (
             dim_2_l_cmpnts_edges_calculation(
                 conn_core_graph, conn_pb_graph, conn_graph, core_x, core_y, L)
         )
-        np.savetxt(l_x_cmpnts_edges_filename, l_x_cmpnts_edges)
-        np.savetxt(l_y_cmpnts_edges_filename, l_y_cmpnts_edges)
+        np.savetxt(l_x_cmpnt_edges_filename, l_x_cmpnt_edges)
+        np.savetxt(l_y_cmpnt_edges_filename, l_y_cmpnt_edges)
     elif dim == 3:
         # Load core node z-coordinates
         core_z = np.loadtxt(core_z_filename)
         # Calculate and save edge length components
-        l_x_cmpnts_edges, l_y_cmpnts_edges, l_z_cmpnts_edges = (
+        l_x_cmpnt_edges, l_y_cmpnt_edges, l_z_cmpnt_edges = (
             dim_3_l_cmpnts_edges_calculation(
                 conn_core_graph, conn_pb_graph, conn_graph,
                 core_x, core_y, core_z, L)
         )
-        np.savetxt(l_x_cmpnts_edges_filename, l_x_cmpnts_edges)
-        np.savetxt(l_y_cmpnts_edges_filename, l_y_cmpnts_edges)
-        np.savetxt(l_z_cmpnts_edges_filename, l_z_cmpnts_edges)
+        np.savetxt(l_x_cmpnt_edges_filename, l_x_cmpnt_edges)
+        np.savetxt(l_y_cmpnt_edges_filename, l_y_cmpnt_edges)
+        np.savetxt(l_z_cmpnt_edges_filename, l_z_cmpnt_edges)
 
 def dim_2_l_cmpnts_nrmlzd_edges_calculation(
         conn_core_graph,
@@ -3206,14 +3234,14 @@ def dim_2_l_cmpnts_nrmlzd_edges_calculation(
     
     """
     # Edge length components
-    l_x_cmpnts_edges, l_y_cmpnts_edges = (
+    l_x_cmpnt_edges, l_y_cmpnt_edges = (
         dim_2_l_cmpnts_edges_calculation(
             conn_core_graph, conn_pb_graph, conn_graph, core_x, core_y, L)
     )
     # Edge length normalization by L*sqrt(dim)
-    l_x_cmpnts_nrmlzd_edges = l_x_cmpnts_edges / (L*np.sqrt(2))
-    l_y_cmpnts_nrmlzd_edges = l_y_cmpnts_edges / (L*np.sqrt(2))
-    return (l_x_cmpnts_nrmlzd_edges, l_y_cmpnts_nrmlzd_edges)
+    l_x_cmpnt_nrmlzd_edges = l_x_cmpnt_edges / (L*np.sqrt(2))
+    l_y_cmpnt_nrmlzd_edges = l_y_cmpnt_edges / (L*np.sqrt(2))
+    return (l_x_cmpnt_nrmlzd_edges, l_y_cmpnt_nrmlzd_edges)
 
 def dim_3_l_cmpnts_nrmlzd_edges_calculation(
         conn_core_graph,
@@ -3256,18 +3284,18 @@ def dim_3_l_cmpnts_nrmlzd_edges_calculation(
     
     """
     # Edge length components
-    l_x_cmpnts_edges, l_y_cmpnts_edges, l_z_cmpnts_edges = (
+    l_x_cmpnt_edges, l_y_cmpnt_edges, l_z_cmpnt_edges = (
         dim_3_l_cmpnts_edges_calculation(
             conn_core_graph, conn_pb_graph, conn_graph,
             core_x, core_y, core_z, L)
     )# Edge length normalization by L*sqrt(dim)
-    l_x_cmpnts_nrmlzd_edges = l_x_cmpnts_edges / (L*np.sqrt(3))
-    l_y_cmpnts_nrmlzd_edges = l_y_cmpnts_edges / (L*np.sqrt(3))
-    l_z_cmpnts_nrmlzd_edges = l_z_cmpnts_edges / (L*np.sqrt(3))
+    l_x_cmpnt_nrmlzd_edges = l_x_cmpnt_edges / (L*np.sqrt(3))
+    l_y_cmpnt_nrmlzd_edges = l_y_cmpnt_edges / (L*np.sqrt(3))
+    l_z_cmpnt_nrmlzd_edges = l_z_cmpnt_edges / (L*np.sqrt(3))
     return (
-        l_x_cmpnts_nrmlzd_edges,
-        l_y_cmpnts_nrmlzd_edges,
-        l_z_cmpnts_nrmlzd_edges
+        l_x_cmpnt_nrmlzd_edges,
+        l_y_cmpnt_nrmlzd_edges,
+        l_z_cmpnt_nrmlzd_edges
     )
 
 def swidt_network_l_cmpnts_nrmlzd_edges(
@@ -3327,14 +3355,14 @@ def swidt_network_l_cmpnts_nrmlzd_edges(
     core_x_filename = filename_prefix + "-core_x" + ".dat"
     core_y_filename = filename_prefix + "-core_y" + ".dat"
     core_z_filename = filename_prefix + "-core_z" + ".dat"
-    l_x_cmpnts_nrmlzd_edges_filename = (
-        filename_prefix + "-l_x_cmpnts_nrmlzd_edges" + ".dat"
+    l_x_cmpnt_nrmlzd_edges_filename = (
+        filename_prefix + "-l_x_cmpnt_nrmlzd_edges" + ".dat"
     )
-    l_y_cmpnts_nrmlzd_edges_filename = (
-        filename_prefix + "-l_y_cmpnts_nrmlzd_edges" + ".dat"
+    l_y_cmpnt_nrmlzd_edges_filename = (
+        filename_prefix + "-l_y_cmpnt_nrmlzd_edges" + ".dat"
     )
-    l_z_cmpnts_nrmlzd_edges_filename = (
-        filename_prefix + "-l_z_cmpnts_nrmlzd_edges" + ".dat"
+    l_z_cmpnt_nrmlzd_edges_filename = (
+        filename_prefix + "-l_z_cmpnt_nrmlzd_edges" + ".dat"
     )
 
     # Load fundamental graph constituents
@@ -3366,34 +3394,34 @@ def swidt_network_l_cmpnts_nrmlzd_edges(
 
     # Yield the elastically-effective network graph, if called for
     if elastically_effective:
-        l_x_cmpnts_nrmlzd_edges_filename = (
-            filename_prefix + "-ee_l_x_cmpnts_nrmlzd_edges" + ".dat"
+        l_x_cmpnt_nrmlzd_edges_filename = (
+            filename_prefix + "-ee_l_x_cmpnt_nrmlzd_edges" + ".dat"
         )
-        l_y_cmpnts_nrmlzd_edges_filename = (
-            filename_prefix + "-ee_l_y_cmpnts_nrmlzd_edges" + ".dat"
+        l_y_cmpnt_nrmlzd_edges_filename = (
+            filename_prefix + "-ee_l_y_cmpnt_nrmlzd_edges" + ".dat"
         )
-        l_z_cmpnts_nrmlzd_edges_filename = (
-            filename_prefix + "-ee_l_z_cmpnts_nrmlzd_edges" + ".dat"
+        l_z_cmpnt_nrmlzd_edges_filename = (
+            filename_prefix + "-ee_l_z_cmpnt_nrmlzd_edges" + ".dat"
         )
         conn_graph = elastically_effective_graph(conn_graph)
     
     if dim == 2:
         # Calculate and save normalized edge length components
-        l_x_cmpnts_nrmlzd_edges, l_y_cmpnts_nrmlzd_edges = (
+        l_x_cmpnt_nrmlzd_edges, l_y_cmpnt_nrmlzd_edges = (
             dim_2_l_cmpnts_nrmlzd_edges_calculation(
                 conn_core_graph, conn_pb_graph, conn_graph, core_x, core_y, L)
         )
-        np.savetxt(l_x_cmpnts_nrmlzd_edges_filename, l_x_cmpnts_nrmlzd_edges)
-        np.savetxt(l_y_cmpnts_nrmlzd_edges_filename, l_y_cmpnts_nrmlzd_edges)
+        np.savetxt(l_x_cmpnt_nrmlzd_edges_filename, l_x_cmpnt_nrmlzd_edges)
+        np.savetxt(l_y_cmpnt_nrmlzd_edges_filename, l_y_cmpnt_nrmlzd_edges)
     elif dim == 3:
         # Load core node z-coordinates
         core_z = np.loadtxt(core_z_filename)
         # Calculate and save normalized edge length components
-        l_x_cmpnts_nrmlzd_edges, l_y_cmpnts_nrmlzd_edges, l_z_cmpnts_nrmlzd_edges = (
+        l_x_cmpnt_nrmlzd_edges, l_y_cmpnt_nrmlzd_edges, l_z_cmpnt_nrmlzd_edges = (
             dim_3_l_cmpnts_nrmlzd_edges_calculation(
                 conn_core_graph, conn_pb_graph, conn_graph,
                 core_x, core_y, core_z, L)
         )
-        np.savetxt(l_x_cmpnts_nrmlzd_edges_filename, l_x_cmpnts_nrmlzd_edges)
-        np.savetxt(l_y_cmpnts_nrmlzd_edges_filename, l_y_cmpnts_nrmlzd_edges)
-        np.savetxt(l_z_cmpnts_nrmlzd_edges_filename, l_z_cmpnts_nrmlzd_edges)
+        np.savetxt(l_x_cmpnt_nrmlzd_edges_filename, l_x_cmpnt_nrmlzd_edges)
+        np.savetxt(l_y_cmpnt_nrmlzd_edges_filename, l_y_cmpnt_nrmlzd_edges)
+        np.savetxt(l_z_cmpnt_nrmlzd_edges_filename, l_z_cmpnt_nrmlzd_edges)

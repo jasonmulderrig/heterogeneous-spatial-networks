@@ -821,7 +821,6 @@ def swidt_topology_synthesis_plotter(
         fig.tight_layout()
         fig.savefig(tsslltd_core_deltri_zoomed_in_filename)
         plt.close()
-
     elif dim == 3:
         # Import three-dimension specific functions
         from heterogeneous_spatial_networks_funcs import (
@@ -1366,7 +1365,7 @@ def swidt_topology_synthesis_plotter(
             conn_edges = np.delete(conn_edges, edge_indx2remove, axis=0)
             if conn_core_graph.has_edge(core_node_0, core_node_1):
                 conn_core_graph.remove_edge(core_node_0, core_node_1)
-            if conn_pb_graph.has_edge(core_node_0, core_node_1):
+            elif conn_pb_graph.has_edge(core_node_0, core_node_1):
                 conn_pb_graph.remove_edge(core_node_0, core_node_1)
 
             conn_graph_k[core_node_0] -= 1
@@ -1374,7 +1373,6 @@ def swidt_topology_synthesis_plotter(
     
     pruned_conn_core_edges = np.asarray(list(conn_core_graph.edges()), dtype=int)
     pruned_conn_pb_edges = np.asarray(list(conn_pb_graph.edges()), dtype=int)
-
     pruned_core_m = np.shape(pruned_conn_core_edges)[0]
     pruned_pb_m = np.shape(pruned_conn_pb_edges)[0]
     
@@ -1641,77 +1639,78 @@ def swidt_topology_synthesis_plotter(
         fig.savefig(pruned_conn_graph_topology_synthesis_filename)
         plt.close()
     
-    # Isolate largest/maximum connected component from the
-    # core_pb_conn_graph
-    mx_cmp_conn_graph_nodes = max(
+    # Isolate largest/maximum connected component from the graph
+    mx_cmp_pruned_conn_graph_nodes = max(
         nx.connected_components(conn_graph), key=len)
-    mx_cmp_conn_core_graph = (
-        conn_core_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
+    mx_cmp_pruned_conn_core_graph = (
+        conn_core_graph.subgraph(mx_cmp_pruned_conn_graph_nodes).copy()
     )
-    mx_cmp_conn_pb_graph = (
-        conn_pb_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
+    mx_cmp_pruned_conn_pb_graph = (
+        conn_pb_graph.subgraph(mx_cmp_pruned_conn_graph_nodes).copy()
     )
-    mx_cmp_conn_graph_nodes = (
-        np.sort(np.fromiter(mx_cmp_conn_graph_nodes, dtype=int))
+    mx_cmp_pruned_conn_core_graph_edges = np.asarray(
+        list(mx_cmp_pruned_conn_core_graph.edges()), dtype=int)
+    mx_cmp_pruned_conn_pb_graph_edges = np.asarray(
+        list(mx_cmp_pruned_conn_pb_graph.edges()), dtype=int)
+    mx_cmp_pruned_conn_core_graph_m = (
+        np.shape(mx_cmp_pruned_conn_core_graph_edges)[0]
     )
-    mx_cmp_conn_core_graph_edges = (
-        np.asarray(list(mx_cmp_conn_core_graph.edges()), dtype=int)
+    mx_cmp_pruned_conn_pb_graph_m = (
+        np.shape(mx_cmp_pruned_conn_pb_graph_edges)[0]
     )
-    mx_cmp_conn_pb_graph_edges = (
-        np.asarray(list(mx_cmp_conn_pb_graph.edges()), dtype=int)
+    mx_cmp_pruned_conn_graph_nodes = (
+        np.sort(np.fromiter(mx_cmp_pruned_conn_graph_nodes, dtype=int))
     )
-    mx_cmp_conn_core_graph_m = np.shape(mx_cmp_conn_core_graph_edges)[0]
-    mx_cmp_conn_pb_graph_m = np.shape(mx_cmp_conn_pb_graph_edges)[0]
 
-    mx_cmp_core_x = core_x[mx_cmp_conn_graph_nodes]
-    mx_cmp_core_y = core_y[mx_cmp_conn_graph_nodes]
-    mx_cmp_core_z = np.asarray([])
+    mx_cmp_pruned_core_x = core_x[mx_cmp_pruned_conn_graph_nodes]
+    mx_cmp_pruned_core_y = core_y[mx_cmp_pruned_conn_graph_nodes]
+    mx_cmp_pruned_core_z = np.asarray([])
 
-    for edge in range(mx_cmp_conn_core_graph_m):
-        mx_cmp_conn_core_graph_edges[edge, 0] = (
-            int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 0])[0][0])
+    for edge in range(mx_cmp_pruned_conn_core_graph_m):
+        mx_cmp_pruned_conn_core_graph_edges[edge, 0] = (
+            int(np.where(mx_cmp_pruned_conn_graph_nodes == mx_cmp_pruned_conn_core_graph_edges[edge, 0])[0][0])
         )
-        mx_cmp_conn_core_graph_edges[edge, 1] = (
-            int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 1])[0][0])
+        mx_cmp_pruned_conn_core_graph_edges[edge, 1] = (
+            int(np.where(mx_cmp_pruned_conn_graph_nodes == mx_cmp_pruned_conn_core_graph_edges[edge, 1])[0][0])
         )
 
-    for edge in range(mx_cmp_conn_pb_graph_m):
-        mx_cmp_conn_pb_graph_edges[edge, 0] = (
-            int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 0])[0][0])
+    for edge in range(mx_cmp_pruned_conn_pb_graph_m):
+        mx_cmp_pruned_conn_pb_graph_edges[edge, 0] = (
+            int(np.where(mx_cmp_pruned_conn_graph_nodes == mx_cmp_pruned_conn_pb_graph_edges[edge, 0])[0][0])
         )
-        mx_cmp_conn_pb_graph_edges[edge, 1] = (
-            int(np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 1])[0][0])
+        mx_cmp_pruned_conn_pb_graph_edges[edge, 1] = (
+            int(np.where(mx_cmp_pruned_conn_graph_nodes == mx_cmp_pruned_conn_pb_graph_edges[edge, 1])[0][0])
         )
     
-    mx_cmp_core_m = mx_cmp_conn_core_graph_m
-    mx_cmp_pb_m = mx_cmp_conn_pb_graph_m
+    mx_cmp_pruned_core_m = mx_cmp_pruned_conn_core_graph_m
+    mx_cmp_pruned_pb_m = mx_cmp_pruned_conn_pb_graph_m
     
     if dim == 2:
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the spatial
         # topology of the core and periodic boundary nodes and edges
         fig, ax = plt.subplots()
-        for edge in range(mx_cmp_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(mx_cmp_pb_m):
-            core_node_0_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]]
-            core_node_0_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]]
-            core_node_1_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
-            core_node_1_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+        for edge in range(mx_cmp_pruned_pb_m):
+            core_node_0_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]]
+            core_node_0_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]]
+            core_node_1_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
+            core_node_1_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
             pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
                 core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
             pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
@@ -1760,27 +1759,27 @@ def swidt_topology_synthesis_plotter(
         # Here, core edges are distinguished by purple lines, and
         # periodic boundary edges are distinguished by olive lines.
         fig, ax = plt.subplots()
-        for edge in range(mx_cmp_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
                 edge_x, edge_y, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(mx_cmp_pb_m):
-            core_node_0_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]]
-            core_node_0_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]]
-            core_node_1_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
-            core_node_1_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+        for edge in range(mx_cmp_pruned_pb_m):
+            core_node_0_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]]
+            core_node_0_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]]
+            core_node_1_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
+            core_node_1_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
             pb_node_0_x, pb_node_0_y, l_pb_edge = dim_2_core_pb_edge_identification(
                 core_node_1_x, core_node_1_y, core_node_0_x, core_node_0_y, L)
             pb_node_1_x, pb_node_1_y, l_pb_edge = dim_2_core_pb_edge_identification(
@@ -1827,33 +1826,33 @@ def swidt_topology_synthesis_plotter(
         # cross-linkers and edges for the graph capturing the periodic
         # connections between the core nodes
         fig, ax = plt.subplots()
-        for edge in range(mx_cmp_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
                 edge_x, edge_y, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(mx_cmp_pb_m):
+        for edge in range(mx_cmp_pruned_pb_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
@@ -1873,33 +1872,33 @@ def swidt_topology_synthesis_plotter(
         # distinguished by purple lines, and periodic boundary edges are
         # distinguished by olive lines.
         fig, ax = plt.subplots()
-        for edge in range(mx_cmp_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
                 edge_x, edge_y, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(mx_cmp_pb_m):
+        for edge in range(mx_cmp_pruned_pb_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
@@ -1913,41 +1912,41 @@ def swidt_topology_synthesis_plotter(
         fig.savefig(mx_cmp_pruned_conn_graph_colored_topology_synthesis_filename)
         plt.close()
     elif dim == 3:
-        mx_cmp_core_z = core_z[mx_cmp_conn_graph_nodes]
+        mx_cmp_pruned_core_z = core_z[mx_cmp_pruned_conn_graph_nodes]
 
         # Plot of the edge pruned core and periodic boundary
         # cross-linkers and edges for the graph capturing the spatial
         # topology of the core and periodic boundary nodes and edges
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(mx_cmp_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(mx_cmp_pb_m):
-            core_node_0_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]]
-            core_node_0_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]]
-            core_node_0_z = mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 0]]
-            core_node_1_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
-            core_node_1_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
-            core_node_1_z = mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 1]]
+        for edge in range(mx_cmp_pruned_pb_m):
+            core_node_0_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]]
+            core_node_0_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]]
+            core_node_0_z = mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]]
+            core_node_1_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
+            core_node_1_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
+            core_node_1_z = mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
             pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
                 dim_3_core_pb_edge_identification(
                     core_node_1_x, core_node_1_y, core_node_1_z,
@@ -2015,35 +2014,35 @@ def swidt_topology_synthesis_plotter(
         # Here, core edges are distinguished by purple lines, and
         # periodic boundary edges are distinguished by olive lines.
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(mx_cmp_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(mx_cmp_pb_m):
-            core_node_0_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]]
-            core_node_0_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]]
-            core_node_0_z = mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 0]]
-            core_node_1_x = mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
-            core_node_1_y = mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
-            core_node_1_z = mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 1]]
+        for edge in range(mx_cmp_pruned_pb_m):
+            core_node_0_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]]
+            core_node_0_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]]
+            core_node_0_z = mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]]
+            core_node_1_x = mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
+            core_node_1_y = mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
+            core_node_1_z = mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
             pb_node_0_x, pb_node_0_y, pb_node_0_z, l_pb_edge = (
                 dim_3_core_pb_edge_identification(
                     core_node_1_x, core_node_1_y, core_node_1_z,
@@ -2109,45 +2108,45 @@ def swidt_topology_synthesis_plotter(
         # cross-linkers and edges for the graph capturing the periodic
         # connections between the core nodes
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(mx_cmp_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:blue", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(mx_cmp_pb_m):
+        for edge in range(mx_cmp_pruned_pb_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
                 ]
             )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
@@ -2168,45 +2167,45 @@ def swidt_topology_synthesis_plotter(
         # distinguished by purple lines, and periodic boundary edges are
         # distinguished by olive lines.
         fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
-        for edge in range(mx_cmp_core_m):
+        for edge in range(mx_cmp_pruned_core_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 0]],
-                    mx_cmp_core_z[mx_cmp_conn_core_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_core_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
                 edge_x, edge_y, edge_z, color="tab:purple", linewidth=1.5,
                 marker=".", markerfacecolor="black", markeredgecolor="black")
-        for edge in range(mx_cmp_pb_m):
+        for edge in range(mx_cmp_pruned_pb_m):
             edge_x = np.asarray(
                 [
-                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_x[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_x[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
                 ]
             )
             edge_y = np.asarray(
                 [
-                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_y[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_y[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
                 ]
             )
             edge_z = np.asarray(
                 [
-                    mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 0]],
-                    mx_cmp_core_z[mx_cmp_conn_pb_graph_edges[edge, 1]]
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]],
+                    mx_cmp_pruned_core_z[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]]
                 ]
             )
             ax.plot(
@@ -3444,7 +3443,13 @@ def swidt_graph_k_density_histogram_plotter(
         eta_n: float,
         config_arr: np.ndarray,
         pruning_arr: np.ndarray,
-        graph: str) -> None:
+        elastically_effective: bool) -> None:
+    # k identifiers
+    k_idntfr = "k"
+    k_counts_idntfr = "k_counts"
+    if elastically_effective:
+        k_idntfr = "ee_" + k_idntfr
+        k_counts_idntfr = "ee_" + k_counts_idntfr
     # Density histogram preformatting
     k_step = 1.0
     k_first_bin = 1.0
@@ -3463,15 +3468,17 @@ def swidt_graph_k_density_histogram_plotter(
     title = f"{dim:d}D, n = {n:d}, k_max = {k:d}, eta_n = {eta_n:0.3f}"
     filename_prefix = filename_str(network, date, batch, sample)
     k_dnstyhist_filename = (
-        filename_prefix + "-" + graph + "_k" + "-dnstyhist" + ".png"
+        filename_prefix + "-" + k_idntfr + "-dnstyhist" + ".png"
     )
 
     graph_k_counts = np.zeros(8, dtype=int)
     for config in np.nditer(config_arr):
         for pruning in np.nditer(pruning_arr):
-            filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+            graph_k_counts_filename_prefix = (
+                filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+            )
             graph_k_counts_filename =  (
-                filename_prefix + "-" + graph + "_k_counts" + ".dat"
+                graph_k_counts_filename_prefix + "-" + k_counts_idntfr + ".dat"
             )
             graph_k_counts += np.loadtxt(graph_k_counts_filename, dtype=int)
 
@@ -3505,8 +3512,7 @@ def swidt_graph_h_density_histogram_plotter(
         eta_n: float,
         l_bound: int,
         config_arr: np.ndarray,
-        pruning_arr: np.ndarray,
-        graph: str) -> None:
+        pruning_arr: np.ndarray) -> None:
     # Density histogram preformatting
     h_step = 1.0
     h_first_bin = 3.0
@@ -3524,16 +3530,16 @@ def swidt_graph_h_density_histogram_plotter(
 
     title = f"{dim:d}D, n = {n:d}, k_max = {k:d}, eta_n = {eta_n:0.3f}"
     filename_prefix = filename_str(network, date, batch, sample)
-    h_dnstyhist_filename = (
-        filename_prefix + "-" + graph + "_h" + "-dnstyhist" + ".png"
-    )
+    h_dnstyhist_filename = filename_prefix + "-h-dnstyhist" + ".png"
 
     graph_h_counts = np.zeros(l_bound, dtype=int)
     for config in np.nditer(config_arr):
         for pruning in np.nditer(pruning_arr):
-            filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+            graph_h_counts_filename_prefix = (
+                filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+            )
             graph_h_counts_filename =  (
-                filename_prefix + "-" + graph + "_h_counts" + ".dat"
+                graph_h_counts_filename_prefix + "-h_counts" + ".dat"
             )
             graph_h_counts += np.loadtxt(graph_h_counts_filename, dtype=int)
     graph_h_counts = graph_h_counts[2:]
@@ -3571,9 +3577,9 @@ def swidt_graph_l_edges_variant_density_histogram_plotter(
         eta_n: float,
         config_arr: np.ndarray,
         pruning_arr: np.ndarray,
-        l_edges_vrnt: str,
-        graph: str) -> None:
-    if dim == 2 and ((l_edges_vrnt == "l_edges_z_cmpnt") or (l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt")):
+        elastically_effective: bool,
+        l_edges_vrnt_idntfr: str) -> None:
+    if dim == 2 and ((l_edges_vrnt_idntfr == "l_z_cmpnt_edges") or (l_edges_vrnt_idntfr == "l_z_cmpnt_nrmlzd_edges")):
         pass
     else:
         # Density histogram preformatting
@@ -3604,142 +3610,59 @@ def swidt_graph_l_edges_variant_density_histogram_plotter(
                 l_edges_vrnt_dnstyhist_steps)
         )
         xlabel = ""
-        if l_edges_vrnt == "l_edges": xlabel = "l"
-        elif l_edges_vrnt == "l_edges_x_cmpnt": xlabel = "l_x"
-        elif l_edges_vrnt == "l_edges_y_cmpnt": xlabel = "l_y"
-        elif l_edges_vrnt == "l_edges_z_cmpnt": xlabel = "l_z"
-        elif l_edges_vrnt == "l_nrmlzd_edges": xlabel = "l/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_x_cmpnt": xlabel = "l_x/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_y_cmpnt": xlabel = "l_y/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt": xlabel = "l_z/(L*sqrt(dim))"
+        if l_edges_vrnt_idntfr == "l_edges":
+            xlabel = "l"
+        elif l_edges_vrnt_idntfr == "l_x_cmpnt_edges":
+            xlabel = "l_x"
+        elif l_edges_vrnt_idntfr == "l_y_cmpnt_edges":
+            xlabel = "l_y"
+        elif l_edges_vrnt_idntfr == "l_z_cmpnt_edges":
+            xlabel = "l_z"
+        elif l_edges_vrnt_idntfr == "l_nrmlzd_edges":
+            xlabel = "l/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_x_cmpnt_nrmlzd_edges":
+            xlabel = "l_x/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_y_cmpnt_nrmlzd_edges":
+            xlabel = "l_y/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_z_cmpnt_nrmlzd_edges":
+            xlabel = "l_z/(L*sqrt(dim))"
+
+        if elastically_effective:
+            l_edges_vrnt_idntfr = "ee_" + l_edges_vrnt_idntfr
+            xlabel = "ee_" + xlabel
         
         title = f"{dim:d}D, n = {n:d}, k_max = {k:d}, eta_n = {eta_n:0.3f}"
         filename_prefix = filename_str(network, date, batch, sample)
         
-        if graph == "core_pb":
-            core_pb_l_edges_vrnt_dnstyhist_filename = (
-                filename_prefix + "-core_pb_"
-                + l_edges_vrnt + "-dnstyhist" + ".png"
-            )
+        l_edges_vrnt_dnstyhist_filename = (
+            filename_prefix + "-" + l_edges_vrnt_idntfr + "-dnstyhist" + ".png"
+        )
 
-            core_pb_l_edges_vrnt = np.asarray([])
-            for config in np.nditer(config_arr):
-                for pruning in np.nditer(pruning_arr):
-                    filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
-                    core_pb_l_edges_vrnt_filename = (
-                        filename_prefix + "-core_pb_" + l_edges_vrnt + ".dat"
-                    )
-                    core_pb_l_edges_vrnt = np.concatenate(
-                        (core_pb_l_edges_vrnt, np.loadtxt(core_pb_l_edges_vrnt_filename)))
+        l_edges_vrnt = np.asarray([])
+        for config in np.nditer(config_arr):
+            for pruning in np.nditer(pruning_arr):
+                l_edges_vrnt_filename_prefix = (
+                    filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                )
+                l_edges_vrnt_filename = (
+                    l_edges_vrnt_filename_prefix + "-"
+                    + l_edges_vrnt_idntfr + ".dat"
+                )
+                l_edges_vrnt = np.concatenate(
+                    (l_edges_vrnt, np.loadtxt(l_edges_vrnt_filename)))
 
-            plt.hist(
-                core_pb_l_edges_vrnt, bins=l_edges_vrnt_bins, density=True,
-                color="tab:blue", edgecolor="black", zorder=3)
-            plt.xticks(xticks)
-            plt.xlabel(xlabel, fontsize=16)
-            plt.ylim([l_edges_vrnt_dnstyhist_min, l_edges_vrnt_dnstyhist_max])
-            plt.yticks(yticks)
-            plt.title(title, fontsize=20)
-            plt.grid(True, alpha=0.25, zorder=0)
-            plt.tight_layout()
-            plt.savefig(core_pb_l_edges_vrnt_dnstyhist_filename)
-            plt.close()
-        elif graph == "core_pb_conn":
-            l_core_edges_vrnt = ""
-            l_pb_edges_vrnt = ""
-            l_core_and_pb_edges_vrnt = ""
-
-            if l_edges_vrnt == "l_edges":
-                l_core_edges_vrnt = "l_core_edges"
-                l_pb_edges_vrnt = "l_pb_edges"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges"
-            elif l_edges_vrnt == "l_edges_x_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_x_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_x_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_x_cmpnt"
-            elif l_edges_vrnt == "l_edges_y_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_y_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_y_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_y_cmpnt"
-            elif l_edges_vrnt == "l_edges_z_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_z_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_z_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_z_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges"
-            elif l_edges_vrnt == "l_nrmlzd_edges_x_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_x_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_x_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_x_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges_y_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_y_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_y_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_y_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_z_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_z_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_z_cmpnt"
-            
-            core_pb_conn_l_edges_vrnt_dnstyhist_filename = (
-                filename_prefix + "-core_pb_conn_"
-                + l_edges_vrnt + "-dnstyhist" + ".png"
-            )
-            core_pb_conn_l_core_and_pb_edges_vrnt_dnstyhist_filename = (
-                filename_prefix + "-core_pb_conn_"
-                + l_core_and_pb_edges_vrnt + "-dnstyhist" + ".png"
-            )
-
-            core_pb_conn_l_edges_vrnt = np.asarray([])
-            core_pb_conn_l_core_edges_vrnt = np.asarray([])
-            core_pb_conn_l_pb_edges_vrnt = np.asarray([])
-            for config in np.nditer(config_arr):
-                for pruning in np.nditer(pruning_arr):
-                    filename_prefix = filename_prefix + f"C{config:d}" + f"P{pruning:d}"
-                    core_pb_conn_l_core_edges_vrnt_filename = (
-                        filename_prefix + "-core_pb_conn_"
-                        + l_core_edges_vrnt + ".dat"
-                    )
-                    core_pb_conn_l_pb_edges_vrnt_filename = (
-                        filename_prefix + "-core_pb_conn_"
-                        + l_pb_edges_vrnt + ".dat"
-                    )
-                    core_pb_conn_l_core_edges_vrnt = np.concatenate(
-                        (core_pb_conn_l_core_edges_vrnt, np.loadtxt(core_pb_conn_l_core_edges_vrnt_filename)))
-                    core_pb_conn_l_pb_edges_vrnt = np.concatenate(
-                        (core_pb_conn_l_pb_edges_vrnt, np.loadtxt(core_pb_conn_l_pb_edges_vrnt_filename)))
-            core_pb_conn_l_edges_vrnt = np.concatenate(
-                (core_pb_conn_l_core_edges_vrnt, core_pb_conn_l_pb_edges_vrnt))
-            
-            plt.hist(
-                core_pb_conn_l_edges_vrnt, bins=l_edges_vrnt_bins, density=True,
-                color="tab:blue", edgecolor="black", zorder=3)
-            plt.xticks(xticks)
-            plt.xlabel(xlabel, fontsize=16)
-            plt.ylim([l_edges_vrnt_dnstyhist_min, l_edges_vrnt_dnstyhist_max])
-            plt.yticks(yticks)
-            plt.title(title, fontsize=20)
-            plt.grid(True, alpha=0.25, zorder=0)
-            plt.tight_layout()
-            plt.savefig(core_pb_conn_l_edges_vrnt_dnstyhist_filename)
-            plt.close()
-
-            plt.hist(
-                core_pb_conn_l_core_edges_vrnt, bins=l_edges_vrnt_bins, density=True,
-                color="tab:purple", edgecolor="black", zorder=3)
-            plt.hist(
-                core_pb_conn_l_pb_edges_vrnt, bins=l_edges_vrnt_bins, density=True,
-                color="tab:olive", edgecolor="black", zorder=3)
-            plt.xticks(xticks)
-            plt.xlabel(xlabel, fontsize=16)
-            plt.ylim([l_edges_vrnt_dnstyhist_min, l_edges_vrnt_dnstyhist_max])
-            plt.yticks(yticks)
-            plt.title(title, fontsize=20)
-            plt.grid(True, alpha=0.25, zorder=0)
-            plt.tight_layout()
-            plt.savefig(core_pb_conn_l_core_and_pb_edges_vrnt_dnstyhist_filename)
-            plt.close()
+        plt.hist(
+            l_edges_vrnt, bins=l_edges_vrnt_bins, density=True,
+            color="tab:blue", edgecolor="black", zorder=3)
+        plt.xticks(xticks)
+        plt.xlabel(xlabel, fontsize=16)
+        plt.ylim([l_edges_vrnt_dnstyhist_min, l_edges_vrnt_dnstyhist_max])
+        plt.yticks(yticks)
+        plt.title(title, fontsize=20)
+        plt.grid(True, alpha=0.25, zorder=0)
+        plt.tight_layout()
+        plt.savefig(l_edges_vrnt_dnstyhist_filename)
+        plt.close()
 
 def run_swidt_graph_l_edges_variant_density_histogram_plotter(args):
     swidt_graph_l_edges_variant_density_histogram_plotter(*args)
@@ -3760,7 +3683,13 @@ def swidt_graph_k_christmas_tree_plot_plotter(
         params_arr: np.ndarray,
         config_arr: np.ndarray,
         pruning_arr: np.ndarray,
-        graph: str) -> None:
+        elastically_effective: bool) -> None:
+    # k identifiers
+    k_idntfr = "k"
+    k_counts_idntfr = "k_counts"
+    if elastically_effective:
+        k_idntfr = "ee_" + k_idntfr
+        k_counts_idntfr = "ee_" + k_counts_idntfr
     # Christmas tree plot preformatting
     k_num = np.shape(k_arr)[0]
     k_pad = 1.25
@@ -3780,7 +3709,7 @@ def swidt_graph_k_christmas_tree_plot_plotter(
     filename_prefix = filename_str(network, date, batch, unique_sample)
 
     k_xmastreeplt_filename = (
-        filename_prefix + "-" + graph + "_k" + "-xmastreeplt" + ".png"
+        filename_prefix + "-" + k_idntfr + "-xmastreeplt" + ".png"
     )
 
     k_indx = 0
@@ -3793,11 +3722,12 @@ def swidt_graph_k_christmas_tree_plot_plotter(
         graph_k_counts = np.zeros(8, dtype=int)
         for config in np.nditer(config_arr):
             for pruning in np.nditer(pruning_arr):
-                filename_prefix = (
+                graph_k_counts_filename_prefix = (
                     filename_prefix + f"C{config:d}" + f"P{pruning:d}"
                 )
                 graph_k_counts_filename =  (
-                    filename_prefix + "-" + graph + "_k_counts" + ".dat"
+                    graph_k_counts_filename_prefix + "-"
+                    + k_counts_idntfr + ".dat"
                 )
                 graph_k_counts += np.loadtxt(graph_k_counts_filename, dtype=int)
         graph_k = np.asarray([], dtype=int)
@@ -3844,7 +3774,13 @@ def swidt_graph_k_dim_christmas_tree_plot_plotter(
         params_arr: np.ndarray,
         config_arr: np.ndarray,
         pruning_arr: np.ndarray,
-        graph: str) -> None:
+        elastically_effective: bool) -> None:
+    # k identifiers
+    k_idntfr = "k"
+    k_counts_idntfr = "k_counts"
+    if elastically_effective:
+        k_idntfr = "ee_" + k_idntfr
+        k_counts_idntfr = "ee_" + k_counts_idntfr
     # Christmas tree plot preformatting
     k_num = np.shape(k_arr)[0]
     k_pad = 1.25
@@ -3864,7 +3800,7 @@ def swidt_graph_k_dim_christmas_tree_plot_plotter(
     filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
 
     k_xmastreeplt_filename = (
-        filename_prefix + "-" + graph + "_k" + "-xmastreeplt" + ".png"
+        filename_prefix + "-" + k_idntfr + "-xmastreeplt" + ".png"
     )
 
     for n in np.nditer(n_arr):
@@ -3879,11 +3815,12 @@ def swidt_graph_k_dim_christmas_tree_plot_plotter(
                 graph_k_counts = np.zeros(8, dtype=int)
                 for config in np.nditer(config_arr):
                     for pruning in np.nditer(pruning_arr):
-                        filename_prefix = (
+                        graph_k_counts_filename_prefix = (
                             filename_prefix + f"C{config:d}" + f"P{pruning:d}"
                         )
                         graph_k_counts_filename = (
-                            filename_prefix + "-" + graph + "_k_counts" + ".dat"
+                            graph_k_counts_filename_prefix + "-"
+                            + k_counts_idntfr + ".dat"
                         )
                         graph_k_counts += np.loadtxt(graph_k_counts_filename, dtype=int)
                 graph_k = np.asarray([], dtype=int)
@@ -3930,7 +3867,13 @@ def swidt_graph_k_dim_dist_stats_plotter(
         params_arr: np.ndarray,
         config_arr: np.ndarray,
         pruning_arr: np.ndarray,
-        graph: str) -> None:
+        elastically_effective: bool) -> None:
+    # k identifiers
+    k_idntfr = "k"
+    k_counts_idntfr = "k_counts"
+    if elastically_effective:
+        k_idntfr = "ee_" + k_idntfr
+        k_counts_idntfr = "ee_" + k_counts_idntfr
     # Statistical distributions plot preformatting
     q1 = 0.25
     q3 = 0.75
@@ -3954,7 +3897,7 @@ def swidt_graph_k_dim_dist_stats_plotter(
     filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
 
     k_dist_stats_plt_filename = (
-        filename_prefix + "-" + graph + "_k" + "-dist_stats_plt" + ".png"
+        filename_prefix + "-" + k_idntfr + "-dist_stats_plt" + ".png"
     )
 
     graph_k_min_arr = np.empty(k_num)
@@ -3974,11 +3917,12 @@ def swidt_graph_k_dim_dist_stats_plotter(
 
                 for config in np.nditer(config_arr):
                     for pruning in np.nditer(pruning_arr):
-                        filename_prefix = (
+                        graph_k_counts_filename_prefix = (
                             filename_prefix + f"C{config:d}" + f"P{pruning:d}"
                         )
                         graph_k_counts_filename =  (
-                            filename_prefix + "-" + graph + "_k_counts" + ".dat"
+                            graph_k_counts_filename_prefix + "-"
+                            + k_counts_idntfr + ".dat"
                         )
                         graph_k_counts += np.loadtxt(graph_k_counts_filename, dtype=int)
         graph_k = np.asarray([], dtype=int)
@@ -4027,8 +3971,7 @@ def swidt_graph_h_christmas_tree_plot_plotter(
         k_arr: np.ndarray,
         params_arr: np.ndarray,
         config_arr: np.ndarray,
-        pruning_arr: np.ndarray,
-        graph: str) -> None:
+        pruning_arr: np.ndarray) -> None:
     # Christmas tree plot preformatting
     k_num = np.shape(k_arr)[0]
     k_pad = 1.25
@@ -4050,9 +3993,7 @@ def swidt_graph_h_christmas_tree_plot_plotter(
     title = f"{dim:d}D, n = {n:d}, eta_n = {eta_n:0.3f}"
     filename_prefix = filename_str(network, date, batch, unique_sample)
 
-    h_xmastreeplt_filename = (
-        filename_prefix + "-" + graph + "_h" + "-xmastreeplt" + ".png"
-    )
+    h_xmastreeplt_filename = filename_prefix + "-h-xmastreeplt" + ".png"
 
     l_bound = 0
     k_indx = 0
@@ -4072,11 +4013,11 @@ def swidt_graph_h_christmas_tree_plot_plotter(
         graph_h_counts = np.zeros(l_bound, dtype=int)
         for config in np.nditer(config_arr):
             for pruning in np.nditer(pruning_arr):
-                filename_prefix = (
+                graph_h_counts_filename_prefix = (
                     filename_prefix + f"C{config:d}" + f"P{pruning:d}"
                 )
                 graph_h_counts_filename =  (
-                    filename_prefix + "-" + graph + "_h_counts" + ".dat"
+                    graph_h_counts_filename_prefix + "-h_counts" + ".dat"
                 )
                 graph_h_counts += np.loadtxt(graph_h_counts_filename, dtype=int)
         graph_h_counts = graph_h_counts[2:]
@@ -4120,8 +4061,7 @@ def swidt_graph_h_dim_christmas_tree_plot_plotter(
         k_arr: np.ndarray,
         params_arr: np.ndarray,
         config_arr: np.ndarray,
-        pruning_arr: np.ndarray,
-        graph: str) -> None:
+        pruning_arr: np.ndarray) -> None:
     # Christmas tree plot preformatting
     k_num = np.shape(k_arr)[0]
     k_pad = 1.25
@@ -4143,9 +4083,7 @@ def swidt_graph_h_dim_christmas_tree_plot_plotter(
     title = f"{dim:d}D"
     filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
 
-    h_xmastreeplt_filename = (
-        filename_prefix + "-" + graph + "_h" + "-xmastreeplt" + ".png"
-    )
+    h_xmastreeplt_filename = filename_prefix + "-h-xmastreeplt" + ".png"
 
     for n in np.nditer(n_arr):
         for eta_n in np.nditer(eta_n_arr):
@@ -4167,11 +4105,11 @@ def swidt_graph_h_dim_christmas_tree_plot_plotter(
                 graph_h_counts = np.zeros(l_bound, dtype=int)
                 for config in np.nditer(config_arr):
                     for pruning in np.nditer(pruning_arr):
-                        filename_prefix = (
+                        graph_h_counts_filename_prefix = (
                             filename_prefix + f"C{config:d}" + f"P{pruning:d}"
                         )
                         graph_h_counts_filename = (
-                            filename_prefix + "-" + graph + "_h_counts" + ".dat"
+                            graph_h_counts_filename_prefix + "-h_counts" + ".dat"
                         )
                         graph_h_counts += np.loadtxt(graph_h_counts_filename, dtype=int)
                 graph_h_counts = graph_h_counts[2:]
@@ -4215,8 +4153,7 @@ def swidt_graph_h_dim_dist_stats_plotter(
         k_arr: np.ndarray,
         params_arr: np.ndarray,
         config_arr: np.ndarray,
-        pruning_arr: np.ndarray,
-        graph: str) -> None:
+        pruning_arr: np.ndarray) -> None:
     # Statistical distributions plot preformatting
     q1 = 0.25
     q3 = 0.75
@@ -4244,9 +4181,7 @@ def swidt_graph_h_dim_dist_stats_plotter(
         filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
     )
 
-    h_dist_stats_plt_filename = (
-        filename_prefix + "-" + graph + "_h" + "-dist_stats_plt" + ".png"
-    )
+    h_dist_stats_plt_filename = filename_prefix + "-h-dist_stats_plt" + ".png"
 
     graph_h_min_arr = np.empty(k_num)
     graph_h_q1_arr = np.empty(k_num)
@@ -4274,11 +4209,11 @@ def swidt_graph_h_dim_dist_stats_plotter(
 
                 for config in np.nditer(config_arr):
                     for pruning in np.nditer(pruning_arr):
-                        filename_prefix = (
+                        graph_h_counts_filename_prefix = (
                             filename_prefix + f"C{config:d}" + f"P{pruning:d}"
                         )
                         graph_h_counts_filename =  (
-                            filename_prefix + "-" + graph + "_h_counts" + ".dat"
+                            graph_h_counts_filename_prefix + "-h_counts" + ".dat"
                         )
                         graph_h_counts += np.loadtxt(graph_h_counts_filename, dtype=int)
         graph_h_counts = graph_h_counts[2:]
@@ -4332,9 +4267,9 @@ def swidt_graph_l_edges_variant_violinplot_plotter(
         params_arr: np.ndarray,
         config_arr: np.ndarray,
         pruning_arr: np.ndarray,
-        l_edges_vrnt: str,
-        graph: str) -> None:
-    if dim == 2 and ((l_edges_vrnt == "l_edges_z_cmpnt") or (l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt")):
+        elastically_effective: bool,
+        l_edges_vrnt_idntfr: str) -> None:
+    if dim == 2 and ((l_edges_vrnt_idntfr == "l_z_cmpnt_edges") or (l_edges_vrnt_idntfr == "l_z_cmpnt_nrmlzd_edges")):
         pass
     else:
         # Violinplot preformatting
@@ -4353,179 +4288,72 @@ def swidt_graph_l_edges_variant_violinplot_plotter(
         )
         xlabel = "n"
         ylabel = ""
-        if l_edges_vrnt == "l_edges": ylabel = "l"
-        elif l_edges_vrnt == "l_edges_x_cmpnt": ylabel = "l_x"
-        elif l_edges_vrnt == "l_edges_y_cmpnt": ylabel = "l_y"
-        elif l_edges_vrnt == "l_edges_z_cmpnt": ylabel = "l_z"
-        elif l_edges_vrnt == "l_nrmlzd_edges": ylabel = "l/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_x_cmpnt": ylabel = "l_x/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_y_cmpnt": ylabel = "l_y/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt": ylabel = "l_z/(L*sqrt(dim))"
+        if l_edges_vrnt_idntfr == "l_edges":
+            ylabel = "l"
+        elif l_edges_vrnt_idntfr == "l_x_cmpnt_edges":
+            ylabel = "l_x"
+        elif l_edges_vrnt_idntfr == "l_y_cmpnt_edges":
+            ylabel = "l_y"
+        elif l_edges_vrnt_idntfr == "l_z_cmpnt_edges":
+            ylabel = "l_z"
+        elif l_edges_vrnt_idntfr == "l_nrmlzd_edges":
+            ylabel = "l/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_x_cmpnt_nrmlzd_edges":
+            ylabel = "l_x/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_y_cmpnt_nrmlzd_edges":
+            ylabel = "l_y/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_z_cmpnt_nrmlzd_edges":
+            ylabel = "l_z/(L*sqrt(dim))"
+
+        if elastically_effective:
+            l_edges_vrnt_idntfr = "ee_" + l_edges_vrnt_idntfr
+            ylabel = "ee_" + ylabel
         
         title = f"{dim:d}D, k_max = {k:d}, eta_n = {eta_n:0.3f}"
         filename_prefix = filename_str(network, date, batch, unique_sample)
         
-        if graph == "core_pb":
-            core_pb_l_edges_vrnt_vlnplt_filename = (
-                filename_prefix + "-core_pb_" + l_edges_vrnt + "-vlnplt" + ".png"
+        l_edges_vrnt_vlnplt_filename = (
+            filename_prefix + "-" + l_edges_vrnt_idntfr + "-vlnplt" + ".png"
+        )
+
+        l_edges_vrnt_list = []
+        n_indx = 0
+        for n in np.nditer(n_arr):
+            sample = (
+                int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
             )
+            filename_prefix = filename_str(network, date, batch, sample)
 
-            core_pb_l_edges_vrnt_list = []
-            n_indx = 0
-            for n in np.nditer(n_arr):
-                sample = (
-                    int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
-                )
-                filename_prefix = filename_str(network, date, batch, sample)
-
-                core_pb_l_edges_vrnt = np.asarray([])
-                for config in np.nditer(config_arr):
-                    for pruning in np.nditer(pruning_arr):
-                        filename_prefix = (
-                            filename_prefix + f"C{config:d}" + f"P{pruning:d}"
-                        )
-                        core_pb_l_edges_vrnt_filename = (
-                            filename_prefix + "-core_pb_" + l_edges_vrnt + ".dat"
-                        )
-                        core_pb_l_edges_vrnt = np.concatenate(
-                            (core_pb_l_edges_vrnt, np.loadtxt(core_pb_l_edges_vrnt_filename)))
-                core_pb_l_edges_vrnt_list.append(core_pb_l_edges_vrnt)
-                n_indx += 1
-            
-            core_pb_vp = plt.violinplot(
-                core_pb_l_edges_vrnt_list, showextrema=False)
-            for vp in core_pb_vp["bodies"]:
-                vp.set_facecolor("tab:blue")
-                vp.set_edgecolor("tab:blue")
-            plt.xlabel(xlabel, fontsize=16)
-            plt.xticks(ticks=n_ticks, labels=n_arr)
-            plt.ylabel(ylabel, fontsize=16)
-            plt.ylim(ylim)
-            plt.yticks(yticks)
-            plt.title(title, fontsize=20)
-            plt.grid(True, alpha=0.25)
-            plt.tight_layout()
-            plt.savefig(core_pb_l_edges_vrnt_vlnplt_filename)
-            plt.close()
-        elif graph == "core_pb_conn":
-            l_core_edges_vrnt = ""
-            l_pb_edges_vrnt = ""
-            l_core_and_pb_edges_vrnt = ""
-
-            if l_edges_vrnt == "l_edges":
-                l_core_edges_vrnt = "l_core_edges"
-                l_pb_edges_vrnt = "l_pb_edges"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges"
-            elif l_edges_vrnt == "l_edges_x_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_x_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_x_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_x_cmpnt"
-            elif l_edges_vrnt == "l_edges_y_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_y_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_y_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_y_cmpnt"
-            elif l_edges_vrnt == "l_edges_z_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_z_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_z_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_z_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges"
-            elif l_edges_vrnt == "l_nrmlzd_edges_x_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_x_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_x_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_x_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges_y_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_y_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_y_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_y_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_z_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_z_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_z_cmpnt"
-            
-            core_pb_conn_l_edges_vrnt_vlnplt_filename = (
-                filename_prefix + "-core_pb_conn_"
-                + l_edges_vrnt + "-vlnplt" + ".png"
-            )
-            core_pb_conn_l_core_and_pb_edges_vrnt_vlnplt_filename = (
-                filename_prefix + "-core_pb_conn_"
-                + l_core_and_pb_edges_vrnt + "-vlnplt" + ".png"
-            )
-
-            core_pb_conn_l_edges_vrnt_list = []
-            core_pb_conn_l_core_edges_vrnt_list = []
-            core_pb_conn_l_pb_edges_vrnt_list = []
-            n_indx = 0
-            for n in np.nditer(n_arr):
-                sample = (
-                    int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
-                )
-                filename_prefix = filename_str(network, date, batch, sample)
-
-                core_pb_conn_l_edges_vrnt = np.asarray([])
-                core_pb_conn_l_core_edges_vrnt = np.asarray([])
-                core_pb_conn_l_pb_edges_vrnt = np.asarray([])
-
-                for config in np.nditer(config_arr):
-                    for pruning in np.nditer(pruning_arr):
-                        filename_prefix = (
-                            filename_prefix + f"C{config:d}" + f"P{pruning:d}"
-                        )
-                        core_pb_conn_l_core_edges_vrnt_filename = (
-                            filename_prefix + "-core_pb_conn_" + l_core_edges_vrnt + ".dat"
-                        )
-                        core_pb_conn_l_pb_edges_vrnt_filename = (
-                            filename_prefix + "-core_pb_conn_" + l_pb_edges_vrnt + ".dat"
-                        )
-                        core_pb_conn_l_core_edges_vrnt = np.concatenate(
-                            (core_pb_conn_l_core_edges_vrnt, np.loadtxt(core_pb_conn_l_core_edges_vrnt_filename)))
-                        core_pb_conn_l_pb_edges_vrnt = np.concatenate(
-                            (core_pb_conn_l_pb_edges_vrnt, np.loadtxt(core_pb_conn_l_pb_edges_vrnt_filename)))
-                core_pb_conn_l_edges_vrnt = np.concatenate(
-                    (core_pb_conn_l_core_edges_vrnt, core_pb_conn_l_pb_edges_vrnt))
-                core_pb_conn_l_edges_vrnt_list.append(core_pb_conn_l_edges_vrnt)
-                core_pb_conn_l_core_edges_vrnt_list.append(core_pb_conn_l_core_edges_vrnt)
-                core_pb_conn_l_pb_edges_vrnt_list.append(core_pb_conn_l_pb_edges_vrnt)
-                n_indx += 1
-            
-            core_pb_conn_vp = plt.violinplot(
-                core_pb_conn_l_edges_vrnt_list, showextrema=False)
-            for vp in core_pb_conn_vp["bodies"]:
-                vp.set_facecolor("tab:blue")
-                vp.set_edgecolor("tab:blue")
-            plt.xlabel(xlabel, fontsize=16)
-            plt.xticks(ticks=n_ticks, labels=n_arr)
-            plt.ylabel(ylabel, fontsize=16)
-            plt.ylim(ylim)
-            plt.yticks(yticks)
-            plt.title(title, fontsize=20)
-            plt.grid(True, alpha=0.25)
-            plt.tight_layout()
-            plt.savefig(core_pb_conn_l_edges_vrnt_vlnplt_filename)
-            plt.close()
-
-            core_vp = plt.violinplot(
-                core_pb_conn_l_core_edges_vrnt_list, showextrema=False)
-            for vp in core_vp["bodies"]:
-                vp.set_facecolor("tab:purple")
-                vp.set_edgecolor("tab:purple")
-            pb_vp = plt.violinplot(
-                core_pb_conn_l_pb_edges_vrnt_list, showextrema=False)
-            for vp in pb_vp["bodies"]:
-                vp.set_facecolor("tab:olive")
-                vp.set_edgecolor("tab:olive")
-            plt.xlabel(xlabel, fontsize=16)
-            plt.xticks(ticks=n_ticks, labels=n_arr)
-            plt.ylabel(ylabel, fontsize=16)
-            plt.ylim(ylim)
-            plt.yticks(yticks)
-            plt.title(title, fontsize=20)
-            plt.grid(True, alpha=0.25)
-            plt.tight_layout()
-            plt.savefig(core_pb_conn_l_core_and_pb_edges_vrnt_vlnplt_filename)
-            plt.close()
+            l_edges_vrnt = np.asarray([])
+            for config in np.nditer(config_arr):
+                for pruning in np.nditer(pruning_arr):
+                    l_edges_vrnt_filename_prefix = (
+                        filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                    )
+                    l_edges_vrnt_filename = (
+                        l_edges_vrnt_filename_prefix + "-"
+                        + l_edges_vrnt_idntfr + ".dat"
+                    )
+                    l_edges_vrnt = np.concatenate(
+                        (l_edges_vrnt, np.loadtxt(l_edges_vrnt_filename)))
+            l_edges_vrnt_list.append(l_edges_vrnt)
+            n_indx += 1
+        
+        l_edges_vrnt_vp = plt.violinplot(
+            l_edges_vrnt_list, showextrema=False)
+        for vp in l_edges_vrnt_vp["bodies"]:
+            vp.set_facecolor("tab:blue")
+            vp.set_edgecolor("tab:blue")
+        plt.xlabel(xlabel, fontsize=16)
+        plt.xticks(ticks=n_ticks, labels=n_arr)
+        plt.ylabel(ylabel, fontsize=16)
+        plt.ylim(ylim)
+        plt.yticks(yticks)
+        plt.title(title, fontsize=20)
+        plt.grid(True, alpha=0.25)
+        plt.tight_layout()
+        plt.savefig(l_edges_vrnt_vlnplt_filename)
+        plt.close()
 
 def run_swidt_graph_l_edges_variant_violinplot_plotter(args):
     swidt_graph_l_edges_variant_violinplot_plotter(*args)
@@ -4545,9 +4373,9 @@ def swidt_graph_l_edges_variant_dim_violinplot_plotter(
         params_arr: np.ndarray,
         config_arr: np.ndarray,
         pruning_arr: np.ndarray,
-        l_edges_vrnt: str,
-        graph: str) -> None:
-    if dim == 2 and ((l_edges_vrnt == "l_edges_z_cmpnt") or (l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt")):
+        elastically_effective: bool,
+        l_edges_vrnt_idntfr: str) -> None:
+    if dim == 2 and ((l_edges_vrnt_idntfr == "l_z_cmpnt_edges") or (l_edges_vrnt_idntfr == "l_z_cmpnt_nrmlzd_edges")):
         pass
     else:
         # Violinplot preformatting
@@ -4566,191 +4394,75 @@ def swidt_graph_l_edges_variant_dim_violinplot_plotter(
         )
         xlabel = "n"
         ylabel = ""
-        if l_edges_vrnt == "l_edges": ylabel = "l"
-        elif l_edges_vrnt == "l_edges_x_cmpnt": ylabel = "l_x"
-        elif l_edges_vrnt == "l_edges_y_cmpnt": ylabel = "l_y"
-        elif l_edges_vrnt == "l_edges_z_cmpnt": ylabel = "l_z"
-        elif l_edges_vrnt == "l_nrmlzd_edges": ylabel = "l/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_x_cmpnt": ylabel = "l_x/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_y_cmpnt": ylabel = "l_y/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt": ylabel = "l_z/(L*sqrt(dim))"
+        if l_edges_vrnt_idntfr == "l_edges":
+            ylabel = "l"
+        elif l_edges_vrnt_idntfr == "l_x_cmpnt_edges":
+            ylabel = "l_x"
+        elif l_edges_vrnt_idntfr == "l_y_cmpnt_edges":
+            ylabel = "l_y"
+        elif l_edges_vrnt_idntfr == "l_z_cmpnt_edges":
+            ylabel = "l_z"
+        elif l_edges_vrnt_idntfr == "l_nrmlzd_edges":
+            ylabel = "l/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_x_cmpnt_nrmlzd_edges":
+            ylabel = "l_x/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_y_cmpnt_nrmlzd_edges":
+            ylabel = "l_y/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_z_cmpnt_nrmlzd_edges":
+            ylabel = "l_z/(L*sqrt(dim))"
+
+        if elastically_effective:
+            l_edges_vrnt_idntfr = "ee_" + l_edges_vrnt_idntfr
+            ylabel = "ee_" + ylabel
         
         title = f"{dim:d}D"
         filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
         
-        if graph == "core_pb":
-            core_pb_l_edges_vrnt_vlnplt_filename = (
-                filename_prefix + "-core_pb_" + l_edges_vrnt + "-vlnplt" + ".png"
-            )
+        l_edges_vrnt_vlnplt_filename = (
+            filename_prefix + "-" + l_edges_vrnt_idntfr + "-vlnplt" + ".png"
+        )
 
-            for k in np.nditer(k_arr):
-                for eta_n in np.nditer(eta_n_arr):
-                    core_pb_l_edges_vrnt_list = []
-                    n_indx = 0
-                    for n in np.nditer(n_arr):
-                        sample = (
-                            int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
-                        )
-                        filename_prefix = filename_str(network, date, batch, sample)
+        for k in np.nditer(k_arr):
+            for eta_n in np.nditer(eta_n_arr):
+                l_edges_vrnt_list = []
+                n_indx = 0
+                for n in np.nditer(n_arr):
+                    sample = (
+                        int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
+                    )
+                    filename_prefix = filename_str(network, date, batch, sample)
 
-                        core_pb_l_edges_vrnt = np.asarray([])
-                        for config in np.nditer(config_arr):
-                            for pruning in np.nditer(pruning_arr):
-                                filename_prefix = (
-                                    filename_prefix + f"C{config:d}" + f"P{pruning:d}"
-                                )
-                                core_pb_l_edges_vrnt_filename = (
-                                    filename_prefix + "-core_pb_" + l_edges_vrnt + ".dat"
-                                )
-                                core_pb_l_edges_vrnt = np.concatenate(
-                                    (core_pb_l_edges_vrnt, np.loadtxt(core_pb_l_edges_vrnt_filename)))
-                        core_pb_l_edges_vrnt_list.append(core_pb_l_edges_vrnt)
-                        n_indx += 1
-                    
-                    core_pb_vp = plt.violinplot(
-                        core_pb_l_edges_vrnt_list, showextrema=False)
-                    for vp in core_pb_vp["bodies"]:
-                        vp.set_facecolor("tab:blue")
-                        vp.set_edgecolor("tab:blue")
-                        vp.set_alpha(0.25)
-            plt.xlabel(xlabel, fontsize=16)
-            plt.xticks(ticks=n_ticks, labels=n_arr)
-            plt.ylabel(ylabel, fontsize=16)
-            plt.ylim(ylim)
-            plt.yticks(yticks)
-            plt.title(title, fontsize=20)
-            plt.grid(True, alpha=0.25)
-            plt.tight_layout()
-            plt.savefig(core_pb_l_edges_vrnt_vlnplt_filename)
-            plt.close()
-        elif graph == "core_pb_conn":
-            l_core_edges_vrnt = ""
-            l_pb_edges_vrnt = ""
-            l_core_and_pb_edges_vrnt = ""
-
-            if l_edges_vrnt == "l_edges":
-                l_core_edges_vrnt = "l_core_edges"
-                l_pb_edges_vrnt = "l_pb_edges"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges"
-            elif l_edges_vrnt == "l_edges_x_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_x_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_x_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_x_cmpnt"
-            elif l_edges_vrnt == "l_edges_y_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_y_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_y_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_y_cmpnt"
-            elif l_edges_vrnt == "l_edges_z_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_z_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_z_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_z_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges"
-            elif l_edges_vrnt == "l_nrmlzd_edges_x_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_x_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_x_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_x_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges_y_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_y_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_y_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_y_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_z_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_z_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_z_cmpnt"
-            
-            core_pb_conn_l_edges_vrnt_vlnplt_filename = (
-                filename_prefix + "-core_pb_conn_"
-                + l_edges_vrnt + "-vlnplt" + ".png"
-            )
-            core_pb_conn_l_core_and_pb_edges_vrnt_vlnplt_filename = (
-                filename_prefix + "-core_pb_conn_"
-                + l_core_and_pb_edges_vrnt + "-vlnplt" + ".png"
-            )
-
-            fig_edges_vlnplt, ax_edges_vlnplt = plt.subplots()
-            fig_core_and_pb_edges_vlnplt, ax_core_and_pb_edges_vlnplt = plt.subplots()
-
-            for k in np.nditer(k_arr):
-                for eta_n in np.nditer(eta_n_arr):
-                    core_pb_conn_l_edges_vrnt_list = []
-                    core_pb_conn_l_core_edges_vrnt_list = []
-                    core_pb_conn_l_pb_edges_vrnt_list = []
-                    n_indx = 0
-                    for n in np.nditer(n_arr):
-                        sample = (
-                            int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
-                        )
-                        filename_prefix = filename_str(network, date, batch, sample)
-
-                        core_pb_conn_l_edges_vrnt = np.asarray([])
-                        core_pb_conn_l_core_edges_vrnt = np.asarray([])
-                        core_pb_conn_l_pb_edges_vrnt = np.asarray([])
-
-                        for config in np.nditer(config_arr):
-                            for pruning in np.nditer(pruning_arr):
-                                filename_prefix = (
-                                    filename_prefix + f"C{config:d}"
-                                    + f"P{pruning:d}"
-                                )
-                                core_pb_conn_l_core_edges_vrnt_filename = (
-                                    filename_prefix + "-core_pb_conn_" + l_core_edges_vrnt + ".dat"
-                                )
-                                core_pb_conn_l_pb_edges_vrnt_filename = (
-                                    filename_prefix + "-core_pb_conn_" + l_pb_edges_vrnt + ".dat"
-                                )
-                                core_pb_conn_l_core_edges_vrnt = np.concatenate(
-                                    (core_pb_conn_l_core_edges_vrnt, np.loadtxt(core_pb_conn_l_core_edges_vrnt_filename)))
-                                core_pb_conn_l_pb_edges_vrnt = np.concatenate(
-                                    (core_pb_conn_l_pb_edges_vrnt, np.loadtxt(core_pb_conn_l_pb_edges_vrnt_filename)))
-                        core_pb_conn_l_edges_vrnt = np.concatenate(
-                            (core_pb_conn_l_core_edges_vrnt, core_pb_conn_l_pb_edges_vrnt))
-                        core_pb_conn_l_edges_vrnt_list.append(core_pb_conn_l_edges_vrnt)
-                        core_pb_conn_l_core_edges_vrnt_list.append(core_pb_conn_l_core_edges_vrnt)
-                        core_pb_conn_l_pb_edges_vrnt_list.append(core_pb_conn_l_pb_edges_vrnt)
-                        n_indx += 1
-                    
-                    core_pb_conn_vp = ax_edges_vlnplt.violinplot(
-                        core_pb_conn_l_edges_vrnt_list, showextrema=False)
-                    for vp in core_pb_conn_vp["bodies"]:
-                        vp.set_facecolor("tab:blue")
-                        vp.set_edgecolor("tab:blue")
-                        vp.set_alpha(0.25)
-                    core_vp = ax_core_and_pb_edges_vlnplt.violinplot(
-                        core_pb_conn_l_core_edges_vrnt_list, showextrema=False)
-                    for vp in core_vp["bodies"]:
-                        vp.set_facecolor("tab:purple")
-                        vp.set_edgecolor("tab:purple")
-                        vp.set_alpha(0.25)
-                    pb_vp = ax_core_and_pb_edges_vlnplt.violinplot(
-                        core_pb_conn_l_pb_edges_vrnt_list, showextrema=False)
-                    for vp in pb_vp["bodies"]:
-                        vp.set_facecolor("tab:olive")
-                        vp.set_edgecolor("tab:olive")
-                        vp.set_alpha(0.25)
-            ax_edges_vlnplt.set_xlabel(xlabel, fontsize=16)
-            ax_edges_vlnplt.set_xticks(ticks=n_ticks, labels=n_arr)
-            ax_edges_vlnplt.set_ylabel(ylabel, fontsize=16)
-            ax_edges_vlnplt.set_ylim(ylim)
-            ax_edges_vlnplt.set_yticks(yticks)
-            ax_edges_vlnplt.set_title(title, fontdict={"fontsize": 20})
-            ax_edges_vlnplt.grid(True, alpha=0.25)
-            fig_edges_vlnplt.tight_layout()
-            fig_edges_vlnplt.savefig(core_pb_conn_l_edges_vrnt_vlnplt_filename)
-            plt.close(fig_edges_vlnplt)
-
-            ax_core_and_pb_edges_vlnplt.set_xlabel(xlabel, fontsize=16)
-            ax_core_and_pb_edges_vlnplt.set_xticks(ticks=n_ticks, labels=n_arr)
-            ax_core_and_pb_edges_vlnplt.set_ylabel(ylabel, fontsize=16)
-            ax_core_and_pb_edges_vlnplt.set_ylim(ylim)
-            ax_core_and_pb_edges_vlnplt.set_yticks(yticks)
-            ax_core_and_pb_edges_vlnplt.set_title(title, fontdict={"fontsize": 20})
-            ax_core_and_pb_edges_vlnplt.grid(True, alpha=0.25)
-            fig_core_and_pb_edges_vlnplt.tight_layout()
-            fig_core_and_pb_edges_vlnplt.savefig(core_pb_conn_l_core_and_pb_edges_vrnt_vlnplt_filename)
-            plt.close(fig_core_and_pb_edges_vlnplt)
+                    l_edges_vrnt = np.asarray([])
+                    for config in np.nditer(config_arr):
+                        for pruning in np.nditer(pruning_arr):
+                            l_edges_vrnt_filename_prefix = (
+                                filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                            )
+                            l_edges_vrnt_filename = (
+                                l_edges_vrnt_filename_prefix + "-"
+                                + l_edges_vrnt_idntfr + ".dat"
+                            )
+                            l_edges_vrnt = np.concatenate(
+                                (l_edges_vrnt, np.loadtxt(l_edges_vrnt_filename)))
+                    l_edges_vrnt_list.append(l_edges_vrnt)
+                    n_indx += 1
+                
+                l_edges_vrnt_vp = plt.violinplot(
+                    l_edges_vrnt_list, showextrema=False)
+                for vp in l_edges_vrnt_vp["bodies"]:
+                    vp.set_facecolor("tab:blue")
+                    vp.set_edgecolor("tab:blue")
+                    vp.set_alpha(0.25)
+        plt.xlabel(xlabel, fontsize=16)
+        plt.xticks(ticks=n_ticks, labels=n_arr)
+        plt.ylabel(ylabel, fontsize=16)
+        plt.ylim(ylim)
+        plt.yticks(yticks)
+        plt.title(title, fontsize=20)
+        plt.grid(True, alpha=0.25)
+        plt.tight_layout()
+        plt.savefig(l_edges_vrnt_vlnplt_filename)
+        plt.close()
 
 def run_swidt_graph_l_edges_variant_dim_violinplot_plotter(args):
     swidt_graph_l_edges_variant_dim_violinplot_plotter(*args)
@@ -4770,9 +4482,9 @@ def swidt_graph_l_edges_variant_dim_dist_stats_plotter(
         params_arr: np.ndarray,
         config_arr: np.ndarray,
         pruning_arr: np.ndarray,
-        l_edges_vrnt: str,
-        graph: str) -> None:
-    if dim == 2 and ((l_edges_vrnt == "l_edges_z_cmpnt") or (l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt")):
+        elastically_effective: bool,
+        l_edges_vrnt_idntfr: str) -> None:
+    if dim == 2 and ((l_edges_vrnt_idntfr == "l_z_cmpnt_edges") or (l_edges_vrnt_idntfr == "l_z_cmpnt_nrmlzd_edges")):
         pass
     else:
         # Statistical distributions plot preformatting
@@ -4795,365 +4507,102 @@ def swidt_graph_l_edges_variant_dim_dist_stats_plotter(
         )
         xlabel = "n"
         ylabel = ""
-        if l_edges_vrnt == "l_edges": ylabel = "l"
-        elif l_edges_vrnt == "l_edges_x_cmpnt": ylabel = "l_x"
-        elif l_edges_vrnt == "l_edges_y_cmpnt": ylabel = "l_y"
-        elif l_edges_vrnt == "l_edges_z_cmpnt": ylabel = "l_z"
-        elif l_edges_vrnt == "l_nrmlzd_edges": ylabel = "l/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_x_cmpnt": ylabel = "l_x/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_y_cmpnt": ylabel = "l_y/(L*sqrt(dim))"
-        elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt": ylabel = "l_z/(L*sqrt(dim))"
+        if l_edges_vrnt_idntfr == "l_edges":
+            ylabel = "l"
+        elif l_edges_vrnt_idntfr == "l_x_cmpnt_edges":
+            ylabel = "l_x"
+        elif l_edges_vrnt_idntfr == "l_y_cmpnt_edges":
+            ylabel = "l_y"
+        elif l_edges_vrnt_idntfr == "l_z_cmpnt_edges":
+            ylabel = "l_z"
+        elif l_edges_vrnt_idntfr == "l_nrmlzd_edges":
+            ylabel = "l/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_x_cmpnt_nrmlzd_edges":
+            ylabel = "l_x/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_y_cmpnt_nrmlzd_edges":
+            ylabel = "l_y/(L*sqrt(dim))"
+        elif l_edges_vrnt_idntfr == "l_z_cmpnt_nrmlzd_edges":
+            ylabel = "l_z/(L*sqrt(dim))"
+
+        if elastically_effective:
+            l_edges_vrnt_idntfr = "ee_" + l_edges_vrnt_idntfr
+            ylabel = "ee_" + ylabel
         
         title = f"{dim:d}D"
         filename_prefix = filepath_str(network) + f"{date}{batch}-dim_{dim:d}"
         
-        if graph == "core_pb":
-            core_pb_l_edges_vrnt_dist_stats_plt_filename = (
-                filename_prefix + "-core_pb_"
-                + l_edges_vrnt + "-dist_stats_plt" + ".png"
+        l_edges_vrnt_dist_stats_plt_filename = (
+            filename_prefix + "-" + l_edges_vrnt_idntfr
+            + "-dist_stats_plt" + ".png"
+        )
+
+        l_edges_vrnt_min_arr = np.empty(n_num)
+        l_edges_vrnt_q1_arr = np.empty(n_num)
+        l_edges_vrnt_mean_arr = np.empty(n_num)
+        l_edges_vrnt_q3_arr = np.empty(n_num)
+        l_edges_vrnt_max_arr = np.empty(n_num)
+        n_indx = 0
+        for n in np.nditer(n_arr):
+            l_edges_vrnt = np.asarray([])
+            for k in np.nditer(k_arr):
+                for eta_n in np.nditer(eta_n_arr):
+                    sample = (
+                        int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
+                    )
+                    filename_prefix = filename_str(network, date, batch, sample)
+
+                    for config in np.nditer(config_arr):
+                        for pruning in np.nditer(pruning_arr):
+                            l_edges_vrnt_filename_prefix = (
+                                filename_prefix + f"C{config:d}" + f"P{pruning:d}"
+                            )
+                            l_edges_vrnt_filename = (
+                                l_edges_vrnt_filename_prefix + "-"
+                                + l_edges_vrnt_idntfr + ".dat"
+                            )
+                            l_edges_vrnt = np.concatenate(
+                                (l_edges_vrnt, np.loadtxt(l_edges_vrnt_filename)))
+            l_edges_vrnt_q1_val, l_edges_vrnt_q3_val = (
+                np.quantile(l_edges_vrnt, q1_q3_arr)
             )
-
-            core_pb_l_edges_vrnt_min_arr = np.empty(n_num)
-            core_pb_l_edges_vrnt_q1_arr = np.empty(n_num)
-            core_pb_l_edges_vrnt_mean_arr = np.empty(n_num)
-            core_pb_l_edges_vrnt_q3_arr = np.empty(n_num)
-            core_pb_l_edges_vrnt_max_arr = np.empty(n_num)
-            n_indx = 0
-            for n in np.nditer(n_arr):
-                core_pb_l_edges_vrnt = np.asarray([])
-                for k in np.nditer(k_arr):
-                    for eta_n in np.nditer(eta_n_arr):
-                        sample = (
-                            int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
-                        )
-                        filename_prefix = filename_str(network, date, batch, sample)
-
-                        for config in np.nditer(config_arr):
-                            for pruning in np.nditer(pruning_arr):
-                                filename_prefix = (
-                                    filename_prefix + f"C{config:d}"
-                                    + f"P{pruning:d}"
-                                )
-                                core_pb_l_edges_vrnt_filename = (
-                                    filename_prefix + "-core_pb_" + l_edges_vrnt + ".dat"
-                                )
-                                core_pb_l_edges_vrnt = np.concatenate(
-                                    (core_pb_l_edges_vrnt, np.loadtxt(core_pb_l_edges_vrnt_filename)))
-                core_pb_l_edges_vrnt_q1_val, core_pb_l_edges_vrnt_q3_val = (
-                    np.quantile(core_pb_l_edges_vrnt, q1_q3_arr)
-                )
-                core_pb_l_edges_vrnt_min_arr[n_indx] = (
-                    np.min(core_pb_l_edges_vrnt)
-                )
-                core_pb_l_edges_vrnt_q1_arr[n_indx] = (
-                    core_pb_l_edges_vrnt_q1_val
-                )
-                core_pb_l_edges_vrnt_mean_arr[n_indx] = (
-                    np.mean(core_pb_l_edges_vrnt)
-                )
-                core_pb_l_edges_vrnt_q3_arr[n_indx] = (
-                    core_pb_l_edges_vrnt_q3_val
-                )
-                core_pb_l_edges_vrnt_max_arr[n_indx] = (
-                    np.max(core_pb_l_edges_vrnt)
-                )
-                n_indx += 1
-            
-            del core_pb_l_edges_vrnt
-
-            plt.fill_between(
-                n_arr, core_pb_l_edges_vrnt_min_arr,
-                core_pb_l_edges_vrnt_max_arr, color="skyblue", alpha=0.25)
-            plt.fill_between(
-                n_arr, core_pb_l_edges_vrnt_q1_arr,
-                core_pb_l_edges_vrnt_q3_arr, color="steelblue", alpha=0.25)
-            plt.plot(
-                n_arr, core_pb_l_edges_vrnt_mean_arr, linestyle="-",
-                color="tab:blue")
-            plt.xscale("log")
-            plt.xlabel(xlabel, fontsize=16)
-            plt.ylabel(ylabel, fontsize=16)
-            plt.ylim(ylim)
-            plt.yticks(yticks)
-            plt.title(title, fontsize=20)
-            plt.grid(True, alpha=0.25, zorder=0)
-            plt.tight_layout()
-            plt.savefig(core_pb_l_edges_vrnt_dist_stats_plt_filename)
-            plt.close()
-
-            # plt.fill_between(
-            #     n_ticks, core_pb_l_edges_vrnt_min_arr,
-            #     core_pb_l_edges_vrnt_max_arr, color="skyblue", alpha=0.25)
-            # plt.fill_between(
-            #     n_ticks, core_pb_l_edges_vrnt_q1_arr,
-            #     core_pb_l_edges_vrnt_q3_arr, color="steelblue", alpha=0.25)
-            # plt.plot(
-            #     n_ticks, core_pb_l_edges_vrnt_mean_arr, linestyle="-",
-            #     color="tab:blue")
-            # plt.xlabel(xlabel, fontsize=16)
-            # plt.xticks(ticks=n_ticks, labels=n_arr)
-            # plt.ylabel(ylabel, fontsize=16)
-            # plt.ylim(ylim)
-            # plt.yticks(yticks)
-            # plt.title(title, fontsize=20)
-            # plt.grid(True, alpha=0.25, zorder=0)
-            # plt.tight_layout()
-            # plt.savefig(core_pb_l_edges_vrnt_dist_stats_plt_filename)
-            # plt.close()
-        elif graph == "core_pb_conn":
-            l_core_edges_vrnt = ""
-            l_pb_edges_vrnt = ""
-            l_core_and_pb_edges_vrnt = ""
-
-            if l_edges_vrnt == "l_edges":
-                l_core_edges_vrnt = "l_core_edges"
-                l_pb_edges_vrnt = "l_pb_edges"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges"
-            elif l_edges_vrnt == "l_edges_x_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_x_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_x_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_x_cmpnt"
-            elif l_edges_vrnt == "l_edges_y_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_y_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_y_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_y_cmpnt"
-            elif l_edges_vrnt == "l_edges_z_cmpnt":
-                l_core_edges_vrnt = "l_core_edges_z_cmpnt"
-                l_pb_edges_vrnt = "l_pb_edges_z_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_core_and_pb_edges_z_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges"
-            elif l_edges_vrnt == "l_nrmlzd_edges_x_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_x_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_x_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_x_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges_y_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_y_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_y_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_y_cmpnt"
-            elif l_edges_vrnt == "l_nrmlzd_edges_z_cmpnt":
-                l_core_edges_vrnt = "l_nrmlzd_core_edges_z_cmpnt"
-                l_pb_edges_vrnt = "l_nrmlzd_pb_edges_z_cmpnt"
-                l_core_and_pb_edges_vrnt = "l_nrmlzd_core_and_pb_edges_z_cmpnt"
-            
-            core_pb_conn_l_edges_vrnt_dist_stats_plt_filename = (
-                filename_prefix + "-core_pb_conn_"
-                + l_edges_vrnt + "-dist_stats_plt" + ".png"
+            l_edges_vrnt_min_arr[n_indx] = (
+                np.min(l_edges_vrnt)
             )
-            core_pb_conn_l_core_and_pb_edges_vrnt_dist_stats_plt_filename = (
-                filename_prefix + "-core_pb_conn_"
-                + l_core_and_pb_edges_vrnt + "-dist_stats_plt" + ".png"
+            l_edges_vrnt_q1_arr[n_indx] = (
+                l_edges_vrnt_q1_val
             )
+            l_edges_vrnt_mean_arr[n_indx] = (
+                np.mean(l_edges_vrnt)
+            )
+            l_edges_vrnt_q3_arr[n_indx] = (
+                l_edges_vrnt_q3_val
+            )
+            l_edges_vrnt_max_arr[n_indx] = (
+                np.max(l_edges_vrnt)
+            )
+            n_indx += 1
+        
+        del l_edges_vrnt
 
-            core_pb_conn_l_edges_vrnt_min_arr = np.empty(n_num)
-            core_pb_conn_l_edges_vrnt_q1_arr = np.empty(n_num)
-            core_pb_conn_l_edges_vrnt_mean_arr = np.empty(n_num)
-            core_pb_conn_l_edges_vrnt_q3_arr = np.empty(n_num)
-            core_pb_conn_l_edges_vrnt_max_arr = np.empty(n_num)
-
-            core_pb_conn_l_core_edges_vrnt_min_arr = np.empty(n_num)
-            core_pb_conn_l_core_edges_vrnt_q1_arr = np.empty(n_num)
-            core_pb_conn_l_core_edges_vrnt_mean_arr = np.empty(n_num)
-            core_pb_conn_l_core_edges_vrnt_q3_arr = np.empty(n_num)
-            core_pb_conn_l_core_edges_vrnt_max_arr = np.empty(n_num)
-
-            core_pb_conn_l_pb_edges_vrnt_min_arr = np.empty(n_num)
-            core_pb_conn_l_pb_edges_vrnt_q1_arr = np.empty(n_num)
-            core_pb_conn_l_pb_edges_vrnt_mean_arr = np.empty(n_num)
-            core_pb_conn_l_pb_edges_vrnt_q3_arr = np.empty(n_num)
-            core_pb_conn_l_pb_edges_vrnt_max_arr = np.empty(n_num)
-            n_indx = 0
-            for n in np.nditer(n_arr):
-                core_pb_conn_l_edges_vrnt = np.asarray([])
-                core_pb_conn_l_core_edges_vrnt = np.asarray([])
-                core_pb_conn_l_pb_edges_vrnt = np.asarray([])
-                for k in np.nditer(k_arr):
-                    for eta_n in np.nditer(eta_n_arr):
-                        sample = (
-                            int(np.where((params_arr == (dim, b, n, k, eta_n)).all(axis=1))[0][0])
-                        )
-                        filename_prefix = filename_str(network, date, batch, sample)
-
-                        for config in np.nditer(config_arr):
-                            for pruning in np.nditer(pruning_arr):
-                                filename_prefix = (
-                                    filename_prefix + f"C{config:d}"
-                                    + f"P{pruning:d}"
-                                )
-                                core_pb_conn_l_core_edges_vrnt_filename = (
-                                    filename_prefix + "-core_pb_conn_" + l_core_edges_vrnt + ".dat"
-                                )
-                                core_pb_conn_l_pb_edges_vrnt_filename = (
-                                    filename_prefix + "-core_pb_conn_" + l_pb_edges_vrnt + ".dat"
-                                )
-                                core_pb_conn_l_core_edges_vrnt = np.concatenate(
-                                    (core_pb_conn_l_core_edges_vrnt, np.loadtxt(core_pb_conn_l_core_edges_vrnt_filename)))
-                                core_pb_conn_l_pb_edges_vrnt = np.concatenate(
-                                    (core_pb_conn_l_pb_edges_vrnt, np.loadtxt(core_pb_conn_l_pb_edges_vrnt_filename)))
-                core_pb_conn_l_edges_vrnt = np.concatenate(
-                    (core_pb_conn_l_core_edges_vrnt, core_pb_conn_l_pb_edges_vrnt))
-
-                core_pb_conn_l_edges_vrnt_q1_val, core_pb_conn_l_edges_vrnt_q3_val = (
-                    np.quantile(core_pb_conn_l_edges_vrnt, q1_q3_arr)
-                )
-                core_pb_conn_l_edges_vrnt_min_arr[n_indx] = (
-                    np.min(core_pb_conn_l_edges_vrnt)
-                )
-                core_pb_conn_l_edges_vrnt_q1_arr[n_indx] = (
-                    core_pb_conn_l_edges_vrnt_q1_val
-                )
-                core_pb_conn_l_edges_vrnt_mean_arr[n_indx] = (
-                    np.mean(core_pb_conn_l_edges_vrnt)
-                )
-                core_pb_conn_l_edges_vrnt_q3_arr[n_indx] = (
-                    core_pb_conn_l_edges_vrnt_q3_val
-                )
-                core_pb_conn_l_edges_vrnt_max_arr[n_indx] = (
-                    np.max(core_pb_conn_l_edges_vrnt)
-                )
-
-                core_pb_conn_l_core_edges_vrnt_q1_val, core_pb_conn_l_core_edges_vrnt_q3_val = (
-                    np.quantile(core_pb_conn_l_core_edges_vrnt, q1_q3_arr)
-                )
-                core_pb_conn_l_core_edges_vrnt_min_arr[n_indx] = (
-                    np.min(core_pb_conn_l_core_edges_vrnt)
-                )
-                core_pb_conn_l_core_edges_vrnt_q1_arr[n_indx] = (
-                    core_pb_conn_l_core_edges_vrnt_q1_val
-                )
-                core_pb_conn_l_core_edges_vrnt_mean_arr[n_indx] = (
-                    np.mean(core_pb_conn_l_core_edges_vrnt)
-                )
-                core_pb_conn_l_core_edges_vrnt_q3_arr[n_indx] = (
-                    core_pb_conn_l_core_edges_vrnt_q3_val
-                )
-                core_pb_conn_l_core_edges_vrnt_max_arr[n_indx] = (
-                    np.max(core_pb_conn_l_core_edges_vrnt)
-                )
-
-                core_pb_conn_l_pb_edges_vrnt_q1_val, core_pb_conn_l_pb_edges_vrnt_q3_val = (
-                    np.quantile(core_pb_conn_l_pb_edges_vrnt, q1_q3_arr)
-                )
-                core_pb_conn_l_pb_edges_vrnt_min_arr[n_indx] = (
-                    np.min(core_pb_conn_l_pb_edges_vrnt)
-                )
-                core_pb_conn_l_pb_edges_vrnt_q1_arr[n_indx] = (
-                    core_pb_conn_l_pb_edges_vrnt_q1_val
-                )
-                core_pb_conn_l_pb_edges_vrnt_mean_arr[n_indx] = (
-                    np.mean(core_pb_conn_l_pb_edges_vrnt)
-                )
-                core_pb_conn_l_pb_edges_vrnt_q3_arr[n_indx] = (
-                    core_pb_conn_l_pb_edges_vrnt_q3_val
-                )
-                core_pb_conn_l_pb_edges_vrnt_max_arr[n_indx] = (
-                    np.max(core_pb_conn_l_pb_edges_vrnt)
-                )
-                n_indx += 1
-            
-            del core_pb_conn_l_edges_vrnt, core_pb_conn_l_core_edges_vrnt, core_pb_conn_l_pb_edges_vrnt
-
-            plt.fill_between(
-                n_arr, core_pb_conn_l_edges_vrnt_min_arr,
-                core_pb_conn_l_edges_vrnt_max_arr, color="skyblue", alpha=0.25)
-            plt.fill_between(
-                n_arr, core_pb_conn_l_edges_vrnt_q1_arr,
-                core_pb_conn_l_edges_vrnt_q3_arr, color="steelblue", alpha=0.25)
-            plt.plot(
-                n_arr, core_pb_conn_l_edges_vrnt_mean_arr, linestyle="-",
-                color="tab:blue")
-            plt.xscale("log")
-            plt.xlabel(xlabel, fontsize=16)
-            plt.ylabel(ylabel, fontsize=16)
-            plt.ylim(ylim)
-            plt.yticks(yticks)
-            plt.title(title, fontsize=20)
-            plt.grid(True, alpha=0.25, zorder=0)
-            plt.tight_layout()
-            plt.savefig(core_pb_conn_l_edges_vrnt_dist_stats_plt_filename)
-            plt.close()
-
-            plt.fill_between(
-                n_arr, core_pb_conn_l_core_edges_vrnt_min_arr,
-                core_pb_conn_l_core_edges_vrnt_max_arr, color="plum", alpha=0.25)
-            plt.fill_between(
-                n_arr, core_pb_conn_l_core_edges_vrnt_q1_arr,
-                core_pb_conn_l_core_edges_vrnt_q3_arr, color="mediumorchid",
-                alpha=0.25)
-            plt.plot(
-                n_arr, core_pb_conn_l_core_edges_vrnt_mean_arr, linestyle="-",
-                color="tab:purple")
-            plt.fill_between(
-                n_arr, core_pb_conn_l_pb_edges_vrnt_min_arr,
-                core_pb_conn_l_pb_edges_vrnt_max_arr, color="khaki", alpha=0.25)
-            plt.fill_between(
-                n_arr, core_pb_conn_l_pb_edges_vrnt_q1_arr,
-                core_pb_conn_l_pb_edges_vrnt_q3_arr, color="gold", alpha=0.25)
-            plt.plot(
-                n_arr, core_pb_conn_l_pb_edges_vrnt_mean_arr, linestyle="-",
-                color="tab:olive")
-            plt.xscale("log")
-            plt.xlabel(xlabel, fontsize=16)
-            plt.ylabel(ylabel, fontsize=16)
-            plt.ylim(ylim)
-            plt.yticks(yticks)
-            plt.title(title, fontsize=20)
-            plt.grid(True, alpha=0.25, zorder=0)
-            plt.tight_layout()
-            plt.savefig(core_pb_conn_l_core_and_pb_edges_vrnt_dist_stats_plt_filename)
-            plt.close()
-
-            # plt.fill_between(
-            #     n_ticks, core_pb_conn_l_edges_vrnt_min_arr,
-            #     core_pb_conn_l_edges_vrnt_max_arr, color="skyblue", alpha=0.25)
-            # plt.fill_between(
-            #     n_ticks, core_pb_conn_l_edges_vrnt_q1_arr,
-            #     core_pb_conn_l_edges_vrnt_q3_arr, color="steelblue", alpha=0.25)
-            # plt.plot(
-            #     n_ticks, core_pb_conn_l_edges_vrnt_mean_arr, linestyle="-",
-            #     color="tab:blue")
-            # plt.xlabel(xlabel, fontsize=16)
-            # plt.xticks(ticks=n_ticks, labels=n_arr)
-            # plt.ylabel(ylabel, fontsize=16)
-            # plt.ylim(ylim)
-            # plt.yticks(yticks)
-            # plt.title(title, fontsize=20)
-            # plt.grid(True, alpha=0.25, zorder=0)
-            # plt.tight_layout()
-            # plt.savefig(core_pb_conn_l_edges_vrnt_dist_stats_plt_filename)
-            # plt.close()
-
-            # plt.fill_between(
-            #     n_ticks, core_pb_conn_l_core_edges_vrnt_min_arr,
-            #     core_pb_conn_l_core_edges_vrnt_max_arr, color="plum", alpha=0.25)
-            # plt.fill_between(
-            #     n_ticks, core_pb_conn_l_core_edges_vrnt_q1_arr,
-            #     core_pb_conn_l_core_edges_vrnt_q3_arr, color="mediumorchid",
-            #     alpha=0.25)
-            # plt.plot(
-            #     n_ticks, core_pb_conn_l_core_edges_vrnt_mean_arr, linestyle="-",
-            #     color="tab:purple")
-            # plt.fill_between(
-            #     n_ticks, core_pb_conn_l_pb_edges_vrnt_min_arr,
-            #     core_pb_conn_l_pb_edges_vrnt_max_arr, color="khaki", alpha=0.25)
-            # plt.fill_between(
-            #     n_ticks, core_pb_conn_l_pb_edges_vrnt_q1_arr,
-            #     core_pb_conn_l_pb_edges_vrnt_q3_arr, color="gold", alpha=0.25)
-            # plt.plot(
-            #     n_ticks, core_pb_conn_l_pb_edges_vrnt_mean_arr, linestyle="-",
-            #     color="tab:olive")
-            # plt.xlabel(xlabel, fontsize=16)
-            # plt.xticks(ticks=n_ticks, labels=n_arr)
-            # plt.ylabel(ylabel, fontsize=16)
-            # plt.ylim(ylim)
-            # plt.yticks(yticks)
-            # plt.title(title, fontsize=20)
-            # plt.grid(True, alpha=0.25, zorder=0)
-            # plt.tight_layout()
-            # plt.savefig(core_pb_conn_l_core_and_pb_edges_vrnt_dist_stats_plt_filename)
-            # plt.close()
+        plt.fill_between(
+            n_arr, l_edges_vrnt_min_arr,
+            l_edges_vrnt_max_arr, color="skyblue", alpha=0.25)
+        plt.fill_between(
+            n_arr, l_edges_vrnt_q1_arr,
+            l_edges_vrnt_q3_arr, color="steelblue", alpha=0.25)
+        plt.plot(
+            n_arr, l_edges_vrnt_mean_arr, linestyle="-",
+            color="tab:blue")
+        plt.xscale("log")
+        plt.xlabel(xlabel, fontsize=16)
+        plt.ylabel(ylabel, fontsize=16)
+        plt.ylim(ylim)
+        plt.yticks(yticks)
+        plt.title(title, fontsize=20)
+        plt.grid(True, alpha=0.25, zorder=0)
+        plt.tight_layout()
+        plt.savefig(l_edges_vrnt_dist_stats_plt_filename)
+        plt.close()
 
 def run_swidt_graph_l_edges_variant_dim_dist_stats_plotter(args):
     swidt_graph_l_edges_variant_dim_dist_stats_plotter(*args)
