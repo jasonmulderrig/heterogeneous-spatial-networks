@@ -21,7 +21,7 @@ Important "worker" functions are located in the ``heterogeneous_spatial_networks
 Finally, there are an assortmant of Jupyter Python notebooks that execute the network synthesis and analysis protocols in parallel via the ``multiprocessing`` Python module.
 
 The following contains some timing benchmarks for the following network synthesis Jupyter Python notebooks on my Dell Inspiron computer with ``cpu_num = 8`` for the ``20241016`` network parameters:
-* ``voronoi-network-topology-synthesis.ipynb`` ~ 4 minutes
-* ``delaunay-network-topology-synthesis.ipynb`` ~ 0.5 minute
-* ``swidt-network-topology-synthesis.ipynb`` ~ 4 minutes
-* ``aelp-network-topology-synthesis.ipynb`` ~ 3 hours
+    * ``voronoi-network-topology-synthesis.ipynb`` ~ 4 minutes
+    * ``delaunay-network-topology-synthesis.ipynb`` ~ 0.5 minute
+    * ``swidt-network-topology-synthesis.ipynb`` ~ 4 minutes
+    * ``aelp-network-topology-synthesis.ipynb`` ~ 3 hours
