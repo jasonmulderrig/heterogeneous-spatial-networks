@@ -16,11 +16,13 @@ def filepath_str(network: str) -> str:
     Args:
         network (str): Lower-case acronym indicating the particular type
         of network that is being represented by the eventual network
-        topology; either "swidt", "auelp", or "apelp" (corresponding
-        to spider web-inspired Delaunay-triangulated networks
-        ("swidt"), artificial uniform end-linked polymer networks
-        ("auelp"), or artificial polydisperse end-linked polymer
-        networks ("apelp")).
+        topology; either "auelp", "apelp", "swidt", "delaunay", or
+        "voronoi" (corresponding to artificial uniform end-linked
+        polymer networks ("auelp"), artificial polydisperse end-linked
+        polymer networks ("apelp"), spider web-inspired
+        Delaunay-triangulated networks ("swidt"), Delaunay-triangulated
+        networks ("delaunay"), or Voronoi-tessellated networks
+        ("voronoi")).
     
     Returns:
         str: The baseline filepath.
@@ -29,7 +31,12 @@ def filepath_str(network: str) -> str:
     import os
     import pathlib
 
-    filepath = f"/Users/jasonmulderrig/research/projects/heterogeneous-spatial-networks/{network}/"
+    # For MacOS
+    # filepath = f"/Users/jasonmulderrig/research/projects/heterogeneous-spatial-networks/{network}/"
+    # For Windows OS
+    filepath = f"C:\\Users\\mulderjp\\projects\\polymer-network-topology-graph-design\\modular-sandbox\\heterogeneous-spatial-networks\\{network}\\"
+    # For Linux
+    # filepath = f"/p/home/jpm2225/projects/polymer-network-topology-graph-design/module-sandbox/heterogeneous-spatial-networks/{network}/"
     if os.path.isdir(filepath) == False:
         pathlib.Path(filepath).mkdir(parents=True, exist_ok=True)
     return filepath
@@ -54,11 +61,13 @@ def filename_str(
     Args:
         network (str): Lower-case acronym indicating the particular type
         of network that is being represented by the eventual network
-        topology; either "swidt", "auelp", or "apelp" (corresponding
-        to spider web-inspired Delaunay-triangulated networks
-        ("swidt"), artificial uniform end-linked polymer networks
-        ("auelp"), or artificial polydisperse end-linked polymer
-        networks ("apelp")).
+        topology; either "auelp", "apelp", "swidt", "delaunay", or
+        "voronoi" (corresponding to artificial uniform end-linked
+        polymer networks ("auelp"), artificial polydisperse end-linked
+        polymer networks ("apelp"), spider web-inspired
+        Delaunay-triangulated networks ("swidt"), Delaunay-triangulated
+        networks ("delaunay"), or Voronoi-tessellated networks
+        ("voronoi")).
         date (str): "YYYYMMDD" string indicating the date during which
         the network batch and sample data was generated.
         batch (str): Single capitalized letter (e.g., A, B, C, ...)
@@ -72,50 +81,149 @@ def filename_str(
     return filepath_str(network) + f"{date}{batch}{sample:d}"
 
 def p_gaussian_cnfrmtn_func(b: float, nu: ArrayLike, r: ArrayLike) -> ArrayLike:
-    """Gaussian polymer chain conformation probability density.
+    """Gaussian end-to-end distance polymer chain conformation
+    probability distribution.
 
-    This function calculates the Gaussian polymer chain conformation
-    probability density for a chain with a given number of segments and
-    a given end-to-end distance.
+    This function calculates the Gaussian end-to-end distance polymer
+    chain conformation probability for a chain with a given number of
+    segments and a given end-to-end distance.
 
     Args:
         b (float): Chain segment and/or cross-linker diameter.
         nu (ArrayLike): Number of segments in the chain.
         r (ArrayLike): End-to-end chain distance.
     
-    Note: If nu is ArrayLike, then r must be a float. Likewise, if r is
-    ArrayLike, then nu must be a float.
+    Note: If nu is an np.ndarray, then r must be a float. Likewise, if r
+    is an np.ndarray, then nu must be a float.
 
     Returns:
-        ArrayLike: Gaussian polymer chain conformation probability
-        density.
+        ArrayLike: Gaussian end-to-end distance polymer chain
+        conformation probability (distribution).
     """
-    return (np.sqrt(3/(2*np.pi*nu*b**2)))**3 * np.exp(-3*r**2/(2*nu*b**2))
+    return (
+        (np.sqrt(3/(2*np.pi*nu*b**2)))**3 * np.exp(-3*r**2/(2*nu*b**2))
+        * 4 * np.pi * r**2
+    )
 
-def ln_p_cnfrmtn_cubic_poly_fit_func(
-        r: ArrayLike,
-        c_0: float,
-        c_1: float,
-        c_2: float,
-        c_3: float) -> ArrayLike:
-    """Cubic polynomial used to curve fit the natural logarithm of a
-    polymer chain conformation probability density.
+def p_nu_flory_func(nu_mean: float, nu: ArrayLike) -> ArrayLike:
+    """Chain segment number probability distribution representative of
+    step-growth linear chain polymerization, as per the theory from
+    Flory.
 
-    This function is a cubic polynomial used to curve fit the natural
-    logarithm of a polymer chain conformation probability density.
+    This function calculates the probability of finding a chain with a
+    given segment number in a polymer network formed via step-growth
+    linear chain polymerization with a given mean segment number.
 
     Args:
-        r (ArrayLike): End-to-end chain distance.
-        c_0 (float): Constant polynomial term.
-        c_1 (float): Linear polynomial term constant.
-        c_2 (float): Quadratic polynomial term constant.
-        c_3 (float): Cubic polynomial term constant.
+        nu_mean (float): Average number of segments in the polymer
+        network.
+        nu (ArrayLike): Number of segments in the chain.
 
     Returns:
-        ArrayLike: Cubic polynomial curve fit of the natural logarithm
-        of a polymer chain conformation probability density.
+        ArrayLike: Chain segment number probability (distribution)
+        representative of step-growth linear chain polymerization.
     """
-    return c_0 + c_1 * r + c_2 * r**2 + c_3 * r**3
+    return (1./nu_mean)*(1.-(1./nu_mean))**(nu-1)
+
+def p_net_gaussian_cnfrmtn_func(
+        b: float,
+        nu_mean: float,
+        nu: ArrayLike,
+        r: ArrayLike) -> ArrayLike:
+    """Probability distribution of network chains accounting for
+    dispersity in chain segment number and Gaussian end-to-end distance
+    polymer chain conformation.
+
+    This function calculates the probability of finding a chain with a
+    given segment number in a particular conformation, assuming that the
+    polymer network was formed via step-growth linear chain
+    polymerization and assuming that the end-to-end distance chain
+    conformation probability distribution is well captured via the
+    classical Gaussian distribution.
+
+    Args:
+        b (float): Chain segment and/or cross-linker diameter.
+        nu_mean (float): Average number of segments in the polymer
+        network.
+        nu (ArrayLike): Number of segments in the chain.
+        r (ArrayLike): End-to-end chain distance.
+    
+    Note: If nu is an np.ndarray, then r must be a float. Likewise, if r
+    is an np.ndarray, then nu must be a float.
+
+    Returns:
+        ArrayLike: Probability of finding a chain with a given segment
+        number in a particular conformation, assuming step-growth linear
+        chain polymerization and a Gaussian end-to-end distance chain
+        conformation probability distribution.
+    """
+    return p_nu_flory_func(nu_mean, nu) * p_gaussian_cnfrmtn_func(b, nu, r)
+
+def p_rel_net_r_float_gaussian_cnfrmtn_func(
+        b: float,
+        nu_mean: float,
+        r: float) -> float:
+    """Relative probability distribution of network chains accounting
+    for dispersity in chain segment number and Gaussian end-to-end
+    distance polymer chain conformation.
+
+    This function calculates the relative probability of finding a chain
+    in a particular conformation, assuming that the polymer network was
+    formed via step-growth linear chain polymerization and assuming that
+    the end-to-end distance chain conformation probability distribution
+    is well captured via the classical Gaussian distribution.
+
+    Args:
+        b (float): Chain segment and/or cross-linker diameter.
+        nu_mean (float): Average number of segments in the polymer
+        network.
+        r (float): End-to-end chain distance.
+
+    Returns:
+        float: Relative probability of finding a chain in a particular
+        conformation, assuming step-growth linear chain polymerization
+        and a Gaussian end-to-end distance chain conformation
+        probability distribution.
+    """
+    # nu = 1 -> n = 100,000 is proscribed by Hanson
+    nu_arr = np.arange(100000, dtype=int) + 1
+    return np.sum(p_net_gaussian_cnfrmtn_func(b, nu_mean, nu_arr, r))
+
+def p_rel_net_r_arr_gaussian_cnfrmtn_func(
+        b: float,
+        nu_mean: float,
+        r: np.ndarray) -> np.ndarray:
+    """Relative probability distribution of network chains accounting
+    for dispersity in chain segment number and Gaussian end-to-end
+    distance polymer chain conformation.
+
+    This function calculates the relative probability of finding a chain
+    in a particular conformation, assuming that the polymer network was
+    formed via step-growth linear chain polymerization and assuming that
+    the end-to-end distance chain conformation probability distribution
+    is well captured via the classical Gaussian distribution.
+
+    Args:
+        b (float): Chain segment and/or cross-linker diameter.
+        nu_mean (float): Average number of segments in the polymer
+        network.
+        r (np.ndarray): End-to-end chain distance.
+
+    Returns:
+        np.ndarray: Relative probability of finding a chain in a
+        particular conformation, assuming step-growth linear chain
+        polymerization and a Gaussian end-to-end distance chain
+        conformation probability distribution.
+    """
+    # nu = 1 -> n = 100,000 is proscribed by Hanson
+    nu_arr = np.arange(100000, dtype=int) + 1
+    r_num = np.shape(r)[0]
+    p_arr = np.empty(r_num)
+    # Calculate relative probability for each value of r
+    for r_indx in range(r_num):
+        p_arr[r_indx] = np.sum(
+            p_net_gaussian_cnfrmtn_func(b, nu_mean, nu_arr, r[r_indx]))
+    return p_arr
 
 def a_or_v_func(dim: int, b: float) -> float:
     """Area or volume of a chain segment and/or cross-linker.
@@ -337,7 +445,7 @@ def eta_func(dim: int, b: float, rho: float) -> float:
     Args:
         dim (int): Physical dimensionality of the network; either 2 or 3
         (for two-dimensional or three-dimensional networks).
-        b (float): Chain segment and/or cross-linker diameter.
+        b (float): Particle diameter.
         rho (float): Particle number density.
 
     Returns:
@@ -387,7 +495,7 @@ def A_or_V_arg_eta_func(dim: int, b: float, n: float, eta: float) -> float:
     Args:
         dim (int): Physical dimensionality of the network; either 2 or 3
         (for two-dimensional or three-dimensional networks).
-        b (float): Chain segment and/or cross-linker diameter.
+        b (float): Particle diameter.
         n (float): Number of particles.
         eta (float): Particle packing density.
 
@@ -441,7 +549,7 @@ def L_arg_eta_func(dim: int, b: float, n: float, eta: float) -> float:
     Args:
         dim (int): Physical dimensionality of the network; either 2 or 3
         (for two-dimensional or three-dimensional networks).
-        b (float): Chain segment and/or cross-linker diameter.
+        b (float): Particle diameter.
         n (float): Number of particles.
         eta (float): Particle packing density.
 
@@ -450,6 +558,126 @@ def L_arg_eta_func(dim: int, b: float, n: float, eta: float) -> float:
     """
     if dim == 2: return np.sqrt(a_or_v_func(dim, b)*n/eta)
     elif dim == 3: return np.cbrt(a_or_v_func(dim, b)*n/eta)
+
+def delaunay_or_voronoi_L(
+        dim: int,
+        b: float,
+        n: int,
+        eta_n: float,
+        L_filename: str) -> None:
+    """Simulation box size for Delaunay-triangulated or
+    Voronoi-tessellated networks.
+
+    This function calculates and saves the simulation box size for
+    Delaunay-triangulated or Voronoi-tessellated networks.
+
+    Args:
+        dim (int): Physical dimensionality of the network; either 2 or 3
+        (for two-dimensional or three-dimensional networks).
+        b (float): Node diameter.
+        n (int): Intended number of core nodes.
+        eta_n (float): Node packing density.
+        L_filename (str): Filename for simulation box size file
+    
+    """
+    # Calculate L
+    L = L_arg_eta_func(dim, b, n, eta_n)
+    
+    # Save L
+    np.savetxt(L_filename, [L])
+
+def voronoi_L(
+        network: str,
+        date: str,
+        batch: str,
+        sample: int,
+        dim: int,
+        b: float,
+        n: int,
+        eta_n: float) -> None:
+    """Simulation box size for Voronoi-tessellated networks.
+
+    This function calculates and saves the simulation box size for
+    Voronoi-tessellated networks.
+
+    Args:
+        network (str): Lower-case acronym indicating the particular type
+        of network that is being represented by the eventual network
+        topology; here, only "voronoi" is applicable (corresponding
+        to Voronoi-tessellated networks ("voronoi")).
+        date (str): "YYYYMMDD" string indicating the date during which
+        the network batch and sample data was generated.
+        batch (str): Single capitalized letter (e.g., A, B, C, ...)
+        indicating the batch label of the network sample data.
+        sample (int): Label of a particular network in the batch.
+        dim (int): Physical dimensionality of the network; either 2 or 3
+        (for two-dimensional or three-dimensional networks).
+        b (float): Node diameter.
+        n (int): Intended number of core nodes.
+        eta_n (float): Node packing density.
+    
+    """
+    # This calculation for L is only applicable for Voronoi-tessellated
+    # networks. Exit if a different type of network is passed.
+    if network != "voronoi":
+        error_str = (
+            "This calculation for L is only applicable for "
+            + "Voronoi-tessellated networks networks. This calculation "
+            + "will only proceed if network = ``voronoi''."
+        )
+        sys.exit(error_str)
+    # Generate filename
+    L_filename = filename_str(network, date, batch, sample) + "-L" + ".dat"
+
+    # Calculate and save L
+    delaunay_or_voronoi_L(dim, b, n, eta_n, L_filename)
+
+def delaunay_L(
+        network: str,
+        date: str,
+        batch: str,
+        sample: int,
+        dim: int,
+        b: float,
+        n: int,
+        eta_n: float) -> None:
+    """Simulation box size for Delaunay-triangulated networks.
+
+    This function calculates and saves the simulation box size for
+    Delaunay-triangulated networks.
+
+    Args:
+        network (str): Lower-case acronym indicating the particular type
+        of network that is being represented by the eventual network
+        topology; here, only "delaunay" is applicable (corresponding
+        to Delaunay-triangulated networks ("delaunay")).
+        date (str): "YYYYMMDD" string indicating the date during which
+        the network batch and sample data was generated.
+        batch (str): Single capitalized letter (e.g., A, B, C, ...)
+        indicating the batch label of the network sample data.
+        sample (int): Label of a particular network in the batch.
+        dim (int): Physical dimensionality of the network; either 2 or 3
+        (for two-dimensional or three-dimensional networks).
+        b (float): Node diameter.
+        n (int): Intended number of core nodes.
+        eta_n (float): Node packing density.
+    
+    """
+    # This calculation for L is only applicable for
+    # Delaunay-triangulated networks. Exit if a different type of
+    # network is passed.
+    if network != "delaunay":
+        error_str = (
+            "This calculation for L is only applicable for "
+            + "Delaunay-triangulated networks networks. This calculation "
+            + "will only proceed if network = ``delaunay''."
+        )
+        sys.exit(error_str)
+    # Generate filename
+    L_filename = filename_str(network, date, batch, sample) + "-L" + ".dat"
+
+    # Calculate and save L
+    delaunay_or_voronoi_L(dim, b, n, eta_n, L_filename)
 
 def swidt_L(
         network: str,
@@ -460,20 +688,18 @@ def swidt_L(
         b: float,
         n: int,
         eta_n: float) -> None:
-    """Core cross-linker simulation box size for spider web-inspired
-    Delaunay-triangulated networks.
+    """Simulation box size for spider web-inspired Delaunay-triangulated
+    networks.
 
-    This function calculates the core cross-linker simulation box size
-    for spider web-inspired Delaunay-triangulated networks.
+    This function calculates the simulation box size for spider
+    web-inspired Delaunay-triangulated networks.
 
     Args:
         network (str): Lower-case acronym indicating the particular type
         of network that is being represented by the eventual network
-        topology; either "swidt", "auelp", or "apelp" (corresponding
+        topology; here, only "swidt" is applicable (corresponding
         to spider web-inspired Delaunay-triangulated networks
-        ("swidt"), artificial uniform end-linked polymer networks
-        ("auelp"), or artificial polydisperse end-linked polymer
-        networks ("apelp")).
+        ("swidt")).
         date (str): "YYYYMMDD" string indicating the date during which
         the network batch and sample data was generated.
         batch (str): Single capitalized letter (e.g., A, B, C, ...)
@@ -481,9 +707,9 @@ def swidt_L(
         sample (int): Label of a particular network in the batch.
         dim (int): Physical dimensionality of the network; either 2 or 3
         (for two-dimensional or three-dimensional networks).
-        b (float): Cross-linker diameter.
-        n (int): Intended number of core cross-linkers.
-        eta_n (float): Cross-linker packing density.
+        b (float): Node diameter.
+        n (int): Intended number of core nodes.
+        eta_n (float): Node packing density.
     
     """
     # This calculation for L is only applicable for spider web-inspired
@@ -499,8 +725,66 @@ def swidt_L(
     # Generate filename
     L_filename = filename_str(network, date, batch, sample) + "-L" + ".dat"
 
+    # Calculate and save L
+    delaunay_or_voronoi_L(dim, b, n, eta_n, L_filename)
+
+def aelp_L(
+        network: str,
+        date: str,
+        batch: str,
+        sample: int,
+        dim: int,
+        rho_nu: float,
+        k: int,
+        n: int,
+        nu: int) -> None:
+    """Simulation box size for artificial end-linked polymer networks.
+
+    This function calculates the simulation box size for artificial
+    end-linked polymer networks.
+
+    Args:
+        network (str): Lower-case acronym indicating the particular type
+        of network that is being represented by the eventual network
+        topology; here, either "auelp" or "apelp" are applicable
+        (corresponding to artificial uniform end-linked polymer networks
+        ("auelp") or artificial polydisperse end-linked polymer networks
+        ("apelp")).
+        date (str): "YYYYMMDD" string indicating the date during which
+        the network batch and sample data was generated.
+        batch (str): Single capitalized letter (e.g., A, B, C, ...)
+        indicating the batch label of the network sample data.
+        sample (int): Label of a particular network in the batch.
+        dim (int): Physical dimensionality of the network; either 2 or 3
+        (for two-dimensional or three-dimensional networks).
+        rho_nu (float): Segment number density.
+        k (int): Maximum cross-linker degree/functionality; either 3, 4,
+        5, 6, 7, or 8.
+        n (int): Intended number of core cross-linkers.
+        nu (int): (Average) Number of segments per chain.
+    
+    """
+    # This calculation for L is only applicable for artificial
+    # end-linked polymer networks. Exit if a different type of network
+    # is passed.
+    if network != "auelp":
+        if network != "apelp":
+            error_str = (
+                "This calculation for L is only applicable for "
+                + "artificial end-linked polymer networks. This "
+                + "calculation will only proceed if "
+                + "network = ``auelp'' or network = ``apelp''."
+            )
+            sys.exit(error_str)
+    # Generate filename
+    L_filename = filename_str(network, date, batch, sample) + "-L" + ".dat"
+
+    # Calculate the stoichiometric (average) number of chain segments in
+    # the simulation box
+    n_nu = n_nu_arg_m_func(m_arg_stoich_func(n, k), nu)
+
     # Calculate L
-    L = L_arg_eta_func(dim, b, n, eta_n)
+    L = L_arg_rho_func(dim, n_nu, rho_nu)
     
     # Save L
     np.savetxt(L_filename, [L])
@@ -652,26 +936,21 @@ def dim_3_tessellation(
     """
     return x + x_tsslltn * L, y + y_tsslltn * L, z + z_tsslltn * L
 
-def random_core_coords_crosslinker_seeding(
+def random_node_placement(
         dim: int,
         L: float,
-        b: float,
         n: int,
-        max_try: int,
         filename_prefix: str) -> None:
-    """Random cross-linker seeding procedure for heterogeneous spatial
-    networks.
+    """Random node placement procedure.
 
-    This function randomly seeds cross-linkers within a pre-defined
+    This function randomly places/seeds nodes within a pre-defined
     simulation box.
 
     Args:
         dim (int): Physical dimensionality of the network; either 2 or 3
         (for two-dimensional or three-dimensional networks).
-        L (float): Simulation box size of the core cross-linkers.
-        b (float): Chain segment and/or cross-linker diameter.
-        n (int): Intended number of core cross-linkers.
-        max_try (int): Maximum number of cross-linker placement attempts.
+        L (float): Simulation box size.
+        n (int): Number of nodes.
         filename_prefix (str): Baseline filename prefix for data files.
     
     """
@@ -681,317 +960,348 @@ def random_core_coords_crosslinker_seeding(
     # Initialize random number generator
     rng = np.random.default_rng()
 
-    # Lists for x- and y-coordinates of core cross-linkers
-    rccs_x = []
-    rccs_y = []
+    # Random node coordinates
+    coords = L * rng.random((n, dim))
 
-    # np.ndarrays for x- and y-coordinates of tessellated core
-    # cross-linkers
-    tsslltd_rccs_x = np.asarray([])
-    tsslltd_rccs_y = np.asarray([])
+    # Save coordinates to configuration file
+    np.savetxt(config_filename, coords)
+
+def periodic_random_hard_disk_node_placement(
+        dim: int,
+        L: float,
+        b: float,
+        n: int,
+        max_try: int,
+        filename_prefix: str) -> None:
+    """Periodic random hard disk node placement procedure.
+
+    This function randomly places/seeds nodes within a pre-defined
+    simulation box where each nodes is treated as the center of a hard
+    disk, and the simulation box is periodic.
+
+    Args:
+        dim (int): Physical dimensionality of the network; either 2 or 3
+        (for two-dimensional or three-dimensional networks).
+        L (float): Simulation box size.
+        b (float): Hard disk diameter.
+        n (int): Intended number of nodes.
+        max_try (int): Maximum number of node placement attempts.
+        filename_prefix (str): Baseline filename prefix for data files.
+    
+    """
+    # Generate data filename
+    config_filename = filename_prefix + ".config"
+
+    # Initialize random number generator
+    rng = np.random.default_rng()
+
+    # Lists for node x- and y-coordinates
+    x = []
+    y = []
+
+    # np.ndarrays for x- and y-coordinates of tessellated core nodes
+    tsslltd_x = np.asarray([])
+    tsslltd_y = np.asarray([])
 
     if dim == 2:
         # Two-dimensional tessellation protocol
         dim_2_tsslltn, dim_2_tsslltn_num = tessellation_protocol(2)
         
-        # Random cross-linker seeding procedure
-        for rccs_seed_attmpt in range(n):
-            # Accept and tessellate the first cross-linker
-            if rccs_seed_attmpt == 0:
-                # Accept the first cross-linker
-                rccs_seed = L * rng.random((2,))
+        # Periodic random hard disk node placement procedure
+        for seed_attmpt in range(n):
+            # Accept and tessellate the first node
+            if seed_attmpt == 0:
+                # Accept the first node
+                seed = L * rng.random((2,))
                 
-                rccs_seed_x = rccs_seed[0]
-                rccs_seed_y = rccs_seed[1]
+                seed_x = seed[0]
+                seed_y = seed[1]
                 
-                rccs_x.append(rccs_seed_x)
-                rccs_y.append(rccs_seed_y)
+                x.append(seed_x)
+                y.append(seed_y)
 
                 # Use two-dimensional tessellation protocol to
-                # tessellate the first cross-linker
-                rccs_seed_tsslltn_x, rccs_seed_tsslltn_y = (
-                    dim_2_tessellation_protocol(
-                        L, rccs_seed_x, rccs_seed_y, dim_2_tsslltn)
-                )
-
-                tsslltd_rccs_x = (
-                    np.concatenate((tsslltd_rccs_x, rccs_seed_tsslltn_x))
-                )
-                tsslltd_rccs_y = (
-                    np.concatenate((tsslltd_rccs_y, rccs_seed_tsslltn_y))
-                )
+                # tessellate the first node
+                seed_tsslltn_x, seed_tsslltn_y = dim_2_tessellation_protocol(
+                    L, seed_x, seed_y, dim_2_tsslltn)
+                tsslltd_x = np.concatenate((tsslltd_x, seed_tsslltn_x))
+                tsslltd_y = np.concatenate((tsslltd_y, seed_tsslltn_y))
                 continue
             else:
-                # Begin random cross-linker seeding procedure
+                # Begin periodic random hard disk node placement
+                # procedure
                 num_try = 0
 
                 while num_try < max_try:
-                    # Generate randomly placed cross-linker candidate
-                    rccs_seed_cnddt = L * rng.random((2,))
-                    rccs_seed_cnddt_x = rccs_seed_cnddt[0]
-                    rccs_seed_cnddt_y = rccs_seed_cnddt[1]
+                    # Generate randomly placed node candidate
+                    seed_cnddt = L * rng.random((2,))
+                    seed_cnddt_x = seed_cnddt[0]
+                    seed_cnddt_y = seed_cnddt[1]
 
                     # Downselect the previously-accepted tessellated
-                    # cross-linkers to those that reside in a local
-                    # square neighborhood that is \pm b about the
-                    # cross-linker candidate. Start by gathering the
-                    # indices of cross-linkers that meet this criterion
-                    # in each separate coordinate.
-                    nghbr_x_lb = rccs_seed_cnddt_x - b
-                    nghbr_x_ub = rccs_seed_cnddt_x + b
-                    nghbr_y_lb = rccs_seed_cnddt_y - b
-                    nghbr_y_ub = rccs_seed_cnddt_y + b
+                    # nodes to those that reside in a local square
+                    # neighborhood that is \pm b about the node
+                    # candidate. Start by gathering the indices of nodes
+                    # that meet this criterion in each separate
+                    # coordinate.
+                    nghbr_x_lb = seed_cnddt_x - b
+                    nghbr_x_ub = seed_cnddt_x + b
+                    nghbr_y_lb = seed_cnddt_y - b
+                    nghbr_y_ub = seed_cnddt_y + b
                     psbl_nghbr_x_indcs = (
-                        np.where(np.logical_and(tsslltd_rccs_x>=nghbr_x_lb, tsslltd_rccs_x<=nghbr_x_ub))[0]
+                        np.where(np.logical_and(tsslltd_x>=nghbr_x_lb, tsslltd_x<=nghbr_x_ub))[0]
                     )
                     psbl_nghbr_y_indcs = (
-                        np.where(np.logical_and(tsslltd_rccs_y>=nghbr_y_lb, tsslltd_rccs_y<=nghbr_y_ub))[0]
+                        np.where(np.logical_and(tsslltd_y>=nghbr_y_lb, tsslltd_y<=nghbr_y_ub))[0]
                     )
                     # Gather the indices from each separate coordinate
-                    # together to assess all possible cross-linker
-                    # neighbors. Retain unique indices corresponding to
-                    # each possible cross-linker neighbor, and the
-                    # number of times each such index value appears
-                    psbl_nghbr_indcs, psbl_nghbr_indcs_counts = (
-                        np.unique(np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs), dtype=int), return_counts=True)
-                    )
-                    # The true cross-linker neighbors are those whose
-                    # index value appears twice in the possible
-                    # cross-linker neighbor array -- equal to the
-                    # network dimensionality
+                    # together to assess all possible node neighbors.
+                    # Retain unique indices corresponding to each
+                    # possible node neighbor, and the number of times
+                    # each such index value appears.
+                    psbl_nghbr_indcs, psbl_nghbr_indcs_counts = np.unique(
+                        np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs), dtype=int),
+                        return_counts=True)
+                    # The true node neighbors are those whose index
+                    # value appears twice in the possible node neighbor
+                    # array -- equal to the network dimensionality
                     nghbr_indcs_vals_indcs = (
                         np.where(psbl_nghbr_indcs_counts == 2)[0]
                     )
                     nghbr_num = np.shape(nghbr_indcs_vals_indcs)[0]
                     # Continue analysis if a local neighborhood of
-                    # tessellated cross-linkers actually exists about
-                    # the cross-linker candidate
+                    # tessellated nodes actually exists about the node
+                    # candidate
                     if nghbr_num > 0:
-                        # Gather the indices of the cross-linker
-                        # neighbors
+                        # Gather the indices of the node neighbors
                         nghbr_indcs = psbl_nghbr_indcs[nghbr_indcs_vals_indcs]
-                        # Extract cross-linker neighbor coordinates
-                        nghbr_tsslltd_rccs_x = tsslltd_rccs_x[nghbr_indcs]
-                        nghbr_tsslltd_rccs_y = tsslltd_rccs_y[nghbr_indcs]
+                        # Extract node neighbor coordinates
+                        nghbr_tsslltd_x = tsslltd_x[nghbr_indcs]
+                        nghbr_tsslltd_y = tsslltd_y[nghbr_indcs]
                         
                         # Calculate the minimum distance between the
-                        # cross-linker candidate and its neighbors
+                        # node candidate and its neighbors
                         dist = np.empty(nghbr_num)
                         for nghbr_indx in range(nghbr_num):
                             nghbr_tsslltd_rccs = np.asarray(
                                 [
-                                    nghbr_tsslltd_rccs_x[nghbr_indx],
-                                    nghbr_tsslltd_rccs_y[nghbr_indx]
+                                    nghbr_tsslltd_x[nghbr_indx],
+                                    nghbr_tsslltd_y[nghbr_indx]
                                 ]
                             )
                             dist[nghbr_indx] = (
-                                np.linalg.norm(
-                                    rccs_seed_cnddt-nghbr_tsslltd_rccs)
+                                np.linalg.norm(seed_cnddt-nghbr_tsslltd_rccs)
                             )
                         min_dist = np.min(dist)
 
                         # Try again if the minimum distance between the
-                        # cross-linker candidate and its neighbors is
-                        # less than b
+                        # node candidate and its neighbors is less than
+                        # b
                         if min_dist < b:
                             num_try += 1
                             continue
                     
-                    # Accept and tessellate the cross-linker candidate
-                    # if (1) no local neighborhood of tessellated
-                    # cross-linkers exists about the cross-linker
-                    # candidate, or (2) the minimum distance between the
-                    # cross-linker candidate and its neighbors is
-                    # greater than or equal to b
-                    rccs_x.append(rccs_seed_cnddt_x)
-                    rccs_y.append(rccs_seed_cnddt_y)
+                    # Accept and tessellate the node candidate if (1) no
+                    # local neighborhood of tessellated nodes exists
+                    # about the node candidate, or (2) the minimum
+                    # distance between the node candidate and its
+                    # neighbors is greater than or equal to b
+                    x.append(seed_cnddt_x)
+                    y.append(seed_cnddt_y)
 
                     # Use two-dimensional tessellation protocol to
-                    # tessellate the accepted cross-linker candidate
-                    rccs_seed_tsslltn_x, rccs_seed_tsslltn_y = (
+                    # tessellate the accepted node candidate
+                    seed_tsslltn_x, seed_tsslltn_y = (
                         dim_2_tessellation_protocol(
-                            L, rccs_seed_cnddt_x, rccs_seed_cnddt_y,
-                            dim_2_tsslltn)
+                            L, seed_cnddt_x, seed_cnddt_y, dim_2_tsslltn)
                     )
-
-                    tsslltd_rccs_x = (
-                        np.concatenate((tsslltd_rccs_x, rccs_seed_tsslltn_x))
-                    )
-                    tsslltd_rccs_y = (
-                        np.concatenate((tsslltd_rccs_y, rccs_seed_tsslltn_y))
-                    )
+                    tsslltd_x = np.concatenate((tsslltd_x, seed_tsslltn_x))
+                    tsslltd_y = np.concatenate((tsslltd_y, seed_tsslltn_y))
                     break
         
         # Convert x- and y-coordinate lists to np.ndarrays, and stack
         # the x- and y-coordinates next to each other columnwise
-        rccs_x = np.asarray(rccs_x)
-        rccs_y = np.asarray(rccs_y)
-        rccs = np.column_stack((rccs_x, rccs_y))
+        x = np.asarray(x)
+        y = np.asarray(y)
+        coords = np.column_stack((x, y))
     elif dim == 3:
-        # List for z-coordinates of core cross-linkers
-        rccs_z = []
+        # List for z-coordinates
+        z = []
 
-        # np.ndarray for z-coordinates of tessellated core cross-linkers
-        tsslltd_rccs_z = np.asarray([])
+        # np.ndarray for z-coordinates of tessellated core nodes
+        tsslltd_z = np.asarray([])
 
         # Three-dimensional tessellation protocol
         dim_3_tsslltn, dim_3_tsslltn_num = tessellation_protocol(3)
         
-        # Random cross-linker seeding procedure
-        for rccs_seed_attmpt in range(n):
-            # Accept and tessellate the first cross-linker
-            if rccs_seed_attmpt == 0:
-                # Accept the first cross-linker
-                rccs_seed = L * rng.random((3,))
+        # Periodic random hard disk node placement procedure
+        for seed_attmpt in range(n):
+            # Accept and tessellate the first node
+            if seed_attmpt == 0:
+                # Accept the first node
+                seed = L * rng.random((3,))
                 
-                rccs_seed_x = rccs_seed[0]
-                rccs_seed_y = rccs_seed[1]
-                rccs_seed_z = rccs_seed[2]
+                seed_x = seed[0]
+                seed_y = seed[1]
+                seed_z = seed[2]
                 
-                rccs_x.append(rccs_seed_x)
-                rccs_y.append(rccs_seed_y)
-                rccs_z.append(rccs_seed_z)
+                x.append(seed_x)
+                y.append(seed_y)
+                z.append(seed_z)
 
                 # Use three-dimensional tessellation protocol to
-                # tessellate the first cross-linker
-                rccs_seed_tsslltn_x, rccs_seed_tsslltn_y, rccs_seed_tsslltn_z = (
+                # tessellate the first node
+                seed_tsslltn_x, seed_tsslltn_y, seed_tsslltn_z = (
                     dim_3_tessellation_protocol(
-                        L, rccs_seed_x, rccs_seed_y, rccs_seed_z, dim_3_tsslltn)
+                        L, seed_x, seed_y, seed_z, dim_3_tsslltn)
                 )
-
-                tsslltd_rccs_x = (
-                    np.concatenate((tsslltd_rccs_x, rccs_seed_tsslltn_x))
-                )
-                tsslltd_rccs_y = (
-                    np.concatenate((tsslltd_rccs_y, rccs_seed_tsslltn_y))
-                )
-                tsslltd_rccs_z = (
-                    np.concatenate((tsslltd_rccs_z, rccs_seed_tsslltn_z))
-                )
+                tsslltd_x = np.concatenate((tsslltd_x, seed_tsslltn_x))
+                tsslltd_y = np.concatenate((tsslltd_y, seed_tsslltn_y))
+                tsslltd_z = np.concatenate((tsslltd_z, seed_tsslltn_z))
                 continue
             else:
-                # Begin random cross-linker seeding procedure
+                # Begin periodic random hard disk node placement
+                # procedure
                 num_try = 0
 
                 while num_try < max_try:
-                    # Generate randomly placed cross-linker candidate
-                    rccs_seed_cnddt = L * rng.random((3,))
-                    rccs_seed_cnddt_x = rccs_seed_cnddt[0]
-                    rccs_seed_cnddt_y = rccs_seed_cnddt[1]
-                    rccs_seed_cnddt_z = rccs_seed_cnddt[2]
+                    # Generate randomly placed node candidate
+                    seed_cnddt = L * rng.random((3,))
+                    seed_cnddt_x = seed_cnddt[0]
+                    seed_cnddt_y = seed_cnddt[1]
+                    seed_cnddt_z = seed_cnddt[2]
 
                     # Downselect the previously-accepted tessellated
-                    # cross-linkers to those that reside in a local
-                    # cube neighborhood that is \pm b about the
-                    # cross-linker candidate. Start by gathering the
-                    # indices of cross-linkers that meet this criterion
-                    # in each separate coordinate.
-                    nghbr_x_lb = rccs_seed_cnddt_x - b
-                    nghbr_x_ub = rccs_seed_cnddt_x + b
-                    nghbr_y_lb = rccs_seed_cnddt_y - b
-                    nghbr_y_ub = rccs_seed_cnddt_y + b
-                    nghbr_z_lb = rccs_seed_cnddt_z - b
-                    nghbr_z_ub = rccs_seed_cnddt_z + b
+                    # nodes to those that reside in a local cube
+                    # neighborhood that is \pm b about the node
+                    # candidate. Start by gathering the indices of nodes
+                    # that meet this criterion in each separate
+                    # coordinate.
+                    nghbr_x_lb = seed_cnddt_x - b
+                    nghbr_x_ub = seed_cnddt_x + b
+                    nghbr_y_lb = seed_cnddt_y - b
+                    nghbr_y_ub = seed_cnddt_y + b
+                    nghbr_z_lb = seed_cnddt_z - b
+                    nghbr_z_ub = seed_cnddt_z + b
                     psbl_nghbr_x_indcs = (
-                        np.where(np.logical_and(tsslltd_rccs_x>=nghbr_x_lb, tsslltd_rccs_x<=nghbr_x_ub))[0]
+                        np.where(np.logical_and(tsslltd_x>=nghbr_x_lb, tsslltd_x<=nghbr_x_ub))[0]
                     )
                     psbl_nghbr_y_indcs = (
-                        np.where(np.logical_and(tsslltd_rccs_y>=nghbr_y_lb, tsslltd_rccs_y<=nghbr_y_ub))[0]
+                        np.where(np.logical_and(tsslltd_y>=nghbr_y_lb, tsslltd_y<=nghbr_y_ub))[0]
                     )
                     psbl_nghbr_z_indcs = (
-                        np.where(np.logical_and(tsslltd_rccs_z>=nghbr_z_lb, tsslltd_rccs_z<=nghbr_z_ub))[0]
+                        np.where(np.logical_and(tsslltd_z>=nghbr_z_lb, tsslltd_z<=nghbr_z_ub))[0]
                     )
                     # Gather the indices from each separate coordinate
-                    # together to assess all possible cross-linker
-                    # neighbors. Retain unique indices corresponding to
-                    # each possible cross-linker neighbor, and the
-                    # number of times each such index value appears
-                    psbl_nghbr_indcs, psbl_nghbr_indcs_counts = (
-                        np.unique(np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs, psbl_nghbr_z_indcs), dtype=int), return_counts=True)
-                    )
-                    # The true cross-linker neighbors are those whose
-                    # index value appears thrice in the possible
-                    # cross-linker neighbor array -- equal to the
-                    # network dimensionality
+                    # together to assess all possible node neighbors.
+                    # Retain unique indices corresponding to each
+                    # possible node neighbor, and the number of times
+                    # each such index value appears.
+                    psbl_nghbr_indcs, psbl_nghbr_indcs_counts = np.unique(
+                        np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs, psbl_nghbr_z_indcs), dtype=int),
+                        return_counts=True)
+                    # The true node neighbors are those whose index
+                    # value appears thrice in the possible node neighbor
+                    # array -- equal to the network dimensionality
                     nghbr_indcs_vals_indcs = (
                         np.where(psbl_nghbr_indcs_counts == 3)[0]
                     )
                     nghbr_num = np.shape(nghbr_indcs_vals_indcs)[0]
                     # Continue analysis if a local neighborhood of
-                    # tessellated cross-linkers actually exists about
-                    # the cross-linker candidate
+                    # tessellated nodes actually exists about the node
+                    # candidate
                     if nghbr_num > 0:
-                        # Gather the indices of the cross-linker
-                        # neighbors
+                        # Gather the indices of the node neighbors
                         nghbr_indcs = psbl_nghbr_indcs[nghbr_indcs_vals_indcs]
-                        # Extract cross-linker neighbor coordinates
-                        nghbr_tsslltd_rccs_x = tsslltd_rccs_x[nghbr_indcs]
-                        nghbr_tsslltd_rccs_y = tsslltd_rccs_y[nghbr_indcs]
-                        nghbr_tsslltd_rccs_z = tsslltd_rccs_z[nghbr_indcs]
+                        # Extract node neighbor coordinates
+                        nghbr_tsslltd_x = tsslltd_x[nghbr_indcs]
+                        nghbr_tsslltd_y = tsslltd_y[nghbr_indcs]
+                        nghbr_tsslltd_z = tsslltd_z[nghbr_indcs]
                         
                         # Calculate the minimum distance between the
-                        # cross-linker candidate and its neighbors
+                        # node candidate and its neighbors
                         dist = np.empty(nghbr_num)
                         for nghbr_indx in range(nghbr_num):
                             nghbr_tsslltd_rccs = np.asarray(
                                 [
-                                    nghbr_tsslltd_rccs_x[nghbr_indx],
-                                    nghbr_tsslltd_rccs_y[nghbr_indx],
-                                    nghbr_tsslltd_rccs_z[nghbr_indx]
+                                    nghbr_tsslltd_x[nghbr_indx],
+                                    nghbr_tsslltd_y[nghbr_indx],
+                                    nghbr_tsslltd_z[nghbr_indx]
                                 ]
                             )
                             dist[nghbr_indx] = (
-                                np.linalg.norm(
-                                    rccs_seed_cnddt-nghbr_tsslltd_rccs)
+                                np.linalg.norm(seed_cnddt-nghbr_tsslltd_rccs)
                             )
                         min_dist = np.min(dist)
 
                         # Try again if the minimum distance between the
-                        # cross-linker candidate and its neighbors is
+                        # node candidate and its neighbors is
                         # less than b
                         if min_dist < b:
                             num_try += 1
                             continue
                     
-                    # Accept and tessellate the cross-linker candidate
-                    # if (1) no local neighborhood of tessellated
-                    # cross-linkers exists about the cross-linker
-                    # candidate, or (2) the minimum distance between the
-                    # cross-linker candidate and its neighbors is
-                    # greater than or equal to b
-                    rccs_x.append(rccs_seed_cnddt_x)
-                    rccs_y.append(rccs_seed_cnddt_y)
-                    rccs_z.append(rccs_seed_cnddt_z)
+                    # Accept and tessellate the node candidate if (1) no
+                    # local neighborhood of tessellated nodes exists
+                    # about the node candidate, or (2) the minimum
+                    # distance between the node candidate and its
+                    # neighbors is greater than or equal to b
+                    x.append(seed_cnddt_x)
+                    y.append(seed_cnddt_y)
+                    z.append(seed_cnddt_z)
 
                     # Use three-dimensional tessellation protocol to
-                    # tessellate the accepted cross-linker candidate
-                    rccs_seed_tsslltn_x, rccs_seed_tsslltn_y, rccs_seed_tsslltn_z = (
+                    # tessellate the accepted node candidate
+                    seed_tsslltn_x, seed_tsslltn_y, seed_tsslltn_z = (
                         dim_3_tessellation_protocol(
-                            L, rccs_seed_cnddt_x, rccs_seed_cnddt_y,
-                            rccs_seed_cnddt_z, dim_3_tsslltn)
+                            L, seed_cnddt_x, seed_cnddt_y,
+                            seed_cnddt_z, dim_3_tsslltn)
                     )
-
-                    tsslltd_rccs_x = (
-                        np.concatenate((tsslltd_rccs_x, rccs_seed_tsslltn_x))
-                    )
-                    tsslltd_rccs_y = (
-                        np.concatenate((tsslltd_rccs_y, rccs_seed_tsslltn_y))
-                    )
-                    tsslltd_rccs_z = (
-                        np.concatenate((tsslltd_rccs_z, rccs_seed_tsslltn_z))
-                    )
+                    tsslltd_x = np.concatenate((tsslltd_x, seed_tsslltn_x))
+                    tsslltd_y = np.concatenate((tsslltd_y, seed_tsslltn_y))
+                    tsslltd_z = np.concatenate((tsslltd_z, seed_tsslltn_z))
                     break
         
         # Convert x-, y-, and z-coordinate lists to np.ndarrays, and
         # stack the x-, y-, and z-coordinates next to each other
         # columnwise
-        rccs_x = np.asarray(rccs_x)
-        rccs_y = np.asarray(rccs_y)
-        rccs_z = np.asarray(rccs_z)
-        rccs = np.column_stack((rccs_x, rccs_y, rccs_z))
+        x = np.asarray(x)
+        y = np.asarray(y)
+        z = np.asarray(z)
+        coords = np.column_stack((x, y, z))
 
-    # Save core cross-linker coordinates to configuration file
-    np.savetxt(config_filename, rccs)
+    # Save coordinates to configuration file
+    np.savetxt(config_filename, coords)
+
+def periodic_disordered_hyperuniform_node_placement(
+        dim: int,
+        L: float,
+        n: int,
+        filename_prefix: str) -> None:
+    """Periodic disordered hyperuniform node placement procedure.
+
+    This function places/seeds nodes within a pre-defined simulation box
+    in a periodic disordered hyperuniform fashion.
+
+    Args:
+        dim (int): Physical dimensionality of the network; either 2 or 3
+        (for two-dimensional or three-dimensional networks).
+        L (float): Simulation box size.
+        n (int): Intended number of nodes.
+        filename_prefix (str): Baseline filename prefix for data files.
+    
+    """
+    # Generate data filename
+    config_filename = filename_prefix + ".config"
+
+    # Initialize random number generator
+    rng = np.random.default_rng()
+    
+    error_str = (
+        "Periodic disordered hyperuniform node placement procedure has "
+        + "not been defined yet!"
+    )
+    sys.exit(error_str)
 
 def lammps_input_file_generator(
         dim: int,
@@ -1000,19 +1310,19 @@ def lammps_input_file_generator(
         n: int,
         filename_prefix: str) -> None:
     """LAMMPS input file generator for soft pushoff and FIRE energy
-    minimization of randomly placed cross-linkers.
+    minimization of randomly placed nodes.
 
     This function generates a LAMMPS input file that randomly places
-    cross-linkers within a pre-defined simulation box, followed by a
-    soft pushoff procedure, and finally followed by a FIRE energy
+    nodes within a pre-defined simulation box, followed by a soft
+    pushoff procedure, and finally followed by a FIRE energy
     minimization procedure.
 
     Args:
         dim (int): Physical dimensionality of the network; either 2 or 3
         (for two-dimensional or three-dimensional networks).
-        L (float): Simulation box size of the core cross-linkers.
-        b (float): Chain segment and/or cross-linker diameter.
-        n (int): Number of core cross-linkers.
+        L (float): Simulation box size.
+        b (float): Node diameter.
+        n (int): Number of core nodes.
         filename_prefix (str): Baseline filename prefix for LAMMPS data
         files.
     
@@ -1034,11 +1344,11 @@ def lammps_input_file_generator(
     lammps_input_file.write("boundary      p p p\n")
     lammps_input_file.write(f"region        box block 0 {L:0.4f} 0 {L:0.4f} 0 {L:0.4f}\n")
     lammps_input_file.write("create_box    1 box\n")
-    # Randomly place cross-linkers in simulation box
+    # Randomly place nodes in simulation box
     lammps_input_file.write(f"create_atoms  1 random {n:d} {create_atoms_random_int:d} NULL\n")
     lammps_input_file.write("mass          1 1.0\n\n")
 
-    # Initiate cross-linker thermodynammics
+    # Initiate thermodynammics
     lammps_input_file.write(f"velocity all create 1.0 {velocity_random_int:d} mom yes rot yes dist gaussian\n\n")
 
     lammps_input_file.write("timestep 0.002\n\n")
@@ -1055,12 +1365,12 @@ def lammps_input_file_generator(
     lammps_input_file.write("min_style fire\n")
     lammps_input_file.write("minimize 1.0e-10 1.0e-10 100000 100000\n\n")
 
-    # Write core cross-linker coordinates to configuration file
+    # Write coordinates to configuration file
     lammps_input_file.write(f"write_data {config_input_filename} nocoeff")
 
     lammps_input_file.close()
 
-def crosslinker_seeding(
+def node_seeding(
         network: str,
         date: str,
         batch: str,
@@ -1071,41 +1381,42 @@ def crosslinker_seeding(
         n: int,
         config: int,
         max_try: int) -> None:
-    """Cross-linker seeding procedure for heterogeneous spatial
-    networks.
+    """Node placement procedure for heterogeneous spatial networks.
 
-    This function loads the simulation box size for the core
-    cross-linkers of the heterogeneous spatial networks. Then, depending
-    on the particular core cross-linker placement scheme, this function
-    calls upon a corresponding helper function to calculate the core
-    cross-linker positions.
+    This function loads the simulation box size for the heterogeneous
+    spatial networks. Then, depending on the particular core node
+    placement scheme, this function calls upon a corresponding helper
+    function to calculate the core node positions.
 
     Args:
         network (str): Lower-case acronym indicating the particular type
         of network that is being represented by the eventual network
-        topology; either "swidt", "auelp", or "apelp" (corresponding
-        to spider web-inspired Delaunay-triangulated networks
-        ("swidt"), artificial uniform end-linked polymer networks
-        ("auelp"), or artificial polydisperse end-linked polymer
-        networks ("apelp")).
+        topology; either "auelp", "apelp", "swidt", "delaunay", or
+        "voronoi" (corresponding to artificial uniform end-linked
+        polymer networks ("auelp"), artificial polydisperse end-linked
+        polymer networks ("apelp"), spider web-inspired
+        Delaunay-triangulated networks ("swidt"), Delaunay-triangulated
+        networks ("delaunay"), or Voronoi-tessellated networks
+        ("voronoi")).
         date (str): "YYYYMMDD" string indicating the date during which
         the network batch and sample data was generated.
         batch (str): Single capitalized letter (e.g., A, B, C, ...)
         indicating the batch label of the network sample data.
         sample (int): Label of a particular network in the batch.
         scheme (str): Lower-case acronym indicating the particular
-        scheme used to generate the positions of the core cross-linkers;
-        either "rccs" or "mccs" (corresponding to random core
-        cross-linker coordinates ("rccs") or minimized core
-        cross-linker coordinates ("mccs")).
+        scheme used to generate the positions of the core nodes;
+        either "random", "prhd", "pdhu", or "lammps" (corresponding to
+        the random node placement procedure ("random"), periodic random
+        hard disk node placement procedure ("prhd"), periodic disordered
+        hyperuniform node placement procedure ("pdhu"), or nodes
+        randomly placed and minimized via LAMMPS ("lammps")).
         dim (int): Physical dimensionality of the network; either 2 or 3
         (for two-dimensional or three-dimensional networks).
-        b (float): Chain segment and/or cross-linker diameter.
-        n (int): Number of core cross-linkers.
+        b (float): Node diameter.
+        n (int): Number of core nodes.
         config (int): Configuration number.
-        max_try (int): Maximum number of cross-linker placement attempts
-        for the random core cross-linker coordinates (scheme = "rccs")
-        scheme.
+        max_try (int): Maximum number of node placement attempts for the
+        random node placement procedure (scheme = "random").
     
     """
     # Generate filename prefix
@@ -1118,12 +1429,16 @@ def crosslinker_seeding(
     # Append configuration number to filename prefix
     filename_prefix = filename_prefix + f"C{config:d}"
     
-    # Call appropriate helper function to calculate the core
-    # cross-linker coordinates
-    if scheme == "rccs": # random core cross-linker coordinates
-        random_core_coords_crosslinker_seeding(
+    # Call appropriate node placement helper function
+    if scheme == "random":
+        random_node_placement(dim, L, n, filename_prefix)
+    elif scheme == "prhd":
+        periodic_random_hard_disk_node_placement(
             dim, L, b, n, max_try, filename_prefix)
-    elif scheme == "mccs": # minimized core cross-linker coordinates
+    elif scheme == "pdhu":
+        periodic_disordered_hyperuniform_node_placement(
+            dim, L, n, filename_prefix)
+    elif scheme == "lammps":
         lammps_input_file_generator(dim, L, b, n, filename_prefix)
 
 def unique_sorted_edges(edges: list[tuple[int, int]]) -> np.ndarray:
@@ -1176,27 +1491,745 @@ def core2pb_nodes_func(
         core2pb_nodes.append(pb_nodes)
     return core2pb_nodes
 
-def swidt_dim_2_network_topology_initialization(
+def voronoi_dim_2_network_topology_initialization(
+        L: float,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        filename_prefix: str) -> None:
+    """Network topology initialization procedure for two-dimensional
+    Voronoi-tessellated networks.
+
+    This function ``tessellates'' the core nodes about themselves,
+    applies Voronoi tessellation to the resulting tessellated network
+    via the scipy.spatial.Voronoi() function, acquires back the
+    periodic network topology of the core nodes, and ascertains
+    fundamental graph constituents (node and edge information) from this
+    topology.
+
+    Args:
+        L (float): Simulation box size.
+        core_x (np.ndarray): x-coordinates of the input core nodes.
+        core_y (np.ndarray): y-coordinates of the input core nodes.
+        filename_prefix (str): Baseline filename prefix for data files.
+    
+    """
+    # Import the scipy.spatial.Voronoi() function
+    from scipy.spatial import Voronoi
+    
+    # Generate filenames
+    input_core_x_filename = filename_prefix + "-input_core_x" + ".dat"
+    input_core_y_filename = filename_prefix + "-input_core_y" + ".dat"
+    conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
+
+    # Save the input core node x- and y-coordinates
+    np.savetxt(input_core_x_filename, core_x)
+    np.savetxt(input_core_y_filename, core_y)
+
+    # Copy the core_x and core_y np.ndarrays as the first n entries in
+    # the tessellated node x- and y-coordinate np.ndarrays
+    tsslltd_core_x = core_x.copy()
+    tsslltd_core_y = core_y.copy()
+
+    # Two-dimensional tessellation protocol
+    dim_2_tsslltn, dim_2_tsslltn_num = tessellation_protocol(2)
+
+    # Use two-dimensional tessellation protocol to tessellate the core
+    # nodes
+    for tsslltn in range(dim_2_tsslltn_num):
+        x_tsslltn = dim_2_tsslltn[tsslltn, 0]
+        y_tsslltn = dim_2_tsslltn[tsslltn, 1]
+        # Skip the (hold, hold) tessellation call because the core nodes
+        # are being tessellated about themselves
+        if (x_tsslltn == 0) and (y_tsslltn == 0): continue
+        else:
+            # x- and y-coordinates from two-dimensional tessellation
+            # protocol
+            core_tsslltn_x, core_tsslltn_y = dim_2_tessellation(
+                L, core_x, core_y, x_tsslltn, y_tsslltn)
+            # Concatenate the tessellated x- and y-coordinates
+            tsslltd_core_x = np.concatenate((tsslltd_core_x, core_tsslltn_x))
+            tsslltd_core_y = np.concatenate((tsslltd_core_y, core_tsslltn_y))
+
+    del core_tsslltn_x, core_tsslltn_y
+
+    # Stack the tessellated x- and y-coordinates next to each other
+    # columnwise
+    tsslltd_core = np.column_stack((tsslltd_core_x, tsslltd_core_y))
+
+    # Apply Voronoi tessellation
+    tsslltd_core_voronoi = Voronoi(tsslltd_core)
+
+    del tsslltd_core, tsslltd_core_x, tsslltd_core_y
+
+    # Extract vertices from the Voronoi tessellation
+    vertices = tsslltd_core_voronoi.vertices
+
+    # Separate vertex x- and y-coordinates
+    vertices_x = vertices[:, 0]
+    vertices_y = vertices[:, 1]
+
+    # Confirm that each vertex solely occupies a square neighborhood
+    # that is \pm tol about itself
+    tol = 1e-10
+    for vertex in range(np.shape(vertices)[0]):
+        # Extract x- and y-coordinates of the vertex
+        vertex_x = vertices_x[vertex]
+        vertex_y = vertices_y[vertex]
+
+        # Determine if the vertex solely occupies a square neighborhood
+        # that is \pm tol about itself
+        nghbr_x_lb = vertex_x - tol
+        nghbr_x_ub = vertex_x + tol
+        nghbr_y_lb = vertex_y - tol
+        nghbr_y_ub = vertex_y + tol
+        psbl_nghbr_x_indcs = (
+            np.where(np.logical_and(vertices_x>=nghbr_x_lb, vertices_x<=nghbr_x_ub))[0]
+        )
+        psbl_nghbr_y_indcs = (
+            np.where(np.logical_and(vertices_y>=nghbr_y_lb, vertices_y<=nghbr_y_ub))[0]
+        )
+        # Gather the indices from each separate coordinate together to
+        # assess all possible vertex neighbors. Retain unique indices
+        # corresponding to each possible vertex neighbor, and the number
+        # of times each such index value appears.
+        psbl_nghbr_indcs, psbl_nghbr_indcs_counts = np.unique(
+            np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs), dtype=int),
+            return_counts=True)
+        # The true vertex neighbors are those whose index value appears
+        # twice in the possible vertex neighbor array -- equal to the
+        # network dimensionality
+        nghbr_indcs_vals_indcs = np.where(psbl_nghbr_indcs_counts == 2)[0]
+        nghbr_num = np.shape(nghbr_indcs_vals_indcs)[0]
+        # If nghbr_num > 1, then the neighborhood is overpopulated, and
+        # therefore this is an invalid set of input node coordinates for
+        # Voronoi tessellation
+        if nghbr_num > 1:
+            error_str = (
+                "A vertex neighborhood has more than one vertex! "
+                + "Therefore, this is an invalid set of input node "
+                + "coordinates for Voronoi tessellation."
+            )
+            sys.exit(error_str)
+    
+    # Extract core vertices and label these as core nodes
+    psbl_core_x_indcs = np.where(np.logical_and(vertices_x>=0, vertices_x<L))[0]
+    psbl_core_y_indcs = np.where(np.logical_and(vertices_y>=0, vertices_y<L))[0]
+    # Gather the indices from each separate coordinate together to
+    # assess all possible core vertices. Retain unique indices
+    # corresponding to each possible core vertex, and the number of
+    # times each such index value appears.
+    psbl_core_indcs, psbl_core_indcs_counts = np.unique(
+        np.concatenate((psbl_core_x_indcs, psbl_core_y_indcs), dtype=int),
+        return_counts=True)
+    # The true core vertices are those whose index value appears twice
+    # in the possible core vertex array -- equal to the network
+    # dimensionality
+    core_indcs = psbl_core_indcs[np.where(psbl_core_indcs_counts == 2)[0]]
+
+    # Number of core vertices
+    n = np.shape(core_indcs)[0]
+
+    # Gather core node x- and y-coordinates
+    core_x = vertices_x[core_indcs]
+    core_y = vertices_y[core_indcs]
+
+    # Copy the core_x and core_y np.ndarrays as the first n entries in
+    # the tessellated node x- and y-coordinate np.ndarrays
+    tsslltd_core_x = core_x.copy()
+    tsslltd_core_y = core_y.copy()
+
+    # Core nodes
+    core_nodes = np.arange(n, dtype=int)
+
+    # Use two-dimensional tessellation protocol to tessellate the core
+    # nodes
+    for tsslltn in range(dim_2_tsslltn_num):
+        x_tsslltn = dim_2_tsslltn[tsslltn, 0]
+        y_tsslltn = dim_2_tsslltn[tsslltn, 1]
+        # Skip the (hold, hold) tessellation call because the core nodes
+        # are being tessellated about themselves
+        if (x_tsslltn == 0) and (y_tsslltn == 0): continue
+        else:
+            # x- and y-coordinates from two-dimensional tessellation
+            # protocol
+            core_tsslltn_x, core_tsslltn_y = dim_2_tessellation(
+                L, core_x, core_y, x_tsslltn, y_tsslltn)
+            # Concatenate the tessellated x- and y-coordinates
+            tsslltd_core_x = np.concatenate((tsslltd_core_x, core_tsslltn_x))
+            tsslltd_core_y = np.concatenate((tsslltd_core_y, core_tsslltn_y))
+
+    del core_tsslltn_x, core_tsslltn_y
+
+    # Construct the pb2core_nodes np.ndarray such that
+    # pb2core_nodes[core_pb_node] = core_node
+    pb2core_nodes = np.tile(core_nodes, dim_2_tsslltn_num)
+        
+    del core_nodes
+
+    # Extract the ridge vertices from the Voronoi tessellation
+    ridge_vertices = tsslltd_core_voronoi.ridge_vertices
+
+    # List for edges of the core and periodic boundary nodes
+    tsslltd_core_pb_edges = []
+
+    for ridge_vertex in ridge_vertices:
+        # In two dimensions, each ridge vertex is a line
+        vertex_0 = int(ridge_vertex[0])
+        vertex_1 = int(ridge_vertex[1])
+        # Skip over ridge vertices that extend out to infinity
+        if (vertex_0 == -1) or (vertex_1 == -1): continue
+        else:
+            # Determine the indices of the vertices in the tessellated
+            # core node topology 
+            # Extract vertex x- and y-coordinates
+            vertex_0_x = vertices_x[vertex_0]
+            vertex_0_y = vertices_y[vertex_0]
+            vertex_1_x = vertices_x[vertex_1]
+            vertex_1_y = vertices_y[vertex_1]
+            # Define vertex neighborhood
+            nghbr_vertex_0_x_lb = vertex_0_x - tol
+            nghbr_vertex_0_x_ub = vertex_0_x + tol
+            nghbr_vertex_0_y_lb = vertex_0_y - tol
+            nghbr_vertex_0_y_ub = vertex_0_y + tol
+            nghbr_vertex_1_x_lb = vertex_1_x - tol
+            nghbr_vertex_1_x_ub = vertex_1_x + tol
+            nghbr_vertex_1_y_lb = vertex_1_y - tol
+            nghbr_vertex_1_y_ub = vertex_1_y + tol
+            psbl_vertex_0_x_indcs = (
+                np.where(np.logical_and(tsslltd_core_x>=nghbr_vertex_0_x_lb, tsslltd_core_x<=nghbr_vertex_0_x_ub))[0]
+            )
+            psbl_vertex_0_y_indcs = (
+                np.where(np.logical_and(tsslltd_core_y>=nghbr_vertex_0_y_lb, tsslltd_core_y<=nghbr_vertex_0_y_ub))[0]
+            )
+            psbl_vertex_1_x_indcs = (
+                np.where(np.logical_and(tsslltd_core_x>=nghbr_vertex_1_x_lb, tsslltd_core_x<=nghbr_vertex_1_x_ub))[0]
+            )
+            psbl_vertex_1_y_indcs = (
+                np.where(np.logical_and(tsslltd_core_y>=nghbr_vertex_1_y_lb, tsslltd_core_y<=nghbr_vertex_1_y_ub))[0]
+            )
+            # Gather the indices from each separate coordinate together,
+            # retain unique indices, and the number of times each such
+            # index value appears.
+            psbl_vertex_0_indcs, psbl_vertex_0_indcs_counts = np.unique(
+                np.concatenate((psbl_vertex_0_x_indcs, psbl_vertex_0_y_indcs), dtype=int),
+                return_counts=True)
+            psbl_vertex_1_indcs, psbl_vertex_1_indcs_counts = np.unique(
+                np.concatenate((psbl_vertex_1_x_indcs, psbl_vertex_1_y_indcs), dtype=int),
+                return_counts=True)
+            # The true vertex is whose index value appears twice in the
+            # possible vertex array -- equal to the network
+            # dimensionality
+            vertex_0_indcs_vals_indcs = (
+                np.where(psbl_vertex_0_indcs_counts == 2)[0]
+            )
+            vertex_0_indcs_num = np.shape(vertex_0_indcs_vals_indcs)[0]
+            vertex_1_indcs_vals_indcs = (
+                np.where(psbl_vertex_1_indcs_counts == 2)[0]
+            )
+            vertex_1_indcs_num = np.shape(vertex_1_indcs_vals_indcs)[0]
+            # Skip over situations where a vertex value is not able to
+            # be solved for, which does not occur for the core and
+            # periodic boundary vertices
+            if (vertex_0_indcs_num != 1) or (vertex_1_indcs_num != 1): continue
+            else:
+                # Extract vertex node index
+                node_0 = int(psbl_vertex_0_indcs[vertex_0_indcs_vals_indcs][0])
+                node_1 = int(psbl_vertex_1_indcs[vertex_1_indcs_vals_indcs][0])
+
+                # If any of the nodes involved in the ridge vertex
+                # correspond to the original core nodes, then add that
+                # edge to the edge list. Duplicate entries will arise.
+                if (node_0 < n) or (node_1 < n):
+                    tsslltd_core_pb_edges.append((node_0, node_1))
+                else: pass
+
+    del vertex, vertices, ridge_vertex, ridge_vertices, tsslltd_core_voronoi
+    del tsslltd_core_x, tsslltd_core_y
+
+    # Convert edge list to np.ndarray, and retain the unique edges from
+    # the core and periodic boundary nodes
+    tsslltd_core_pb_edges = unique_sorted_edges(tsslltd_core_pb_edges)
+
+    # Lists for the edges of the graph capturing the periodic
+    # connections between the core nodes
+    conn_core_edges = []
+    conn_pb_edges = []
+
+    for edge in range(np.shape(tsslltd_core_pb_edges)[0]):
+        node_0 = int(tsslltd_core_pb_edges[edge, 0])
+        node_1 = int(tsslltd_core_pb_edges[edge, 1])
+
+        # Edge is a core edge
+        if (node_0 < n) and (node_1 < n):
+            conn_core_edges.append((node_0, node_1))
+        # Edge is a periodic boundary edge
+        else:
+            node_0 = int(pb2core_nodes[node_0])
+            node_1 = int(pb2core_nodes[node_1])
+            conn_pb_edges.append((node_0, node_1))
+
+    # Convert edge lists to np.ndarrays, and retain unique edges
+    conn_core_edges = unique_sorted_edges(conn_core_edges)
+    conn_pb_edges = unique_sorted_edges(conn_pb_edges)
+
+    # Save fundamental graph constituents from this topology
+    np.savetxt(conn_n_filename, [n], fmt="%d")
+    np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")
+    np.savetxt(conn_pb_edges_filename, conn_pb_edges, fmt="%d")
+
+    # Save the core node x- and y-coordinates
+    np.savetxt(core_x_filename, core_x)
+    np.savetxt(core_y_filename, core_y)
+
+def voronoi_dim_3_network_topology_initialization(
+        L: float,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        core_z: np.ndarray,
+        filename_prefix: str) -> None:
+    """Network topology initialization procedure for three-dimensional
+    Voronoi-tessellated networks.
+
+    This function ``tessellates'' the core nodes about themselves,
+    applies Voronoi tessellation to the resulting tessellated network
+    via the scipy.spatial.Voronoi() function, acquires back the
+    periodic network topology of the core nodes, and ascertains
+    fundamental graph constituents (node and edge information) from this
+    topology.
+
+    Args:
+        L (float): Simulation box size.
+        core_x (np.ndarray): x-coordinates of the input core nodes.
+        core_y (np.ndarray): y-coordinates of the input core nodes.
+        core_z (np.ndarray): z-coordinates of the input core nodes.
+        filename_prefix (str): Baseline filename prefix for data files.
+    
+    """
+    # Import the scipy.spatial.Voronoi() function
+    from scipy.spatial import Voronoi
+    
+    # Generate filenames
+    input_core_x_filename = filename_prefix + "-input_core_x" + ".dat"
+    input_core_y_filename = filename_prefix + "-input_core_y" + ".dat"
+    input_core_z_filename = filename_prefix + "-input_core_z" + ".dat"
+    conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    conn_core_edges_filename = filename_prefix + "-conn_core_edges" + ".dat"
+    conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    core_x_filename = filename_prefix + "-core_x" + ".dat"
+    core_y_filename = filename_prefix + "-core_y" + ".dat"
+    core_z_filename = filename_prefix + "-core_z" + ".dat"
+
+    # Save the input core node x-, y-, and z-coordinates
+    np.savetxt(input_core_x_filename, core_x)
+    np.savetxt(input_core_y_filename, core_y)
+    np.savetxt(input_core_z_filename, core_z)
+
+    # Copy the core_x, core_y, and core_z np.ndarrays as the first n
+    # entries in the tessellated node x-, y-, and z-coordinate
+    # np.ndarrays
+    tsslltd_core_x = core_x.copy()
+    tsslltd_core_y = core_y.copy()
+    tsslltd_core_z = core_z.copy()
+
+    # Three-dimensional tessellation protocol
+    dim_3_tsslltn, dim_3_tsslltn_num = tessellation_protocol(3)
+
+    # Use three-dimensional tessellation protocol to tessellate the core
+    # nodes
+    for tsslltn in range(dim_3_tsslltn_num):
+        x_tsslltn = dim_3_tsslltn[tsslltn, 0]
+        y_tsslltn = dim_3_tsslltn[tsslltn, 1]
+        z_tsslltn = dim_3_tsslltn[tsslltn, 2]
+        # Skip the (hold, hold, hold) tessellation call because the core
+        # nodes are being tessellated about themselves
+        if (x_tsslltn == 0) and (y_tsslltn == 0) and (z_tsslltn == 0): continue
+        else:
+            # x-, y-, and z-coordinates from three-dimensional
+            # tessellation protocol
+            core_tsslltn_x, core_tsslltn_y, core_tsslltn_z = dim_3_tessellation(
+                L, core_x, core_y, core_z, x_tsslltn, y_tsslltn, z_tsslltn)
+            # Concatenate the tessellated x-, y-, and z-coordinates
+            tsslltd_core_x = np.concatenate((tsslltd_core_x, core_tsslltn_x))
+            tsslltd_core_y = np.concatenate((tsslltd_core_y, core_tsslltn_y))
+            tsslltd_core_z = np.concatenate((tsslltd_core_z, core_tsslltn_z))
+
+    del core_tsslltn_x, core_tsslltn_y, core_tsslltn_z
+
+    # Stack the tessellated x-, y-, and z-coordinates next to each other
+    # columnwise
+    tsslltd_core = np.column_stack(
+        (tsslltd_core_x, tsslltd_core_y, tsslltd_core_z))
+
+    # Apply Voronoi tessellation
+    tsslltd_core_voronoi = Voronoi(tsslltd_core)
+
+    del tsslltd_core, tsslltd_core_x, tsslltd_core_y, tsslltd_core_z
+
+    # Extract vertices from the Voronoi tessellation
+    vertices = tsslltd_core_voronoi.vertices
+
+    # Separate vertex x-, y-, and z-coordinates
+    vertices_x = vertices[:, 0]
+    vertices_y = vertices[:, 1]
+    vertices_z = vertices[:, 2]
+
+    # Confirm that each vertex solely occupies a cube neighborhood
+    # that is \pm tol about itself
+    tol = 1e-10
+    for vertex in range(np.shape(vertices)[0]):
+        # Extract x-, y-, and z-coordinates of the vertex
+        vertex_x = vertices_x[vertex]
+        vertex_y = vertices_y[vertex]
+        vertex_z = vertices_z[vertex]
+
+        # Determine if the vertex solely occupies a cube neighborhood
+        # that is \pm tol about itself
+        nghbr_x_lb = vertex_x - tol
+        nghbr_x_ub = vertex_x + tol
+        nghbr_y_lb = vertex_y - tol
+        nghbr_y_ub = vertex_y + tol
+        nghbr_z_lb = vertex_z - tol
+        nghbr_z_ub = vertex_z + tol
+        psbl_nghbr_x_indcs = (
+            np.where(np.logical_and(vertices_x>=nghbr_x_lb, vertices_x<=nghbr_x_ub))[0]
+        )
+        psbl_nghbr_y_indcs = (
+            np.where(np.logical_and(vertices_y>=nghbr_y_lb, vertices_y<=nghbr_y_ub))[0]
+        )
+        psbl_nghbr_z_indcs = (
+            np.where(np.logical_and(vertices_z>=nghbr_z_lb, vertices_z<=nghbr_z_ub))[0]
+        )
+        # Gather the indices from each separate coordinate together to
+        # assess all possible vertex neighbors. Retain unique indices
+        # corresponding to each possible vertex neighbor, and the number
+        # of times each such index value appears.
+        psbl_nghbr_indcs, psbl_nghbr_indcs_counts = np.unique(
+            np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs, psbl_nghbr_z_indcs), dtype=int),
+            return_counts=True)
+        # The true vertex neighbors are those whose index value appears
+        # thrice in the possible vertex neighbor array -- equal to the
+        # network dimensionality
+        nghbr_indcs_vals_indcs = np.where(psbl_nghbr_indcs_counts == 3)[0]
+        nghbr_num = np.shape(nghbr_indcs_vals_indcs)[0]
+        # If nghbr_num > 1, then the neighborhood is overpopulated, and
+        # therefore this is an invalid set of input node coordinates for
+        # Voronoi tessellation
+        if nghbr_num > 1:
+            error_str = (
+                "A vertex neighborhood has more than one vertex! "
+                + "Therefore, this is an invalid set of input node "
+                + "coordinates for Voronoi tessellation."
+            )
+            sys.exit(error_str)
+    
+    # Extract core vertices and label these as core nodes
+    psbl_core_x_indcs = np.where(np.logical_and(vertices_x>=0, vertices_x<L))[0]
+    psbl_core_y_indcs = np.where(np.logical_and(vertices_y>=0, vertices_y<L))[0]
+    psbl_core_z_indcs = np.where(np.logical_and(vertices_z>=0, vertices_z<L))[0]
+    # Gather the indices from each separate coordinate together to
+    # assess all possible core vertices. Retain unique indices
+    # corresponding to each possible core vertex, and the number of
+    # times each such index value appears.
+    psbl_core_indcs, psbl_core_indcs_counts = np.unique(
+        np.concatenate((psbl_core_x_indcs, psbl_core_y_indcs, psbl_core_z_indcs), dtype=int),
+        return_counts=True)
+    # The true core vertices are those whose index value appears thrice
+    # in the possible core vertex array -- equal to the network
+    # dimensionality
+    core_indcs = psbl_core_indcs[np.where(psbl_core_indcs_counts == 3)[0]]
+
+    # Number of core vertices
+    n = np.shape(core_indcs)[0]
+
+    # Gather core node x-, y-, and z-coordinates
+    core_x = vertices_x[core_indcs]
+    core_y = vertices_y[core_indcs]
+    core_z = vertices_z[core_indcs]
+
+    # Copy the core_x, core_y, and core_z np.ndarrays as the first n
+    # entries in the tessellated node x-, y-, and z-coordinate
+    # np.ndarrays
+    tsslltd_core_x = core_x.copy()
+    tsslltd_core_y = core_y.copy()
+    tsslltd_core_z = core_z.copy()
+
+    # Core nodes
+    core_nodes = np.arange(n, dtype=int)
+
+    # Use three-dimensional tessellation protocol to tessellate the core
+    # nodes
+    for tsslltn in range(dim_3_tsslltn_num):
+        x_tsslltn = dim_3_tsslltn[tsslltn, 0]
+        y_tsslltn = dim_3_tsslltn[tsslltn, 1]
+        z_tsslltn = dim_3_tsslltn[tsslltn, 2]
+        # Skip the (hold, hold, hold) tessellation call because the core
+        # nodes are being tessellated about themselves
+        if (x_tsslltn == 0) and (y_tsslltn == 0) and (z_tsslltn == 0): continue
+        else:
+            # x-, y-, and z-coordinates from three-dimensional
+            # tessellation protocol
+            core_tsslltn_x, core_tsslltn_y, core_tsslltn_z = dim_3_tessellation(
+                L, core_x, core_y, core_z, x_tsslltn, y_tsslltn, z_tsslltn)
+            # Concatenate the tessellated x-, y-, and z-coordinates
+            tsslltd_core_x = np.concatenate((tsslltd_core_x, core_tsslltn_x))
+            tsslltd_core_y = np.concatenate((tsslltd_core_y, core_tsslltn_y))
+            tsslltd_core_z = np.concatenate((tsslltd_core_z, core_tsslltn_z))
+
+    del core_tsslltn_x, core_tsslltn_y, core_tsslltn_z
+
+    # Construct the pb2core_nodes np.ndarray such that
+    # pb2core_nodes[core_pb_node] = core_node
+    pb2core_nodes = np.tile(core_nodes, dim_3_tsslltn_num)
+        
+    del core_nodes
+
+    # Extract the ridge vertices from the Voronoi tessellation
+    ridge_vertices = tsslltd_core_voronoi.ridge_vertices
+
+    # List for edges of the core and periodic boundary nodes
+    tsslltd_core_pb_edges = []
+
+    for ridge_vertex in ridge_vertices:
+        # In three dimensions, each ridge vertex is a facet
+        # Extract list of lines that altogether define the facet
+        facet_vertices_0 = ridge_vertex[:-1] + [ridge_vertex[-1]]
+        facet_vertices_1 = ridge_vertex[1:] + [ridge_vertex[0]]
+        for facet_vertex in range(len(ridge_vertex)):
+            vertex_0 = int(facet_vertices_0[facet_vertex])
+            vertex_1 = int(facet_vertices_1[facet_vertex])
+            # Skip over ridge vertices that extend out to infinity
+            if (vertex_0 == -1) or (vertex_1 == -1): continue
+            else:
+                # Determine the indices of the vertices in the
+                # tessellated core node topology 
+                # Extract vertex x-, y-, and z-coordinates
+                vertex_0_x = vertices_x[vertex_0]
+                vertex_0_y = vertices_y[vertex_0]
+                vertex_0_z = vertices_z[vertex_0]
+                vertex_1_x = vertices_x[vertex_1]
+                vertex_1_y = vertices_y[vertex_1]
+                vertex_1_z = vertices_z[vertex_1]
+                # Define vertex neighborhood
+                nghbr_vertex_0_x_lb = vertex_0_x - tol
+                nghbr_vertex_0_x_ub = vertex_0_x + tol
+                nghbr_vertex_0_y_lb = vertex_0_y - tol
+                nghbr_vertex_0_y_ub = vertex_0_y + tol
+                nghbr_vertex_0_z_lb = vertex_0_z - tol
+                nghbr_vertex_0_z_ub = vertex_0_z + tol
+                nghbr_vertex_1_x_lb = vertex_1_x - tol
+                nghbr_vertex_1_x_ub = vertex_1_x + tol
+                nghbr_vertex_1_y_lb = vertex_1_y - tol
+                nghbr_vertex_1_y_ub = vertex_1_y + tol
+                nghbr_vertex_1_z_lb = vertex_1_z - tol
+                nghbr_vertex_1_z_ub = vertex_1_z + tol
+                psbl_vertex_0_x_indcs = (
+                    np.where(np.logical_and(tsslltd_core_x>=nghbr_vertex_0_x_lb, tsslltd_core_x<=nghbr_vertex_0_x_ub))[0]
+                )
+                psbl_vertex_0_y_indcs = (
+                    np.where(np.logical_and(tsslltd_core_y>=nghbr_vertex_0_y_lb, tsslltd_core_y<=nghbr_vertex_0_y_ub))[0]
+                )
+                psbl_vertex_0_z_indcs = (
+                    np.where(np.logical_and(tsslltd_core_z>=nghbr_vertex_0_z_lb, tsslltd_core_z<=nghbr_vertex_0_z_ub))[0]
+                )
+                psbl_vertex_1_x_indcs = (
+                    np.where(np.logical_and(tsslltd_core_x>=nghbr_vertex_1_x_lb, tsslltd_core_x<=nghbr_vertex_1_x_ub))[0]
+                )
+                psbl_vertex_1_y_indcs = (
+                    np.where(np.logical_and(tsslltd_core_y>=nghbr_vertex_1_y_lb, tsslltd_core_y<=nghbr_vertex_1_y_ub))[0]
+                )
+                psbl_vertex_1_z_indcs = (
+                    np.where(np.logical_and(tsslltd_core_z>=nghbr_vertex_1_z_lb, tsslltd_core_z<=nghbr_vertex_1_z_ub))[0]
+                )
+                # Gather the indices from each separate coordinate
+                # together, retain unique indices, and the number of
+                # times each such index value appears.
+                psbl_vertex_0_indcs, psbl_vertex_0_indcs_counts = np.unique(
+                    np.concatenate((psbl_vertex_0_x_indcs, psbl_vertex_0_y_indcs, psbl_vertex_0_z_indcs), dtype=int),
+                    return_counts=True)
+                psbl_vertex_1_indcs, psbl_vertex_1_indcs_counts = np.unique(
+                    np.concatenate((psbl_vertex_1_x_indcs, psbl_vertex_1_y_indcs, psbl_vertex_1_z_indcs), dtype=int),
+                    return_counts=True)
+                # The true vertex is whose index value appears thrice in
+                # the possible vertex array -- equal to the network
+                # dimensionality
+                vertex_0_indcs_vals_indcs = (
+                    np.where(psbl_vertex_0_indcs_counts == 3)[0]
+                )
+                vertex_0_indcs_num = np.shape(vertex_0_indcs_vals_indcs)[0]
+                vertex_1_indcs_vals_indcs = (
+                    np.where(psbl_vertex_1_indcs_counts == 3)[0]
+                )
+                vertex_1_indcs_num = np.shape(vertex_1_indcs_vals_indcs)[0]
+                # Skip over situations where a vertex value is not able
+                # to be solved for, which does not occur for the core
+                # and periodic boundary vertices
+                if (vertex_0_indcs_num != 1) or (vertex_1_indcs_num != 1):
+                    continue
+                else:
+                    # Extract vertex node index
+                    node_0 = int(
+                        psbl_vertex_0_indcs[vertex_0_indcs_vals_indcs][0])
+                    node_1 = int(
+                        psbl_vertex_1_indcs[vertex_1_indcs_vals_indcs][0])
+
+                    # If any of the nodes involved in the ridge vertex
+                    # correspond to the original core nodes, then add
+                    # that edge to the edge list. Duplicate entries will
+                    # arise.
+                    if (node_0 < n) or (node_1 < n):
+                        tsslltd_core_pb_edges.append((node_0, node_1))
+                    else: pass
+
+    del vertex, vertices, ridge_vertex, ridge_vertices, tsslltd_core_voronoi
+    del tsslltd_core_x, tsslltd_core_y, tsslltd_core_z
+
+    # Convert edge list to np.ndarray, and retain the unique edges from
+    # the core and periodic boundary nodes
+    tsslltd_core_pb_edges = unique_sorted_edges(tsslltd_core_pb_edges)
+
+    # Lists for the edges of the graph capturing the periodic
+    # connections between the core nodes
+    conn_core_edges = []
+    conn_pb_edges = []
+
+    for edge in range(np.shape(tsslltd_core_pb_edges)[0]):
+        node_0 = int(tsslltd_core_pb_edges[edge, 0])
+        node_1 = int(tsslltd_core_pb_edges[edge, 1])
+
+        # Edge is a core edge
+        if (node_0 < n) and (node_1 < n):
+            conn_core_edges.append((node_0, node_1))
+        # Edge is a periodic boundary edge
+        else:
+            node_0 = int(pb2core_nodes[node_0])
+            node_1 = int(pb2core_nodes[node_1])
+            conn_pb_edges.append((node_0, node_1))
+
+    # Convert edge lists to np.ndarrays, and retain unique edges
+    conn_core_edges = unique_sorted_edges(conn_core_edges)
+    conn_pb_edges = unique_sorted_edges(conn_pb_edges)
+
+    # Save fundamental graph constituents from this topology
+    np.savetxt(conn_n_filename, [n], fmt="%d")
+    np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")
+    np.savetxt(conn_pb_edges_filename, conn_pb_edges, fmt="%d")
+
+    # Save the core node x-, y-, and z-coordinates
+    np.savetxt(core_x_filename, core_x)
+    np.savetxt(core_y_filename, core_y)
+    np.savetxt(core_z_filename, core_z)
+
+def voronoi_network_topology_initialization(
+        network: str,
+        date: str,
+        batch: str,
+        sample: int,
+        scheme: str,
+        dim: int,
+        n: int,
+        config: int) -> None:
+    """Network topology initialization procedure for Voronoi-tessellated
+    networks.
+
+    This function loads the simulation box size and the core node
+    coordinates previously generated by the node_seeding() function.
+    Then, depending on the network dimensionality, this function calls
+    upon a corresponding helper function to initialize the
+    Voronoi-tessellated network topology.
+
+    Args:
+        network (str): Lower-case acronym indicating the particular type
+        of network that is being represented by the eventual network
+        topology; here, only "voronoi" is applicable (corresponding
+        to Voronoi-tessellated networks ("voronoi")).
+        date (str): "YYYYMMDD" string indicating the date during which
+        the network batch and sample data was generated.
+        batch (str): Single capitalized letter (e.g., A, B, C, ...)
+        indicating the batch label of the network sample data.
+        sample (int): Label of a particular network in the batch.
+        scheme (str): Lower-case acronym indicating the particular
+        scheme used to generate the positions of the core nodes;
+        either "random", "prhd", "pdhu", or "lammps" (corresponding to
+        the random node placement procedure ("random"), periodic random
+        hard disk node placement procedure ("prhd"), periodic disordered
+        hyperuniform node placement procedure ("pdhu"), or nodes
+        randomly placed and minimized via LAMMPS ("lammps")).
+        dim (int): Physical dimensionality of the network; either 2 or 3
+        (for two-dimensional or three-dimensional networks).
+        n (int): Number of core nodes.
+        config (int): Configuration number.
+    
+    """
+    # Network topology initialization procedure is only applicable for 
+    # Voronoi-tessellated networks. Exit if a different type of network
+    # is passed.
+    if network != "voronoi":
+        error_str = (
+            "Network topology initialization procedure is only "
+            + "applicable for Voronoi-tessellated networks. This procedure "
+            + "will only proceed if network = ``voronoi''."
+        )
+        sys.exit(error_str)
+    # Generate filename prefix
+    filename_prefix = filename_str(network, date, batch, sample)
+    L_filename = filename_prefix + "-L" + ".dat"
+    
+    # Load L
+    L = np.loadtxt(L_filename)
+
+    # Append configuration number to filename prefix
+    filename_prefix = filename_prefix + f"C{config:d}"
+
+    # Generate config filename
+    config_filename = filename_prefix + ".config"
+
+    # Call appropriate helper function to initialize network topology
+    if (scheme == "random") or (scheme == "prhd") or (scheme == "pdhu"):
+        # Load core node coordinates
+        coords = np.loadtxt(config_filename)
+    elif scheme == "lammps":
+        skiprows_num = 15
+        # Load core node coordinates
+        coords = np.loadtxt(config_filename, skiprows=skiprows_num, max_rows=n)
+    # Separate core nodes x- and y-coordinates
+    x = coords[:, 0].copy()
+    y = coords[:, 1].copy()
+    if dim == 2:
+        del coords
+        voronoi_dim_2_network_topology_initialization(
+            L, x, y, filename_prefix)
+    elif dim == 3:
+        # Separate core node z-coordinates
+        z = coords[:, 2].copy()
+        del coords
+        voronoi_dim_3_network_topology_initialization(
+            L, x, y, z, filename_prefix)
+
+def delaunay_dim_2_network_topology_initialization(
         L: float,
         core_x: np.ndarray,
         core_y: np.ndarray,
         n: int,
         filename_prefix: str) -> None:
     """Network topology initialization procedure for two-dimensional
-    spider web-inspired Delaunay-triangulated networks.
+    Delaunay-triangulated networks.
 
-    This function ``tessellates'' the core cross-linkers about
-    themselves, applies Delaunay triangulation to the resulting
-    tessellated network via the scipy.spatial.Delaunay() function,
-    acquires back the periodic network topology of the core
-    cross-linkers, and ascertains fundamental graph constituents (node
-    and edge information) from this topology.
+    This function ``tessellates'' the core nodes about themselves,
+    applies Delaunay triangulation to the resulting tessellated network
+    via the scipy.spatial.Delaunay() function, acquires back the
+    periodic network topology of the core nodes, and ascertains
+    fundamental graph constituents (node and edge information) from this
+    topology.
 
     Args:
-        L (float): Simulation box size of the core cross-linkers.
-        core_x (np.ndarray): x-coordinates of the core cross-linkers.
-        core_y (np.ndarray): y-coordinates of the core cross-linkers.
-        n (int): Number of core cross-linkers.
+        L (float): Simulation box size.
+        core_x (np.ndarray): x-coordinates of the core nodes.
+        core_y (np.ndarray): y-coordinates of the core nodes.
+        n (int): Number of core nodes.
         filename_prefix (str): Baseline filename prefix for data files.
     
     """
@@ -1209,11 +2242,11 @@ def swidt_dim_2_network_topology_initialization(
     core_x_filename = filename_prefix + "-core_x" + ".dat"
     core_y_filename = filename_prefix + "-core_y" + ".dat"
 
-    # Core cross-linker nodes
+    # Core nodes
     core_nodes = np.arange(n, dtype=int)
 
     # Copy the core_x and core_y np.ndarrays as the first n entries in
-    # the tessellated cross-linker x- and y-coordinate np.ndarrays
+    # the tessellated node x- and y-coordinate np.ndarrays
     tsslltd_core_x = core_x.copy()
     tsslltd_core_y = core_y.copy()
 
@@ -1221,19 +2254,18 @@ def swidt_dim_2_network_topology_initialization(
     dim_2_tsslltn, dim_2_tsslltn_num = tessellation_protocol(2)
     
     # Use two-dimensional tessellation protocol to tessellate the core
-    # cross-linkers
+    # nodes
     for tsslltn in range(dim_2_tsslltn_num):
         x_tsslltn = dim_2_tsslltn[tsslltn, 0]
         y_tsslltn = dim_2_tsslltn[tsslltn, 1]
         # Skip the (hold, hold) tessellation call because the core
-        # cross-linkers are being tessellated about themselves
+        # nodes are being tessellated about themselves
         if (x_tsslltn == 0) and (y_tsslltn == 0): continue
         else:
             # x- and y-coordinates from two-dimensional tessellation
             # protocol
-            core_tsslltn_x, core_tsslltn_y = (
-                dim_2_tessellation(L, core_x, core_y, x_tsslltn, y_tsslltn)
-            )
+            core_tsslltn_x, core_tsslltn_y = dim_2_tessellation(
+                L, core_x, core_y, x_tsslltn, y_tsslltn)
             # Concatenate the tessellated x- and y-coordinates
             tsslltd_core_x = np.concatenate((tsslltd_core_x, core_tsslltn_x))
             tsslltd_core_y = np.concatenate((tsslltd_core_y, core_tsslltn_y))
@@ -1250,15 +2282,15 @@ def swidt_dim_2_network_topology_initialization(
     # columnwise
     tsslltd_core = np.column_stack((tsslltd_core_x, tsslltd_core_y))
 
-    # Apply Delaunay triangulation to the tessellated network
-    tsslltd_core_deltri = Delaunay(tsslltd_core)
+    # Apply Delaunay triangulation
+    tsslltd_core_delaunay = Delaunay(tsslltd_core)
 
-    del tsslltd_core
+    del tsslltd_core, tsslltd_core_x, tsslltd_core_y
 
     # Extract the simplices from the Delaunay triangulation
-    simplices = tsslltd_core_deltri.simplices
+    simplices = tsslltd_core_delaunay.simplices
 
-    # List for edges of the core and periodic boundary cross-linkers
+    # List for edges of the core and periodic boundary nodes
     tsslltd_core_pb_edges = []
 
     for simplex in simplices:
@@ -1268,8 +2300,8 @@ def swidt_dim_2_network_topology_initialization(
         node_2 = int(simplex[2])
 
         # If any of the nodes involved in any simplex edge correspond to
-        # the original core cross-linkers, then add that edge to the
-        # edge list. Duplicate entries will arise.
+        # the original core nodes, then add that edge to the edge list.
+        # Duplicate entries will arise.
         if (node_0 < n) or (node_1 < n):
             tsslltd_core_pb_edges.append((node_0, node_1))
         if (node_1 < n) or (node_2 < n):
@@ -1278,14 +2310,14 @@ def swidt_dim_2_network_topology_initialization(
             tsslltd_core_pb_edges.append((node_2, node_0))
         else: pass
     
-    del simplex, simplices, tsslltd_core_deltri
+    del simplex, simplices, tsslltd_core_delaunay
 
     # Convert edge list to np.ndarray, and retain the unique edges from
-    # the core and periodic boundary cross-linkers
+    # the core and periodic boundary nodes
     tsslltd_core_pb_edges = unique_sorted_edges(tsslltd_core_pb_edges)
 
     # Lists for the edges of the graph capturing the periodic
-    # connections between the core cross-linkers
+    # connections between the core nodes
     conn_core_edges = []
     conn_pb_edges = []
 
@@ -1310,11 +2342,11 @@ def swidt_dim_2_network_topology_initialization(
     np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")
     np.savetxt(conn_pb_edges_filename, conn_pb_edges, fmt="%d")
 
-    # Save the core cross-linker x- and y-coordinates
+    # Save the core node x- and y-coordinates
     np.savetxt(core_x_filename, core_x)
     np.savetxt(core_y_filename, core_y)
 
-def swidt_dim_3_network_topology_initialization(
+def delaunay_dim_3_network_topology_initialization(
         L: float,
         core_x: np.ndarray,
         core_y: np.ndarray,
@@ -1322,21 +2354,21 @@ def swidt_dim_3_network_topology_initialization(
         n: int,
         filename_prefix: str) -> None:
     """Network topology initialization procedure for three-dimensional
-    spider web-inspired Delaunay-triangulated networks.
+    Delaunay-triangulated networks.
 
-    This function ``tessellates'' the core cross-linkers about
-    themselves, applies Delaunay triangulation to the resulting
-    tessellated network via the scipy.spatial.Delaunay() function,
-    acquires back the periodic network topology of the core
-    cross-linkers, and ascertains fundamental graph constituents (node
-    and edge information) from this topology.
+    This function ``tessellates'' the core nodes about themselves,
+    applies Delaunay triangulation to the resulting tessellated network
+    via the scipy.spatial.Delaunay() function, acquires back the
+    periodic network topology of the core nodes, and ascertains
+    fundamental graph constituents (node and edge information) from this
+    topology.
 
     Args:
-        L (float): Simulation box size of the core cross-linkers.
-        core_x (np.ndarray): x-coordinates of the core cross-linkers.
-        core_y (np.ndarray): y-coordinates of the core cross-linkers.
-        core_z (np.ndarray): z-coordinates of the core cross-linkers.
-        n (int): Number of core cross-linkers.
+        L (float): Simulation box size.
+        core_x (np.ndarray): x-coordinates of the core nodes.
+        core_y (np.ndarray): y-coordinates of the core nodes.
+        core_z (np.ndarray): z-coordinates of the core nodes.
+        n (int): Number of core nodes.
         filename_prefix (str): Baseline filename prefix for data files.
     
     """
@@ -1350,11 +2382,11 @@ def swidt_dim_3_network_topology_initialization(
     core_y_filename = filename_prefix + "-core_y" + ".dat"
     core_z_filename = filename_prefix + "-core_z" + ".dat"
 
-    # Core cross-linker nodes
+    # Core nodes
     core_nodes = np.arange(n, dtype=int)
 
     # Copy the core_x, core_y, and core_z np.ndarrays as the first n
-    # entries in the tessellated cross-linker x-, y-, and z-coordinate
+    # entries in the tessellated node x-, y-, and z-coordinate
     # np.ndarrays
     tsslltd_core_x = core_x.copy()
     tsslltd_core_y = core_y.copy()
@@ -1364,21 +2396,19 @@ def swidt_dim_3_network_topology_initialization(
     dim_3_tsslltn, dim_3_tsslltn_num = tessellation_protocol(3)
     
     # Use three-dimensional tessellation protocol to tessellate the core
-    # cross-linkers
+    # nodes
     for tsslltn in range(dim_3_tsslltn_num):
         x_tsslltn = dim_3_tsslltn[tsslltn, 0]
         y_tsslltn = dim_3_tsslltn[tsslltn, 1]
         z_tsslltn = dim_3_tsslltn[tsslltn, 2]
-        # Skip the (hold, hold) tessellation call because the core
-        # cross-linkers are being tessellated about themselves
+        # Skip the (hold, hold, hold) tessellation call because the core
+        # nodes are being tessellated about themselves
         if (x_tsslltn == 0) and (y_tsslltn == 0) and (z_tsslltn == 0): continue
         else:
             # x-, y-, and z-coordinates from three-dimensional
             # tessellation protocol
-            core_tsslltn_x, core_tsslltn_y, core_tsslltn_z = (
-                dim_3_tessellation(
-                    L, core_x, core_y, core_z, x_tsslltn, y_tsslltn, z_tsslltn)
-            )
+            core_tsslltn_x, core_tsslltn_y, core_tsslltn_z = dim_3_tessellation(
+                L, core_x, core_y, core_z, x_tsslltn, y_tsslltn, z_tsslltn)
             # Concatenate the tessellated x-, y-, and z-coordinates
             tsslltd_core_x = np.concatenate((tsslltd_core_x, core_tsslltn_x))
             tsslltd_core_y = np.concatenate((tsslltd_core_y, core_tsslltn_y))
@@ -1394,19 +2424,18 @@ def swidt_dim_3_network_topology_initialization(
 
     # Stack the tessellated x-, y-, and z-coordinates next to each other
     # columnwise
-    tsslltd_core = (
-        np.column_stack((tsslltd_core_x, tsslltd_core_y, tsslltd_core_z))
-    )
+    tsslltd_core = np.column_stack(
+        (tsslltd_core_x, tsslltd_core_y, tsslltd_core_z))
 
-    # Apply Delaunay triangulation to the tessellated network
-    tsslltd_core_deltri = Delaunay(tsslltd_core)
+    # Apply Delaunay triangulation
+    tsslltd_core_delaunay = Delaunay(tsslltd_core)
 
-    del tsslltd_core
+    del tsslltd_core, tsslltd_core_x, tsslltd_core_y, tsslltd_core_z
 
     # Extract the simplices from the Delaunay triangulation
-    simplices = tsslltd_core_deltri.simplices
+    simplices = tsslltd_core_delaunay.simplices
 
-    # List for edges of the core and periodic boundary cross-linkers
+    # List for edges of the core and periodic boundary nodes
     tsslltd_core_pb_edges = []
 
     for simplex in simplices:
@@ -1417,8 +2446,8 @@ def swidt_dim_3_network_topology_initialization(
         node_3 = int(simplex[3])
 
         # If any of the nodes involved in any simplex edge correspond to
-        # the original core cross-linkers, then add those nodes and that
-        # edge to the appropriate lists. Duplicate entries will arise.
+        # the original core nodes, then add those nodes and that edge to
+        # the appropriate lists. Duplicate entries will arise.
         if (node_0 < n) or (node_1 < n):
             tsslltd_core_pb_edges.append((node_0, node_1))
         if (node_1 < n) or (node_2 < n):
@@ -1433,14 +2462,14 @@ def swidt_dim_3_network_topology_initialization(
             tsslltd_core_pb_edges.append((node_3, node_2))
         else: pass
     
-    del simplex, simplices, tsslltd_core_deltri
+    del simplex, simplices, tsslltd_core_delaunay
 
     # Convert edge list to np.ndarray, and retain the unique edges from
-    # the core and periodic boundary cross-linkers
+    # the core and periodic boundary nodes
     tsslltd_core_pb_edges = unique_sorted_edges(tsslltd_core_pb_edges)
 
     # Lists for the edges of the graph capturing the periodic
-    # connections between the core cross-linkers
+    # connections between the core nodes
     conn_core_edges = []
     conn_pb_edges = []
 
@@ -1465,10 +2494,98 @@ def swidt_dim_3_network_topology_initialization(
     np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")
     np.savetxt(conn_pb_edges_filename, conn_pb_edges, fmt="%d")
 
-    # Save the core cross-linker x-, y-, and z-coordinates
+    # Save the core node x-, y-, and z-coordinates
     np.savetxt(core_x_filename, core_x)
     np.savetxt(core_y_filename, core_y)
     np.savetxt(core_z_filename, core_z)
+
+def delaunay_network_topology_initialization(
+        network: str,
+        date: str,
+        batch: str,
+        sample: int,
+        scheme: str,
+        dim: int,
+        n: int,
+        config: int) -> None:
+    """Network topology initialization procedure for
+    Delaunay-triangulated networks.
+
+    This function loads the simulation box size and the core node
+    coordinates previously generated by the node_seeding() function.
+    Then, depending on the network dimensionality, this function calls
+    upon a corresponding helper function to initialize the
+    Delaunay-triangulated network topology.
+
+    Args:
+        network (str): Lower-case acronym indicating the particular type
+        of network that is being represented by the eventual network
+        topology; here, only "delaunay" is applicable (corresponding
+        to Delaunay-triangulated networks ("delaunay")).
+        date (str): "YYYYMMDD" string indicating the date during which
+        the network batch and sample data was generated.
+        batch (str): Single capitalized letter (e.g., A, B, C, ...)
+        indicating the batch label of the network sample data.
+        sample (int): Label of a particular network in the batch.
+        scheme (str): Lower-case acronym indicating the particular
+        scheme used to generate the positions of the core nodes;
+        either "random", "prhd", "pdhu", or "lammps" (corresponding to
+        the random node placement procedure ("random"), periodic random
+        hard disk node placement procedure ("prhd"), periodic disordered
+        hyperuniform node placement procedure ("pdhu"), or nodes
+        randomly placed and minimized via LAMMPS ("lammps")).
+        dim (int): Physical dimensionality of the network; either 2 or 3
+        (for two-dimensional or three-dimensional networks).
+        n (int): Number of core nodes.
+        config (int): Configuration number.
+    
+    """
+    # Network topology initialization procedure is only applicable for 
+    # Delaunay-triangulated networks. Exit if a different type of
+    # network is passed.
+    if network != "delaunay":
+        error_str = (
+            "Network topology initialization procedure is only "
+            + "applicable for Delaunay-triangulated networks. This "
+            + "procedure will only proceed if network = ``delaunay''."
+        )
+        sys.exit(error_str)
+    # Generate filename prefix
+    filename_prefix = filename_str(network, date, batch, sample)
+    L_filename = filename_prefix + "-L" + ".dat"
+    
+    # Load L
+    L = np.loadtxt(L_filename)
+
+    # Append configuration number to filename prefix
+    filename_prefix = filename_prefix + f"C{config:d}"
+
+    # Generate config filename
+    config_filename = filename_prefix + ".config"
+
+    # Call appropriate helper function to initialize network topology
+    if (scheme == "random") or (scheme == "prhd") or (scheme == "pdhu"):
+        # Load core node coordinates
+        coords = np.loadtxt(config_filename)
+    elif scheme == "lammps":
+        skiprows_num = 15
+        # Load core node coordinates
+        coords = np.loadtxt(config_filename, skiprows=skiprows_num, max_rows=n)
+    # Actual number of core nodes
+    n = np.shape(coords)[0]
+    # Separate core nodes x- and y-coordinates
+    x = coords[:, 0].copy()
+    y = coords[:, 1].copy()
+    if dim == 2:
+        del coords
+        delaunay_dim_2_network_topology_initialization(
+            L, x, y, n, filename_prefix)
+    elif dim == 3:
+        # Separate core node z-coordinates
+        z = coords[:, 2].copy()
+        del coords
+        delaunay_dim_3_network_topology_initialization(
+            L, x, y, z, n, filename_prefix)
 
 def swidt_network_topology_initialization(
         network: str,
@@ -1482,12 +2599,11 @@ def swidt_network_topology_initialization(
     """Network topology initialization procedure for spider web-inspired
     Delaunay-triangulated networks.
 
-    This function loads the simulation box size and the core
-    cross-linker coordinates previously generated by the
-    crosslinker_seeding() function. Then, depending on the network
-    dimensionality, this function calls upon a corresponding helper
-    function to initialize the spider web-inspired Delaunay-triangulated
-    network topology.
+    This function loads the simulation box size and the core node
+    coordinates previously generated by the node_seeding() function.
+    Then, depending on the network dimensionality, this function calls
+    upon a corresponding helper function to initialize the spider
+    web-inspired Delaunay-triangulated network topology.
 
     Args:
         network (str): Lower-case acronym indicating the particular type
@@ -1501,13 +2617,15 @@ def swidt_network_topology_initialization(
         indicating the batch label of the network sample data.
         sample (int): Label of a particular network in the batch.
         scheme (str): Lower-case acronym indicating the particular
-        scheme used to generate the positions of the core cross-linkers;
-        either "rccs" or "mccs" (corresponding to random core
-        cross-linker coordinates ("rccs") or minimized core
-        cross-linker coordinates ("mccs")).
+        scheme used to generate the positions of the core nodes;
+        either "random", "prhd", "pdhu", or "lammps" (corresponding to
+        the random node placement procedure ("random"), periodic random
+        hard disk node placement procedure ("prhd"), periodic disordered
+        hyperuniform node placement procedure ("pdhu"), or nodes
+        randomly placed and minimized via LAMMPS ("lammps")).
         dim (int): Physical dimensionality of the network; either 2 or 3
         (for two-dimensional or three-dimensional networks).
-        n (int): Number of core cross-linkers.
+        n (int): Number of core nodes.
         config (int): Configuration number.
     
     """
@@ -1536,41 +2654,28 @@ def swidt_network_topology_initialization(
     config_filename = filename_prefix + ".config"
 
     # Call appropriate helper function to initialize network topology
-    if scheme == "rccs": # random core cross-linker coordinates
-        # Load core cross-linker coordinates
-        rccs = np.loadtxt(config_filename)
-        # Actual number of core cross-linkers
-        rccs_n = np.shape(rccs)[0]
-        # Separate x- and y-coordinates of core cross-linkers
-        rccs_x = rccs[:, 0].copy()
-        rccs_y = rccs[:, 1].copy()
-        if dim == 2:
-            del rccs
-            swidt_dim_2_network_topology_initialization(
-                L, rccs_x, rccs_y, rccs_n, filename_prefix)
-        elif dim == 3:
-            # Separate z-coordinates of core cross-linkers
-            rccs_z = rccs[:, 2].copy()
-            del rccs
-            swidt_dim_3_network_topology_initialization(
-                L, rccs_x, rccs_y, rccs_z, rccs_n, filename_prefix)
-    elif scheme == "mccs": # minimized core cross-linker coordinates
+    if (scheme == "random") or (scheme == "prhd") or (scheme == "pdhu"):
+        # Load core node coordinates
+        coords = np.loadtxt(config_filename)
+    elif scheme == "lammps":
         skiprows_num = 15
-        # Load core cross-linker coordinates
-        mccs = np.loadtxt(config_filename, skiprows=skiprows_num, max_rows=n)
-        # Separate x- and y-coordinates of core cross-linkers
-        mccs_x = mccs[:, 2].copy()
-        mccs_y = mccs[:, 3].copy()
-        if dim == 2:
-            del mccs
-            swidt_dim_2_network_topology_initialization(
-                L, mccs_x, mccs_y, n, filename_prefix)
-        elif dim == 3:
-            # Separate z-coordinates of core cross-linkers
-            mccs_z = mccs[:, 4].copy()
-            del mccs
-            swidt_dim_3_network_topology_initialization(
-                L, mccs_x, mccs_y, mccs_z, n, filename_prefix)
+        # Load core node coordinates
+        coords = np.loadtxt(config_filename, skiprows=skiprows_num, max_rows=n)
+    # Actual number of core nodes
+    n = np.shape(coords)[0]
+    # Separate core nodes x- and y-coordinates
+    x = coords[:, 0].copy()
+    y = coords[:, 1].copy()
+    if dim == 2:
+        del coords
+        delaunay_dim_2_network_topology_initialization(
+            L, x, y, n, filename_prefix)
+    elif dim == 3:
+        # Separate core node z-coordinates
+        z = coords[:, 2].copy()
+        del coords
+        delaunay_dim_3_network_topology_initialization(
+            L, x, y, z, n, filename_prefix)
 
 def add_nodes_from_numpy_array(graph, nodes: np.ndarray):
     """Add node numbers from a np.ndarray array to an undirected
@@ -1626,10 +2731,9 @@ def swidt_network_edge_pruning_procedure(
     web-inspired Delaunay-triangulated networks.
 
     This function loads fundamental graph constituents along with core
-    cross-linker coordinates, performs a random edge pruning procedure
-    such that each cross-linker in the network is connected to, at most,
-    k edges, and isolates the maximum connected component from the
-    resulting network.
+    node coordinates, performs a random edge pruning procedure such that
+    each node in the network is connected to, at most, k edges, and
+    isolates the maximum connected component from the resulting network.
 
     Args:
         network (str): Lower-case acronym indicating the particular type
@@ -1644,8 +2748,8 @@ def swidt_network_edge_pruning_procedure(
         sample (int): Label of a particular network in the batch.
         dim (int): Physical dimensionality of the network; either 2 or 3
         (for two-dimensional or three-dimensional networks).
-        n (int): Number of core cross-linkers.
-        k (int): Maximum cross-linker degree/functionality; either 3, 4,
+        n (int): Number of core nodes.
+        k (int): Maximum node degree/functionality; either 3, 4,
         5, 6, 7, or 8.
         config (int): Configuration number.
         pruning (int): Edge pruning procedure number.
@@ -1692,15 +2796,14 @@ def swidt_network_edge_pruning_procedure(
     conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
     conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
 
-    # Load core cross-linker x- and y-coordinates
+    # Load core node x- and y-coordinates
     core_x = np.loadtxt(core_x_filename)
     core_y = np.loadtxt(core_y_filename)
     if dim == 3:
-        # Load core cross-linker z-coordinates
+        # Load core node z-coordinates
         core_z = np.loadtxt(core_z_filename)
     
-    # Create nx.Graphs, load fundamental graph constituents, and add
-    # nodes before edges
+    # Create nx.Graphs, and add nodes before edges
     conn_core_graph = nx.Graph()
     conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
     conn_core_graph = add_edges_from_numpy_array(conn_core_graph, conn_core_edges)
@@ -1713,18 +2816,16 @@ def swidt_network_edge_pruning_procedure(
     conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
     conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
 
-    # Degree of cross-linker nodes in the graph
+    # Degree of nodes in the graph
     conn_graph_k = np.asarray(list(conn_graph.degree()), dtype=int)[:, 1]
 
     if np.any(conn_graph_k > k):
         # Explicit edge pruning procedure
         while np.any(conn_graph_k > k):
-            # Identify the cross-linker nodes connected to more than k
-            # edges in the graph, i.e., hyperconnected cross-linker
-            # nodes
+            # Identify the nodes connected to more than k edges in the
+            # graph, i.e., hyperconnected nodes
             conn_graph_hyprconn_nodes = np.where(conn_graph_k > k)[0]
-            # Identify the edges connected to the hyperconnected
-            # cross-linker nodes
+            # Identify the edges connected to the hyperconnected nodes
             conn_graph_hyprconn_edge_indcs_0 = (
                 np.where(np.isin(conn_edges[:, 0], conn_graph_hyprconn_nodes))[0]
             )
@@ -1756,7 +2857,7 @@ def swidt_network_edge_pruning_procedure(
             elif conn_pb_graph.has_edge(core_node_0, core_node_1):
                 conn_pb_graph.remove_edge(core_node_0, core_node_1)
 
-            # Update degree of cross-linker nodes in the graph
+            # Update degree of nodes in the graph
             conn_graph_k[core_node_0] -= 1
             conn_graph_k[core_node_1] -= 1
                 
@@ -1789,8 +2890,8 @@ def swidt_network_edge_pruning_procedure(
         # Number of nodes in the largest/maximum connected component
         mx_cmp_pruned_conn_graph_n = np.shape(mx_cmp_pruned_conn_graph_nodes)[0]
 
-        # Isolate the cross-linker coordinates for the largest/maximum
-        # connected component
+        # Isolate the node coordinates for the largest/maximum connected
+        # component
         # updated_node
         mx_cmp_pruned_core_x = core_x[mx_cmp_pruned_conn_graph_nodes]
         mx_cmp_pruned_core_y = core_y[mx_cmp_pruned_conn_graph_nodes]
@@ -1827,11 +2928,11 @@ def swidt_network_edge_pruning_procedure(
             mx_cmp_pruned_conn_pb_edges_filename,
             mx_cmp_pruned_conn_pb_graph_edges, fmt="%d")
         
-        # Save the core cross-linker x- and y-coordinates
+        # Save the core node x- and y-coordinates
         np.savetxt(mx_cmp_pruned_core_x_filename, mx_cmp_pruned_core_x)
         np.savetxt(mx_cmp_pruned_core_y_filename, mx_cmp_pruned_core_y)
         if dim == 3:
-            # Save the core cross-linker z-coordinates
+            # Save the core node z-coordinates
             np.savetxt(mx_cmp_pruned_core_z_filename, mx_cmp_pruned_core_z)
     else:
         # Save fundamental graph constituents from this topology
@@ -1841,23 +2942,1898 @@ def swidt_network_edge_pruning_procedure(
         np.savetxt(
             mx_cmp_pruned_conn_pb_edges_filename, conn_pb_edges, fmt="%d")
         
-        # Save the core cross-linker x- and y-coordinates
+        # Save the core node x- and y-coordinates
         np.savetxt(mx_cmp_pruned_core_x_filename, core_x)
         np.savetxt(mx_cmp_pruned_core_y_filename, core_y)
         if dim == 3:
-            # Save the core cross-linker z-coordinates
+            # Save the core node z-coordinates
             np.savetxt(mx_cmp_pruned_core_z_filename, core_z)
 
-# To realize the elastically-effective network from the original
-# network, I need to remove self-loops, and dangling chains repeatedly
-# (e.g., to remove pending loops). However, one must deal with the case
-# where a second-order loop, i.e., multiedge, is connected to a free
-# node. This is a case of a dangling multiedge. Such an edge needs to be
-# removed. Check this case by viewing the neighbor list for the both
-# nodes holding the multiedge. If one of them only has one neighbor
-# (being the other node), then remove the multiedge entirely. This needs
-# to be performed in the same protocol as the dangling edge removal
-# (where this is repeatedly checked until no dangling edges exist).
+def core_node_update_func(
+        core_node_updt: int,
+        core_node_updt_active_site_indx: int,
+        core_nodes_active_sites: np.ndarray,
+        core_nodes_active_sites_num: int,
+        core_nodes_anti_k: np.ndarray,
+        core_nodes: np.ndarray,
+        core2pb_nodes: list[np.ndarray],
+        core_nodes_nghbrhd: list[np.ndarray],
+        r_core_nodes_nghbrhd: list[np.ndarray]) -> tuple[np.ndarray, int, np.ndarray, list[np.ndarray], list[np.ndarray]]:
+    """Core node update protocol.
+
+    This function updates the core node active cross-linking sites,
+    anti-degree (the number of remaining active cross-linking sites),
+    and core node sampling neighborhood list in light of a particular
+    core node active cross-linking site becoming inactive.
+
+    Args:
+        core_node_updt (int): Core node number corresponding to where an
+        active cross-linking site is becoming inactive.
+        core_node_updt_active_site_indx (int): Index corresponding to
+        the core node active cross-linking site that is becoming
+        inactive.
+        core_nodes_active_sites (np.ndarray): np.ndarray of the core
+        node numbers that have active cross-linking sites.
+        core_nodes_active_sites_num (int): Number of core node active
+        cross-linking sites.
+        core_nodes_anti_k (np.ndarray): np.ndarray of the number of
+        remaining active cross-linking sites for each core node.
+        core_nodes (np.ndarray): np.ndarray of the core node numbers.
+        core2pb_nodes (list[np.ndarray]): List of np.ndarrays
+        corresponding to the periodic boundary nodes associated with
+        each core node.
+        core_nodes_nghbrhd (list[np.ndarray]): List of np.ndarrays
+        corresponding to the core and periodic boundary node numbers in
+        the sampling neighborhood of each core node.
+        r_core_nodes_nghbrhd (list[np.ndarray]): List of np.ndarrays
+        corresponding to the neighbor node-to-core node distances for
+        each core node.
+    
+    Returns:
+        tuple[np.ndarray, int, np.ndarray, list[np.ndarray], list[np.ndarray]]:
+        Core node numbers that have active cross-linking sites, number
+        of core node active cross-linking sites, number of remaining
+        active cross-linking sites for each core node, core and periodic
+        boundary node numbers in the sampling neighborhood of each core
+        node, and the neighbor node-to-core node distances for each core
+        node.
+    
+    """
+    # Update active cross-linking sites
+    core_nodes_active_sites = np.delete(
+        core_nodes_active_sites, core_node_updt_active_site_indx, axis=0)
+    core_nodes_active_sites_num -= 1
+    # Update anti-degree
+    core_nodes_anti_k[core_node_updt] -= 1
+    # Update core node sampling neighborhood list if the core node now
+    # has no more active cross-linking sites
+    if core_nodes_anti_k[core_node_updt] == 0:
+        # Gather periodic boundary nodes associated with the inactive
+        # core node
+        pb_nodes_updt = core2pb_nodes[core_node_updt]
+        # Assess and update each core node sampling neighborhood list
+        for core_node in np.nditer(core_nodes):
+            core_node = int(core_node)
+            nghbr_nodes = core_nodes_nghbrhd[core_node]
+            r_nghbr_nodes = r_core_nodes_nghbrhd[core_node]
+            if np.shape(nghbr_nodes)[0] == 0: pass
+            else:
+                # Address inactive core node
+                core_node_updt_indx_arr = (
+                    np.where(nghbr_nodes == core_node_updt)[0]
+                )
+                if np.shape(core_node_updt_indx_arr)[0] == 0: pass
+                else:
+                    core_node_updt_indx = int(core_node_updt_indx_arr[0])
+                    nghbr_nodes = np.delete(
+                        nghbr_nodes, core_node_updt_indx, axis=0)
+                    r_nghbr_nodes = np.delete(
+                        r_nghbr_nodes, core_node_updt_indx, axis=0)
+                # Address all associated inactive periodic boundary
+                # nodes
+                if np.shape(pb_nodes_updt)[0] == 0: pass
+                else:
+                    for pb_node_updt in np.nditer(pb_nodes_updt):
+                        pb_node_updt = int(pb_node_updt)
+                        pb_node_updt_indx_arr = (
+                            np.where(nghbr_nodes == pb_node_updt)[0]
+                        )
+                        if np.shape(pb_node_updt_indx_arr)[0] == 0: pass
+                        else:
+                            pb_node_updt_indx = int(pb_node_updt_indx_arr[0])
+                            nghbr_nodes = np.delete(
+                                nghbr_nodes, pb_node_updt_indx, axis=0)
+                            r_nghbr_nodes = np.delete(
+                                r_nghbr_nodes, pb_node_updt_indx, axis=0)
+                core_nodes_nghbrhd[core_node] = nghbr_nodes
+                r_core_nodes_nghbrhd[core_node] = r_nghbr_nodes
+    
+    return (
+        core_nodes_active_sites, core_nodes_active_sites_num, core_nodes_anti_k,
+        core_nodes_nghbrhd, r_core_nodes_nghbrhd
+    )
+
+def dim_2_dangling_chains_update_func(
+        core_node_updt: int,
+        max_try: int,
+        rng: np.random.Generator,
+        r_nghbrhd_chns: np.ndarray,
+        p_nghbrhd_chns: np.ndarray,
+        b: float,
+        L: float,
+        dnglng_chn_fail: bool,
+        dnglng_n: int,
+        core_dnglng_m: int,
+        pb_dnglng_m: int,
+        conn_core_dnglng_edges: list[list[int, int]],
+        conn_pb_dnglng_edges: list[list[int, int]],
+        core_dnglng_chns_x: list[float],
+        core_dnglng_chns_y: list[float],
+        core_pb_dnglng_chns_x: np.ndarray,
+        core_pb_dnglng_chns_y: np.ndarray) -> tuple[bool, int, int, int, list[list[int, int]], list[list[int, int]], list[float], list[float], np.ndarray, np.ndarray]:
+    """Two-dimensional dangling chains update protocol.
+
+    This function instantiates a dangling chain about a particular core
+    cross-linker node by randomly placing the dangling chain free end in
+    the two-dimensional network and confirming that this free end is at
+    least a distance b away from all other nodes.
+
+    Args:
+        core_node_updt (int): Core node number corresponding to where an
+        active cross-linking site is becoming inactive. This node is
+        also where the dangling chain will emanate out from.
+        max_try (int): Maximum number of dangling chain instantiation
+        attempts.
+        rng (np.random.Generator): np.random.Generator object.
+        r_nghbrhd_chns (np.ndarray): np.ndarray of the core cross-linker
+        sampling neighborhood radius.
+        p_nghbrhd_chns (np.ndarray): np.ndarray of the core cross-linker
+        sampling neighborhood polymer chain probability distribution.
+        b (float): Chain segment and/or cross-linker diameter.
+        L (float): Simulation box size.
+        dnglng_chn_fail (bool): Tracker for failure of dangling chain
+        creation.
+        dnglng_n (int): Number of dangling chains, and dangling chain
+        core node number.
+        core_dnglng_m (int): Number of core dangling chains.
+        pb_dnglng_m (int): Number of periodic boundary dangling chains.
+        conn_core_dnglng_edges (list[list[int, int]]): Core dangling
+        chain edge list, where each edge is represented as
+        [core_node_updt, dnglng_n].
+        conn_pb_dnglng_edges (list[list[int, int]]): Periodic boundary
+        dangling chain edge list, where each edge is represented as
+        [core_node_updt, dnglng_n].
+        core_dnglng_chns_x (list[float]): List of dangling chain free
+        end node x-coordinates in the simulation box.
+        core_dnglng_chns_y (list[float]): List of dangling chain free
+        end node y-coordinates in the simulation box.
+        core_pb_dnglng_chns_x (np.ndarray): np.ndarray of core, periodic
+        boundary, and dangling chain free end node x-coordinates.
+        core_pb_dnglng_chns_y (np.ndarray): np.ndarray of core, periodic
+        boundary, and dangling chain free end node y-coordinates.
+    
+    Returns:
+        tuple[bool, int, int, int, list[list[int, int]], list[list[int, int]], list[float], list[float], np.ndarray, np.ndarray]:
+        Tracker for failure of dangling chain creation, number of
+        dangling chains, number of core dangling chains, number of
+        periodic boundary dangling chains, core dangling chain edge
+        list, periodic boundary dangling chain edge list, list of
+        dangling chain free end node x-coordinates in the simulation
+        box, list of dangling chain free end node y-coordinates in the
+        simulation box, np.ndarray of core, periodic boundary, and
+        dangling chain free end node x-coordinates, and np.ndarray of
+        core, periodic boundary, and dangling chain free end node
+        y-coordinates.
+    
+    """
+    # Two-dimensional tessellation protocol
+    dim_2_tsslltn, dim_2_tsslltn_num = tessellation_protocol(2)
+    
+    # Begin dangling chain update procedure
+    num_try = 0
+
+    while num_try < max_try:
+        # Isotropically place a candidate node representing the free end
+        # of the dangling chain
+        node_dnglng_chn_cnddt_x = core_pb_dnglng_chns_x[core_node_updt]
+        node_dnglng_chn_cnddt_y = core_pb_dnglng_chns_y[core_node_updt]
+        # Randomly-selected polar coordinates
+        theta = 2 * np.pi * rng.uniform()
+        r = rng.choice(r_nghbrhd_chns, size=None, p=p_nghbrhd_chns)
+        # Polar-to-Cartesian x- and y-coordinate transformation
+        node_dnglng_chn_cnddt_x += r * np.cos(theta)
+        node_dnglng_chn_cnddt_y += r * np.sin(theta)
+        # Position of candidate node representing the free end of the
+        # dangling chain
+        node_dnglng_chn_cnddt = np.asarray(
+            [
+                node_dnglng_chn_cnddt_x,
+                node_dnglng_chn_cnddt_y
+            ]
+        )
+        # Downselect the local square neighborhood about the free end of
+        # the dangling chain defined by b. Start by gathering the
+        # previously-generated nodes that meet this criterion in each x-
+        # and y-coordinate.
+        nghbr_x_lb = node_dnglng_chn_cnddt_x - b
+        nghbr_x_ub = node_dnglng_chn_cnddt_x + b
+        nghbr_y_lb = node_dnglng_chn_cnddt_y - b
+        nghbr_y_ub = node_dnglng_chn_cnddt_y + b
+        psbl_nghbr_x_indcs = (
+            np.where(np.logical_and(core_pb_dnglng_chns_x>=nghbr_x_lb, core_pb_dnglng_chns_x<=nghbr_x_ub))[0]
+        )
+        psbl_nghbr_y_indcs = (
+            np.where(np.logical_and(core_pb_dnglng_chns_y>=nghbr_y_lb, core_pb_dnglng_chns_y<=nghbr_y_ub))[0]
+        )
+        # Gather and retain unique indices corresponding to each
+        # possible neighbor, and the number of times each such index
+        # value appears
+        psbl_nghbr_indcs, psbl_nghbr_indcs_counts = np.unique(
+            np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs), dtype=int),
+            return_counts=True)
+        # The true neighbors are those whose index value appears twice
+        # in the possible neighbor array -- equal to the network
+        # dimensionality
+        nghbr_indcs_vals_indcs = np.where(psbl_nghbr_indcs_counts == 2)[0]
+        nghbr_num = np.shape(nghbr_indcs_vals_indcs)[0]
+        # Continue analysis if a local neighborhood actually exists
+        # about the candidate
+        if nghbr_num > 0:
+            # Gather the indices of the neighbors
+            nghbr_indcs = psbl_nghbr_indcs[nghbr_indcs_vals_indcs]
+            # Extract neighbor x- and y-coordinates
+            nghbr_x = core_pb_dnglng_chns_x[nghbr_indcs]
+            nghbr_y = core_pb_dnglng_chns_y[nghbr_indcs]
+            # Calculate the minimum distance between the candidate and
+            # its neighbors
+            dist = np.empty(nghbr_num)
+            for nghbr_indx in range(nghbr_num):
+                nghbr = np.asarray(
+                    [
+                        nghbr_x[nghbr_indx],
+                        nghbr_y[nghbr_indx]
+                    ]
+                )
+                dist[nghbr_indx] = np.linalg.norm(node_dnglng_chn_cnddt-nghbr)
+            min_dist = np.min(dist)
+            # Try again if the minimum distance between the candidate
+            # and its neighbors is less than b
+            if min_dist < b:
+                num_try += 1
+                continue
+        
+        # Accept and tessellate the candidate if (1) no local
+        # neighborhood exists about the candidate, or (2) the minimum
+        # distance between the candidate and its neighbors is greater
+        # than or equal to b
+        # Increase dangling chain core node number
+        dnglng_n += 1
+        # Confirm if the node representing the free end of the dangling
+        # chain is a core node or a periodic boundary node
+        core_node_dnglng_chn_x = node_dnglng_chn_cnddt_x
+        core_node_dnglng_chn_y = node_dnglng_chn_cnddt_y
+        # Free end is a core node
+        if (0 <= core_node_dnglng_chn_x < L) and (0 <= core_node_dnglng_chn_y < L):
+            # Increase core dangling chain number
+            core_dnglng_m += 1
+            # Add to edge list
+            conn_core_dnglng_edges.append([core_node_updt, dnglng_n])
+        # Free end is a periodic boundary node
+        else:
+            # Determine the free end core node x- and y-coordinates that
+            # correspond to the free end periodic boundary node via the
+            # minimum image criterion
+            if core_node_dnglng_chn_x < 0: core_node_dnglng_chn_x += L
+            elif core_node_dnglng_chn_x >= L: core_node_dnglng_chn_x -= L
+            if core_node_dnglng_chn_y < 0: core_node_dnglng_chn_y += L
+            elif core_node_dnglng_chn_y >= L: core_node_dnglng_chn_y -= L
+            # Increase periodic boundary dangling chain number
+            pb_dnglng_m += 1
+            # Add to edge lists
+            conn_pb_dnglng_edges.append([core_node_updt, dnglng_n])
+        # Add x- and y-coordinates to coordinate lists
+        core_dnglng_chns_x.append(core_node_dnglng_chn_x)
+        core_dnglng_chns_y.append(core_node_dnglng_chn_y)
+        # Use two-dimensional tessellation protocol to tessellate
+        # the accepted candidate core node
+        node_dnglng_chn_tsslltn_x, node_dnglng_chn_tsslltn_y = (
+            dim_2_tessellation_protocol(
+                L, core_node_dnglng_chn_x, core_node_dnglng_chn_y,
+                dim_2_tsslltn)
+        )
+        core_pb_dnglng_chns_x = (
+            np.concatenate((core_pb_dnglng_chns_x, node_dnglng_chn_tsslltn_x))
+        )
+        core_pb_dnglng_chns_y = (
+            np.concatenate((core_pb_dnglng_chns_y, node_dnglng_chn_tsslltn_y))
+        )
+        
+        break
+
+    # Update the dangling chain creation failure tracker if the number
+    # of attempts to instantiate the dangling chain is equal to its
+    # maximal value
+    if num_try == max_try: dnglng_chn_fail = True
+
+    return (
+        dnglng_chn_fail, dnglng_n, core_dnglng_m, pb_dnglng_m,
+        conn_core_dnglng_edges, conn_pb_dnglng_edges,
+        core_dnglng_chns_x, core_dnglng_chns_y,
+        core_pb_dnglng_chns_x, core_pb_dnglng_chns_y
+    )
+
+def dim_3_dangling_chains_update_func(
+        core_node_updt: int,
+        max_try: int,
+        rng: np.random.Generator,
+        r_nghbrhd_chns: np.ndarray,
+        p_nghbrhd_chns: np.ndarray,
+        b: float,
+        L: float,
+        dnglng_chn_fail: bool,
+        dnglng_n: int,
+        core_dnglng_m: int,
+        pb_dnglng_m: int,
+        conn_core_dnglng_edges: list[list[int, int]],
+        conn_pb_dnglng_edges: list[list[int, int]],
+        core_dnglng_chns_x: list[float],
+        core_dnglng_chns_y: list[float],
+        core_dnglng_chns_z: list[float],
+        core_pb_dnglng_chns_x: np.ndarray,
+        core_pb_dnglng_chns_y: np.ndarray,
+        core_pb_dnglng_chns_z: np.ndarray) -> tuple[bool, int, int, int, list[list[int, int]], list[list[int, int]], list[float], list[float], list[float], np.ndarray, np.ndarray, np.ndarray]:
+    """Three-dimensional dangling chains update protocol.
+
+    This function instantiates a dangling chain about a particular core
+    cross-linker node by randomly placing the dangling chain free end in
+    the three-dimensional network and confirming that this free end is
+    at least a distance b away from all other nodes.
+
+    Args:
+        core_node_updt (int): Core node number corresponding to where an
+        active cross-linking site is becoming inactive. This node is
+        also where the dangling chain will emanate out from.
+        max_try (int): Maximum number of dangling chain instantiation
+        attempts.
+        rng (np.random.Generator): np.random.Generator object.
+        r_nghbrhd_chns (np.ndarray): np.ndarray of the core cross-linker
+        sampling neighborhood radius.
+        p_nghbrhd_chns (np.ndarray): np.ndarray of the core cross-linker
+        sampling neighborhood polymer chain probability distribution.
+        b (float): Chain segment and/or cross-linker diameter.
+        L (float): Simulation box size.
+        dnglng_chn_fail (bool): Tracker for failure of dangling chain
+        creation.
+        dnglng_n (int): Number of dangling chains, and dangling chain
+        core node number.
+        core_dnglng_m (int): Number of core dangling chains.
+        pb_dnglng_m (int): Number of periodic boundary dangling chains.
+        conn_core_dnglng_edges (list[list[int, int]]): Core dangling
+        chain edge list, where each edge is represented as
+        [core_node_updt, dnglng_n].
+        conn_pb_dnglng_edges (list[list[int, int]]): Periodic boundary
+        dangling chain edge list, where each edge is represented as
+        [core_node_updt, dnglng_n].
+        core_dnglng_chns_x (list[float]): List of dangling chain free
+        end node x-coordinates in the simulation box.
+        core_dnglng_chns_y (list[float]): List of dangling chain free
+        end node y-coordinates in the simulation box.
+        core_dnglng_chns_z (list[float]): List of dangling chain free
+        end node z-coordinates in the simulation box.
+        core_pb_dnglng_chns_x (np.ndarray): np.ndarray of core, periodic
+        boundary, and dangling chain free end node x-coordinates.
+        core_pb_dnglng_chns_y (np.ndarray): np.ndarray of core, periodic
+        boundary, and dangling chain free end node y-coordinates.
+        core_pb_dnglng_chns_z (np.ndarray): np.ndarray of core, periodic
+        boundary, and dangling chain free end node z-coordinates.
+    
+    Returns:
+        tuple[bool, int, int, int, list[list[int, int]], list[list[int, int]], list[float], list[float], list[float], np.ndarray, np.ndarray, np.ndarray]:
+        Tracker for failure of dangling chain creation, number of
+        dangling chains, number of core dangling chains, number of
+        periodic boundary dangling chains, core dangling chain edge
+        list, periodic boundary dangling chain edge list, list of
+        dangling chain free end node x-coordinates in the simulation
+        box, list of dangling chain free end node y-coordinates in the
+        simulation box, list of dangling chain free end node
+        z-coordinates in the simulation box, np.ndarray of core,
+        periodic boundary, and dangling chain free end node
+        x-coordinates, np.ndarray of core, periodic boundary, and
+        dangling chain free end node y-coordinates, and np.ndarray of
+        core, periodic boundary, and dangling chain free end node
+        z-coordinates.
+    
+    """
+    # Three-dimensional tessellation protocol
+    dim_3_tsslltn, dim_3_tsslltn_num = tessellation_protocol(3)
+    
+    # Begin dangling chain update procedure
+    num_try = 0
+
+    while num_try < max_try:
+        # Isotropically place a candidate node representing the free end
+        # of the dangling chain
+        node_dnglng_chn_cnddt_x = core_pb_dnglng_chns_x[core_node_updt]
+        node_dnglng_chn_cnddt_y = core_pb_dnglng_chns_y[core_node_updt]
+        node_dnglng_chn_cnddt_z = core_pb_dnglng_chns_z[core_node_updt]
+        # Randomly-selected spherical coordinates
+        theta = np.pi * rng.uniform()
+        phi = 2 * np.pi * rng.uniform()
+        r = rng.choice(r_nghbrhd_chns, size=None, p=p_nghbrhd_chns)
+        # Spherical-to-Cartesian x-, y-, and z-coordinate transformation
+        node_dnglng_chn_cnddt_x += r * np.sin(theta) * np.cos(phi)
+        node_dnglng_chn_cnddt_y += r * np.sin(theta) * np.sin(phi)
+        node_dnglng_chn_cnddt_z += r * np.cos(theta)
+        # Position of candidate node representing the free end of the
+        # dangling chain
+        node_dnglng_chn_cnddt = np.asarray(
+            [
+                node_dnglng_chn_cnddt_x,
+                node_dnglng_chn_cnddt_y,
+                node_dnglng_chn_cnddt_z
+            ]
+        )
+        # Downselect the local square neighborhood about the free end of
+        # the dangling chain defined by b. Start by gathering the
+        # previously-generated nodes that meet this criterion in each
+        # x-, y-, and z-coordinate.
+        nghbr_x_lb = node_dnglng_chn_cnddt_x - b
+        nghbr_x_ub = node_dnglng_chn_cnddt_x + b
+        nghbr_y_lb = node_dnglng_chn_cnddt_y - b
+        nghbr_y_ub = node_dnglng_chn_cnddt_y + b
+        nghbr_z_lb = node_dnglng_chn_cnddt_z - b
+        nghbr_z_ub = node_dnglng_chn_cnddt_z + b
+        psbl_nghbr_x_indcs = (
+            np.where(np.logical_and(core_pb_dnglng_chns_x>=nghbr_x_lb, core_pb_dnglng_chns_x<=nghbr_x_ub))[0]
+        )
+        psbl_nghbr_y_indcs = (
+            np.where(np.logical_and(core_pb_dnglng_chns_y>=nghbr_y_lb, core_pb_dnglng_chns_y<=nghbr_y_ub))[0]
+        )
+        psbl_nghbr_z_indcs = (
+            np.where(np.logical_and(core_pb_dnglng_chns_z>=nghbr_z_lb, core_pb_dnglng_chns_z<=nghbr_z_ub))[0]
+        )
+        # Gather and retain unique indices corresponding to each
+        # possible neighbor, and the number of times each such index
+        # value appears
+        psbl_nghbr_indcs, psbl_nghbr_indcs_counts = np.unique(
+            np.concatenate((psbl_nghbr_x_indcs, psbl_nghbr_y_indcs, psbl_nghbr_z_indcs), dtype=int),
+            return_counts=True)
+        # The true neighbors are those whose index value appears thrice
+        # in the possible neighbor array -- equal to the network
+        # dimensionality
+        nghbr_indcs_vals_indcs = np.where(psbl_nghbr_indcs_counts == 3)[0]
+        nghbr_num = np.shape(nghbr_indcs_vals_indcs)[0]
+        # Continue analysis if a local neighborhood actually exists
+        # about the candidate
+        if nghbr_num > 0:
+            # Gather the indices of the neighbors
+            nghbr_indcs = psbl_nghbr_indcs[nghbr_indcs_vals_indcs]
+            # Extract neighbor x-, y-, and z-coordinates
+            nghbr_x = core_pb_dnglng_chns_x[nghbr_indcs]
+            nghbr_y = core_pb_dnglng_chns_y[nghbr_indcs]
+            nghbr_z = core_pb_dnglng_chns_z[nghbr_indcs]
+            # Calculate the minimum distance between the candidate and
+            # its neighbors
+            dist = np.empty(nghbr_num)
+            for nghbr_indx in range(nghbr_num):
+                nghbr = np.asarray(
+                    [
+                        nghbr_x[nghbr_indx],
+                        nghbr_y[nghbr_indx],
+                        nghbr_z[nghbr_indx]
+                    ]
+                )
+                dist[nghbr_indx] = np.linalg.norm(node_dnglng_chn_cnddt-nghbr)
+            min_dist = np.min(dist)
+            # Try again if the minimum distance between the candidate
+            # and its neighbors is less than b
+            if min_dist < b:
+                num_try += 1
+                continue
+        
+        # Accept and tessellate the candidate if (1) no local
+        # neighborhood exists about the candidate, or (2) the minimum
+        # distance between the candidate and its neighbors is greater
+        # than or equal to b
+        # Increase dangling chain core node number
+        dnglng_n += 1
+        # Confirm if the node representing the free end of the dangling
+        # chain is a core node or a periodic boundary node
+        core_node_dnglng_chn_x = node_dnglng_chn_cnddt_x
+        core_node_dnglng_chn_y = node_dnglng_chn_cnddt_y
+        core_node_dnglng_chn_z = node_dnglng_chn_cnddt_z
+        # Free end is a core node
+        if (0 <= core_node_dnglng_chn_x < L) and (0 <= core_node_dnglng_chn_y < L) and (0 <= core_node_dnglng_chn_z < L):
+            # Increase core dangling chain number
+            core_dnglng_m += 1
+            # Add to edge list
+            conn_core_dnglng_edges.append([core_node_updt, dnglng_n])
+        # Free end is a periodic boundary node
+        else:
+            # Determine the free end core node x-, y-, and z-coordinates
+            # that correspond to the free end periodic boundary node via
+            # the minimum image criterion
+            if core_node_dnglng_chn_x < 0: core_node_dnglng_chn_x += L
+            elif core_node_dnglng_chn_x >= L: core_node_dnglng_chn_x -= L
+            if core_node_dnglng_chn_y < 0: core_node_dnglng_chn_y += L
+            elif core_node_dnglng_chn_y >= L: core_node_dnglng_chn_y -= L
+            if core_node_dnglng_chn_z < 0: core_node_dnglng_chn_z += L
+            elif core_node_dnglng_chn_z >= L: core_node_dnglng_chn_z -= L
+            # Increase periodic boundary dangling chain number
+            pb_dnglng_m += 1
+            # Add to edge lists
+            conn_pb_dnglng_edges.append([core_node_updt, dnglng_n])
+        # Add x-, y-, and z-coordinates to coordinate lists
+        core_dnglng_chns_x.append(core_node_dnglng_chn_x)
+        core_dnglng_chns_y.append(core_node_dnglng_chn_y)
+        core_dnglng_chns_z.append(core_node_dnglng_chn_z)
+        # Use three-dimensional tessellation protocol to tessellate
+        # the accepted candidate core node
+        node_dnglng_chn_tsslltn_x, node_dnglng_chn_tsslltn_y, node_dnglng_chn_tsslltn_z = (
+            dim_3_tessellation_protocol(
+                L, core_node_dnglng_chn_x, core_node_dnglng_chn_y,
+                core_node_dnglng_chn_z, dim_3_tsslltn)
+        )
+        core_pb_dnglng_chns_x = (
+            np.concatenate((core_pb_dnglng_chns_x, node_dnglng_chn_tsslltn_x))
+        )
+        core_pb_dnglng_chns_y = (
+            np.concatenate((core_pb_dnglng_chns_y, node_dnglng_chn_tsslltn_y))
+        )
+        core_pb_dnglng_chns_z = (
+            np.concatenate((core_pb_dnglng_chns_z, node_dnglng_chn_tsslltn_z))
+        )
+        
+        break
+
+    # Update the dangling chain creation failure tracker if the number
+    # of attempts to instantiate the dangling chain is equal to its
+    # maximal value
+    if num_try == max_try: dnglng_chn_fail = True
+
+    return (
+        dnglng_chn_fail, dnglng_n, core_dnglng_m, pb_dnglng_m,
+        conn_core_dnglng_edges, conn_pb_dnglng_edges,
+        core_dnglng_chns_x, core_dnglng_chns_y, core_dnglng_chns_z,
+        core_pb_dnglng_chns_x, core_pb_dnglng_chns_y, core_pb_dnglng_chns_z
+    )
+
+def aelp_dim_2_network_topology_initialization(
+        network: str,
+        L: float,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        b: float,
+        xi: float,
+        k: int,
+        n: int,
+        nu: int,
+        max_try: int,
+        filename_prefix: str) -> None:
+    """Network topology initialization procedure for two-dimensional
+    artificial end-linked polymer networks.
+
+    This function initializes and saves the topology of a
+    two-dimensional artificial end-linked polymer network via a modified
+    Gusev-Hanson procedure.
+
+    Args:
+        network (str): Lower-case acronym indicating the particular type
+        of network that is being represented by the eventual network
+        topology; here, either "auelp" or "apelp" are applicable
+        (corresponding to artificial uniform end-linked polymer networks
+        ("auelp") or artificial polydisperse end-linked polymer networks
+        ("apelp")).
+        L (float): Simulation box size.
+        core_x (np.ndarray): x-coordinates of the core cross-linkers.
+        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        b (float): Chain segment and/or cross-linker diameter.
+        xi (float): Chain-to-cross-link connection probability.
+        k (int): Maximum cross-linker degree/functionality; either 3, 4,
+        5, 6, 7, or 8.
+        n (int): Number of core cross-linkers.
+        nu (int): (Average) Number of segments per chain.
+        max_try (int): Maximum number of dangling chain instantiation
+        attempts.
+        filename_prefix (str): Baseline filename prefix for data files.
+    
+    """
+    # Network topology initialization procedure is only applicable for
+    # artificial end-linked polymer networks. Exit if a different type
+    # of network is passed.
+    if network != "auelp":
+        if network != "apelp":
+            error_str = (
+                "Network topology initialization procedure is only "
+                + "applicable for artificial end-linked polymer "
+                + "networks. This calculation will only proceed if "
+                + "network = ``auelp'' or network = ``apelp''."
+            )
+            sys.exit(error_str)
+    
+    # Generate filenames
+    mx_cmp_conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    mx_cmp_core_node_type_filename = (
+        filename_prefix + "-core_node_type" + ".dat"
+    )
+    mx_cmp_conn_core_edges_filename = (
+        filename_prefix + "-conn_core_edges" + ".dat"
+    )
+    mx_cmp_conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    mx_cmp_core_x_filename = filename_prefix + "-core_x" + ".dat"
+    mx_cmp_core_y_filename = filename_prefix + "-core_y" + ".dat"
+    
+    # Calculate the stoichiometric number of chains
+    m = m_arg_stoich_func(n, k)
+
+    # As a fail-safe check, force int-valued parameters to be ints
+    k = int(np.floor(k))
+    n = int(np.floor(n))
+    nu = int(np.floor(nu))
+    max_try = int(np.floor(max_try))
+    m = int(np.floor(m))
+
+    # Core cross-linker nodes
+    core_nodes = np.arange(n, dtype=int)
+
+    # Identify core nodes as cross-linkers
+    core_node_type = np.ones(n, dtype=int)
+
+    # Copy the core_x and core_y np.ndarrays as the first n entries in
+    # the tessellated cross-linker x- and y-coordinate np.ndarrays
+    tsslltd_core_x = core_x.copy()
+    tsslltd_core_y = core_y.copy()
+
+    # Two-dimensional tessellation protocol
+    dim_2_tsslltn, dim_2_tsslltn_num = tessellation_protocol(2)
+        
+    # Use two-dimensional tessellation protocol to tessellate the core
+    # cross-linkers
+    for tsslltn in range(dim_2_tsslltn_num):
+        x_tsslltn = dim_2_tsslltn[tsslltn, 0]
+        y_tsslltn = dim_2_tsslltn[tsslltn, 1]
+        # Skip the (hold, hold) tessellation call because the core
+        # cross-linkers are being tessellated about themselves
+        if (x_tsslltn == 0) and (y_tsslltn == 0): continue
+        else:
+            # x- and y-coordinates from two-dimensional tessellation
+            # protocol
+            core_tsslltn_x, core_tsslltn_y = dim_2_tessellation(
+                L, core_x, core_y, x_tsslltn, y_tsslltn)
+            # Concatenate the tessellated x- and y-coordinates
+            tsslltd_core_x = np.concatenate((tsslltd_core_x, core_tsslltn_x))
+            tsslltd_core_y = np.concatenate((tsslltd_core_y, core_tsslltn_y))
+
+    del core_tsslltn_x, core_tsslltn_y
+
+    # Construct the pb2core_nodes np.ndarray such that
+    # pb2core_nodes[core_pb_node] = core_node
+    pb2core_nodes = np.tile(core_nodes, dim_2_tsslltn_num)
+
+    # Maximal core cross-linker sampling neighborhood radius as per the
+    # minimum image criterion 
+    r_mic = L / 2.
+    # Polymer chain contour length
+    l_cntr = nu * b
+    # Determine the core cross-linker sampling neighborhood radius
+    r_nghbrhd = np.minimum(r_mic, l_cntr)
+
+    # Finely discretize the core cross-linker sampling neighborhood
+    # radius
+    r_nghbrhd_chns = np.linspace(0, r_nghbrhd, 10001)
+    # Depending on the type of artificial end-linked polymer network,
+    # calculate the polymer chain probability distribution
+    p_nghbrhd_chns = np.asarray([])
+    if network == "auelp":
+        p_nghbrhd_chns = p_gaussian_cnfrmtn_func(b, nu, r_nghbrhd_chns)
+    elif network == "apelp":
+        p_nghbrhd_chns = p_rel_net_r_arr_gaussian_cnfrmtn_func(
+            b, nu, r_nghbrhd_chns)
+    # Normalize the polymer chain probability distribution
+    p_nghbrhd_chns /= np.sum(p_nghbrhd_chns, dtype=float)
+
+    # Initialize core cross-linker sampling neighborhood list
+    core_nodes_nghbrhd_init = []
+    r_core_nodes_nghbrhd_init = []
+
+    # Determine core cross-linker sampling neighborhood
+    for core_node in np.nditer(core_nodes):
+        core_node = int(core_node)
+        # x- and y-coordinates of core cross-linker
+        core_node_x = tsslltd_core_x[core_node]
+        core_node_y = tsslltd_core_y[core_node]
+        # Core cross-linker position
+        core_node_pstn = np.asarray(
+            [
+                core_node_x,
+                core_node_y
+            ]
+        )
+        # Downselect the local square neighborhood about the core node
+        # defined by r_nghbrhd. Start by gathering the tessellated
+        # cross-linker nodes that meet this criterion in each x- and
+        # y-coordinate.
+        lcl_nghbr_x_lb = core_node_x - r_nghbrhd
+        lcl_nghbr_x_ub = core_node_x + r_nghbrhd
+        lcl_nghbr_y_lb = core_node_y - r_nghbrhd
+        lcl_nghbr_y_ub = core_node_y + r_nghbrhd
+        psbl_lcl_nghbr_x_nodes = (
+            np.where(np.logical_and(tsslltd_core_x>=lcl_nghbr_x_lb, tsslltd_core_x<=lcl_nghbr_x_ub))[0]
+        )
+        psbl_lcl_nghbr_y_nodes = (
+            np.where(np.logical_and(tsslltd_core_y>=lcl_nghbr_y_lb, tsslltd_core_y<=lcl_nghbr_y_ub))[0]
+        )
+        # Gather the nodes from each x- and y-coordinate together to
+        # assess all possible local cross-linker neighbors. Retain
+        # unique possible local cross-linker neighbor nodes, and the
+        # number of times each such node appears.
+        psbl_lcl_nghbr_nodes, psbl_lcl_nghbr_nodes_counts = np.unique(
+            np.concatenate((psbl_lcl_nghbr_x_nodes, psbl_lcl_nghbr_y_nodes), dtype=int),
+            return_counts=True)
+        # The true local cross-linker neighbor nodes are those who
+        # appear twice in the possible cross-linker neighbor node array
+        # -- equal to the network dimensionality
+        lcl_nghbr_nodes_indcs = np.where(psbl_lcl_nghbr_nodes_counts == 2)[0]
+        lcl_nghbr_node_num = np.shape(lcl_nghbr_nodes_indcs)[0]
+        # Further downselect to the neighborhood of tessellated
+        # cross-linker nodes that are a distance of r_nghbrhd away from
+        # the core cross-linker node
+        if lcl_nghbr_node_num > 0:
+            # Gather the indices of the local cross-linker neighbors
+            lcl_nghbr_nodes = psbl_lcl_nghbr_nodes[lcl_nghbr_nodes_indcs]
+            # Extract local cross-linker neighbor x- and y-coordinates
+            lcl_nghbr_x = tsslltd_core_x[lcl_nghbr_nodes]
+            lcl_nghbr_y = tsslltd_core_y[lcl_nghbr_nodes]
+            # Calculate the distance between the core node and the local
+            # cross-linker neighbor nodes
+            r_lcl_nghbr_nodes = np.empty(lcl_nghbr_node_num)
+            for lcl_nghbr_node_indx in range(lcl_nghbr_node_num):
+                lcl_nghbr_pstn = np.asarray(
+                    [
+                        lcl_nghbr_x[lcl_nghbr_node_indx],
+                        lcl_nghbr_y[lcl_nghbr_node_indx]
+                    ]
+                )
+                r_lcl_nghbr_nodes[lcl_nghbr_node_indx] = (
+                    np.linalg.norm(core_node_pstn-lcl_nghbr_pstn)
+                )
+            # The true cross-linker neighbor nodes are those whose
+            # distance to the core node is less than r_nghbrhd
+            nghbr_nodes_indcs = np.where(r_lcl_nghbr_nodes <= r_nghbrhd)[0]
+            nghbr_nodes = lcl_nghbr_nodes[nghbr_nodes_indcs]
+            r_nghbr_nodes = r_lcl_nghbr_nodes[nghbr_nodes_indcs]
+            # Add the cross-linker neighbor nodes array to the core
+            # cross-linker sampling neighborhood list
+            core_nodes_nghbrhd_init.append(nghbr_nodes)
+            r_core_nodes_nghbrhd_init.append(r_nghbr_nodes)
+        else:
+            core_nodes_nghbrhd_init.append(np.asarray([]))
+            r_core_nodes_nghbrhd_init.append(np.asarray([]))
+    
+    # Retain unique nodes from the core and periodic boundary
+    # cross-linkers in the core cross-linker sampling neighborhood list
+    core_pb_nodes = np.unique(
+        np.concatenate(
+            tuple(nghbrhd for nghbrhd in core_nodes_nghbrhd_init), dtype=int))
+
+    # Extract the core and periodic boundary cross-linker x- and
+    # y-coordinates using the corresponding node numbers
+    core_pb_x = tsslltd_core_x[core_pb_nodes].copy()
+    core_pb_y = tsslltd_core_y[core_pb_nodes].copy()
+
+    del tsslltd_core_x, tsslltd_core_y
+
+    # Extract the core and periodic boundary cross-linker nodes in the
+    # pb2core_nodes np.ndarray
+    pb2core_nodes = pb2core_nodes[core_pb_nodes].copy()
+
+    # Construct the core2pb_nodes list
+    core2pb_nodes = core2pb_nodes_func(core_nodes, pb2core_nodes)
+
+    # Refactor the node numbers in the core cross-linker sampling
+    # neighborhood list
+    for core_node in np.nditer(core_nodes):
+        core_node = int(core_node)
+        nghbr_nodes = core_nodes_nghbrhd_init[core_node]
+        for nghbr_node_indx in range(np.shape(nghbr_nodes)[0]):
+            nghbr_nodes[nghbr_node_indx] = int(
+                np.where(core_pb_nodes == nghbr_nodes[nghbr_node_indx])[0][0])
+        core_nodes_nghbrhd_init[core_node] = nghbr_nodes
+
+    # Initialize tracker for failure of dangling chain creation
+    dnglng_chn_fail = False
+
+    # Initialize random number generator
+    rng = np.random.default_rng()
+
+    # Initialize dangling chain free end node x- and y-coordinates
+    core_dnglng_chns_x = []
+    core_dnglng_chns_y = []
+
+    # Initialize edge lists
+    conn_core_edges = []
+    conn_pb_edges = []
+    conn_core_dnglng_edges = []
+    conn_pb_dnglng_edges = []
+
+    # Initialize dangling chain node and edge numbers
+    core_dnglng_m = 0
+    pb_dnglng_m = 0
+    dnglng_n = -1
+
+    # Network topology initialization
+    while True:
+        # Initialize anti-degree of the core cross-linker nodes
+        core_nodes_anti_k = k*np.ones(n, dtype=int)
+        # Initialize core cross-linker node active sites
+        core_nodes_active_sites = np.repeat(core_nodes, k)
+        core_nodes_active_sites_num = np.shape(core_nodes_active_sites)[0]
+
+        # Initialize core cross-linker sampling neighborhood list
+        core_nodes_nghbrhd = core_nodes_nghbrhd_init.copy()
+        r_core_nodes_nghbrhd = r_core_nodes_nghbrhd_init.copy()
+        
+        # Initialize cross-linker node x- and y-coordinates for dangling
+        # chains
+        core_pb_dnglng_chns_x = core_pb_x.copy()
+        core_pb_dnglng_chns_y = core_pb_y.copy()
+
+        # Initialize dangling chain free end node x- and y-coordinates
+        core_dnglng_chns_x = []
+        core_dnglng_chns_y = []
+
+        # Initialize edge array and lists
+        edges = np.full((m, 2), np.inf)
+        conn_core_edges = []
+        conn_pb_edges = []
+        conn_core_dnglng_edges = []
+        conn_pb_dnglng_edges = []
+
+        # Initialize dangling chain node and edge numbers
+        core_dnglng_m = 0
+        pb_dnglng_m = 0
+        dnglng_n = -1
+
+        # Initialize node number integer constants
+        core_node = 0
+        nghbr_node = 0
+
+        # Initialize and randomly shuffle chain end numbers
+        chn_ends = np.arange(2*m, dtype=int)
+        rng.shuffle(chn_ends)
+
+        # Initialize network topology on a chain end-by-chain end basis
+        for chn_end in np.nditer(chn_ends):
+            # Chain end is a free chain end
+            if rng.random() > xi: continue
+            else:
+                # Identify the chain and its ends
+                chn_end = int(chn_end)
+                chn = int(np.floor(chn_end/2))
+                chn_end_0 = int(chn_end%2)
+                chn_end_1 = 1 - chn_end_0
+                # If this chain has not yet been instantiated, then
+                # randomly select an active site from the core nodes to
+                # instantiate the chain
+                if (edges[chn, 0] == np.inf) and (edges[chn, 1] == np.inf):
+                    core_node_active_site_indx = rng.integers(
+                        np.shape(core_nodes_active_sites)[0], dtype=int)
+                    core_node = (
+                        core_nodes_active_sites[core_node_active_site_indx]
+                    )
+                    # Instantiate the chain at one end
+                    edges[chn, chn_end_0] = core_node
+                    # Update inactive sites, anti-degree, active core
+                    # cross-linker nodes, and the sampling neighborhood
+                    # list for the parent core cross-linker node
+                    (core_nodes_active_sites, core_nodes_active_sites_num, 
+                     core_nodes_anti_k, core_nodes_nghbrhd, r_core_nodes_nghbrhd) = core_node_update_func(
+                         core_node, core_node_active_site_indx,
+                         core_nodes_active_sites, core_nodes_active_sites_num,
+                         core_nodes_anti_k, core_nodes, core2pb_nodes,
+                         core_nodes_nghbrhd, r_core_nodes_nghbrhd)
+                # Otherwise, the chain has previously been instantiated
+                else:
+                    # Extract sampling neighborhood about the
+                    # previously-instantiated chain end
+                    core_node = int(edges[chn, chn_end_1])
+                    nghbr_nodes = core_nodes_nghbrhd[core_node]
+                    nghbr_nodes_num = np.shape(nghbr_nodes)[0]
+                    r_nghbr_nodes = r_core_nodes_nghbrhd[core_node]
+                    # Check if the sampling neighborhood is empty. If
+                    # so, then the chain is a dangling chain.
+                    if nghbr_nodes_num == 0:
+                        continue
+                    else:
+                        # Check if there is only one neighbor in the
+                        # sampling neighborhood
+                        if nghbr_nodes_num == 1:
+                            nghbr_node = nghbr_nodes[0]
+                        else:
+                            # Calculate and normalize weighting factors
+                            p_nghbrhd = np.asarray([])
+                            if network == "auelp":
+                                p_nghbrhd = p_gaussian_cnfrmtn_func(
+                                    b, nu, r_nghbr_nodes)
+                            elif network == "apelp":
+                                p_nghbrhd = np.empty(nghbr_nodes_num)
+                                for nghbr_node_indx in range(nghbr_nodes_num):
+                                    r_nghbr_node = (
+                                        r_nghbr_nodes[nghbr_node_indx]
+                                    )
+                                    if r_nghbr_node == 0.0:
+                                        p_nghbrhd[nghbr_node_indx] = 0.0
+                                    else:
+                                        # Linear interpolation
+                                        r_nghbrhd_chns_diff = (
+                                            r_nghbrhd_chns - r_nghbr_node
+                                        )
+                                        r_nghbrhd_chns_diff[r_nghbrhd_chns_diff < 0] = (
+                                            np.inf
+                                        )
+                                        indx_right = np.argmin(
+                                            r_nghbrhd_chns_diff)
+                                        r_right = r_nghbrhd_chns[indx_right]
+                                        p_right = p_nghbrhd_chns[indx_right]
+                                        indx_left = indx_right - 1
+                                        r_left = r_nghbrhd_chns[indx_left]
+                                        p_left = p_nghbrhd_chns[indx_left]
+                                        p_nghbrhd[nghbr_node_indx] = (
+                                            p_left + (r_nghbr_node-r_left)
+                                            * (p_right-p_left) / (r_right-r_left)
+                                        )
+                            p_nghbrhd /= np.sum(p_nghbrhd, dtype=float)
+                            # Randomly select a neighbor cross-linker
+                            # node to host the other end of the chain
+                            nghbr_node = int(
+                                rng.choice(nghbr_nodes, size=None, p=p_nghbrhd))
+                        # Instantiate the other end of the chain
+                        edges[chn, chn_end_0] = nghbr_node
+                        core_node = int(pb2core_nodes[nghbr_node])
+                        core_node_active_site_indx = int(
+                            np.where(core_nodes_active_sites == core_node)[0][0])
+                        # Update inactive sites, anti-degree, active core
+                        # cross-linker nodes, and the sampling neighborhood list
+                        # for the neighbor core cross-linker node
+                        (core_nodes_active_sites, core_nodes_active_sites_num,
+                         core_nodes_anti_k, core_nodes_nghbrhd,
+                         r_core_nodes_nghbrhd) = core_node_update_func(
+                            core_node, core_node_active_site_indx,
+                            core_nodes_active_sites, core_nodes_active_sites_num,
+                            core_nodes_anti_k, core_nodes, core2pb_nodes,
+                            core_nodes_nghbrhd, r_core_nodes_nghbrhd)
+        
+        # Post-process the edges array (that was populated during the
+        # network topology initialization) on a chain-by-chain basis
+        # into edges lists
+        for chn in range(m):
+            # Chain is a core edge
+            if (edges[chn, 0] < n) and (edges[chn, 1] < n):
+                conn_core_edges.append(
+                    (int(edges[chn, 0]), int(edges[chn, 1])))
+            # Chain is a periodic edge
+            elif (edges[chn, 0] < n) and (n <= edges[chn, 1] < np.inf):
+                conn_pb_edges.append(
+                    (int(edges[chn, 0]), int(pb2core_nodes[int(edges[chn, 1])])))
+            elif (n <= edges[chn, 0] < np.inf) and (edges[chn, 1] < n):
+                conn_pb_edges.append(
+                    (int(pb2core_nodes[int(edges[chn, 0])]), int(edges[chn, 1])))
+            # Chain is a dangling chain
+            elif (edges[chn, 0] < n) and (edges[chn, 1] == np.inf):
+                (dnglng_chn_fail, dnglng_n, core_dnglng_m, pb_dnglng_m,
+                 conn_core_dnglng_edges, conn_pb_dnglng_edges,
+                 core_dnglng_chns_x, core_dnglng_chns_y,
+                 core_pb_dnglng_chns_x, core_pb_dnglng_chns_y) = dim_2_dangling_chains_update_func(
+                     int(edges[chn, 0]), max_try, rng, r_nghbrhd_chns,
+                     p_nghbrhd_chns, b, L, dnglng_chn_fail, dnglng_n,
+                     core_dnglng_m, pb_dnglng_m, conn_core_dnglng_edges,
+                     conn_pb_dnglng_edges, core_dnglng_chns_x,
+                     core_dnglng_chns_y, core_pb_dnglng_chns_x,
+                     core_pb_dnglng_chns_y)
+                # Break if a dangling chain failed to be instantiated
+                if dnglng_chn_fail == True: break
+            elif (edges[chn, 0] == np.inf) and (edges[chn, 1] < n):
+                (dnglng_chn_fail, dnglng_n, core_dnglng_m, pb_dnglng_m,
+                 conn_core_dnglng_edges, conn_pb_dnglng_edges,
+                 core_dnglng_chns_x, core_dnglng_chns_y,
+                 core_pb_dnglng_chns_x, core_pb_dnglng_chns_y) = dim_2_dangling_chains_update_func(
+                     int(edges[chn, 1]), max_try, rng, r_nghbrhd_chns,
+                     p_nghbrhd_chns, b, L, dnglng_chn_fail, dnglng_n,
+                     core_dnglng_m, pb_dnglng_m, conn_core_dnglng_edges,
+                     conn_pb_dnglng_edges, core_dnglng_chns_x,
+                     core_dnglng_chns_y, core_pb_dnglng_chns_x,
+                     core_pb_dnglng_chns_y)
+                # Break if a dangling chain failed to be instantiated
+                if dnglng_chn_fail == True: break
+            # Chain is a free chain
+            elif (edges[chn, 0] == np.inf) and (edges[chn, 1] == np.inf):
+                continue
+
+        # Restart the network topology initialization protocol if a
+        # dangling chain failed to be instantiated
+        if dnglng_chn_fail == True: continue
+        
+        del core_nodes_anti_k, core_nodes_active_sites
+        del core_pb_dnglng_chns_x, core_pb_dnglng_chns_y
+        del edges, chn_ends
+        # Break out of acceptable initialized topology 
+        break
+
+    del core_pb_nodes, pb2core_nodes, core2pb_nodes
+    del core_pb_x, core_pb_y
+    del core_nodes_nghbrhd_init, core_nodes_nghbrhd
+    del r_core_nodes_nghbrhd_init, r_core_nodes_nghbrhd
+    del r_nghbrhd_chns, p_nghbrhd_chns
+
+    # Refactor edge lists to np.ndarrays
+    conn_core_edges = np.asarray(conn_core_edges, dtype=int)
+    conn_pb_edges = np.asarray(conn_pb_edges, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+
+    # Create nx.MultiGraphs
+    conn_core_graph = nx.MultiGraph()
+    conn_pb_graph = nx.MultiGraph()
+    conn_graph = nx.MultiGraph()
+    
+    # Recalibrate number of dangling chains
+    dnglng_n += 1
+
+    # No dangling chains were added to the network
+    if dnglng_n == 0:
+        conn_core_graph = add_nodes_from_numpy_array(
+            conn_core_graph, core_nodes)
+        conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+        conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+        
+        conn_core_graph = add_edges_from_numpy_array(
+            conn_core_graph, conn_core_edges)
+        conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
+        conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
+    # Only core dangling chains were added to the network
+    elif core_dnglng_m > 0 and pb_dnglng_m == 0:
+        # Update core dangling chain node numbers
+        for edge in conn_core_dnglng_edges: edge[1] += n
+        # Update edge lists
+        conn_core_dnglng_edges = np.asarray(
+            list(tuple(edge) for edge in conn_core_dnglng_edges), dtype=int)
+        conn_core_edges = np.vstack(
+            (conn_core_edges, conn_core_dnglng_edges), dtype=int)
+        conn_edges = np.vstack((conn_edges, conn_core_dnglng_edges), dtype=int)
+    # Only periodic boundary dangling chains were added to the network
+    elif core_dnglng_m == 0 and pb_dnglng_m > 0:
+        # Update periodic boundary dangling chain node numbers
+        for edge in conn_pb_dnglng_edges: edge[1] += n
+        # Update edge lists
+        conn_pb_dnglng_edges = np.asarray(
+            list(tuple(edge) for edge in conn_pb_dnglng_edges), dtype=int)
+        conn_pb_edges = np.vstack(
+            (conn_pb_edges, conn_pb_dnglng_edges), dtype=int)
+        conn_edges = np.vstack((conn_edges, conn_pb_dnglng_edges), dtype=int)
+    # Both core and periodic boundary dangling chains were added to the
+    # network
+    else:
+        # Update core and periodic boundary dangling chain node numbers
+        for edge in conn_core_dnglng_edges: edge[1] += n
+        for edge in conn_pb_dnglng_edges: edge[1] += n
+        # Update edge lists
+        conn_core_dnglng_edges = np.asarray(
+            list(tuple(edge) for edge in conn_core_dnglng_edges), dtype=int)
+        conn_pb_dnglng_edges = np.asarray(
+            list(tuple(edge) for edge in conn_pb_dnglng_edges), dtype=int)
+        conn_core_edges = np.vstack(
+            (conn_core_edges, conn_core_dnglng_edges), dtype=int)
+        conn_pb_edges = np.vstack(
+            (conn_pb_edges, conn_pb_dnglng_edges), dtype=int)
+        conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+    # Update core_node_type correspondingly to end-linked polymer
+    # network code
+    core_node_type = np.concatenate(
+        (core_node_type, np.repeat(3, dnglng_n)), dtype=int)
+    # Add core coordinates from dangling chains
+    core_x = np.concatenate((core_x, np.asarray(core_dnglng_chns_x)))
+    core_y = np.concatenate((core_y, np.asarray(core_dnglng_chns_y)))
+    # Update core_nodes
+    core_nodes = np.arange(n+dnglng_n, dtype=int)
+    # Update nx.MultiGraph nodes
+    conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
+    conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    # Update nx.MultiGraph edges
+    conn_core_graph = add_edges_from_numpy_array(
+        conn_core_graph, conn_core_edges)
+    conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
+
+    # Isolate largest/maximum connected component in a nodewise fashion
+    mx_cmp_conn_graph_nodes = max(nx.connected_components(conn_graph), key=len)
+    # Extract largest/maximum connected component subgraphs
+    mx_cmp_conn_core_graph = (
+        conn_core_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
+    )
+    mx_cmp_conn_pb_graph = (
+        conn_pb_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
+    )
+    # Extract edges
+    mx_cmp_conn_core_graph_edges = np.asarray(
+        list(mx_cmp_conn_core_graph.edges()), dtype=int)
+    mx_cmp_conn_pb_graph_edges = np.asarray(
+        list(mx_cmp_conn_pb_graph.edges()), dtype=int)
+    # Number of edges in the largest/maximum connected component
+    mx_cmp_conn_core_graph_m = np.shape(mx_cmp_conn_core_graph_edges)[0]
+    mx_cmp_conn_pb_graph_m = np.shape(mx_cmp_conn_pb_graph_edges)[0]
+    # Nodes from the largest/maximum connected component, sorted in
+    # ascending order
+    mx_cmp_conn_graph_nodes = np.sort(
+        np.fromiter(mx_cmp_conn_graph_nodes, dtype=int))
+    # Number of nodes in the largest/maximum connected component
+    mx_cmp_conn_graph_n = np.shape(mx_cmp_conn_graph_nodes)[0]
+
+    # Isolate core_node_type for the largest/maximum connected component
+    mx_cmp_core_node_type = core_node_type[mx_cmp_conn_graph_nodes]
+    # Isolate the cross-linker coordinates for the largest/maximum
+    # connected component
+    mx_cmp_core_x = core_x[mx_cmp_conn_graph_nodes]
+    mx_cmp_core_y = core_y[mx_cmp_conn_graph_nodes]
+
+    # Update all original node values with updated node values
+    for edge in range(mx_cmp_conn_core_graph_m):
+        mx_cmp_conn_core_graph_edges[edge, 0] = int(
+            np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 0])[0][0])
+        mx_cmp_conn_core_graph_edges[edge, 1] = int(
+            np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 1])[0][0])
+    for edge in range(mx_cmp_conn_pb_graph_m):
+        mx_cmp_conn_pb_graph_edges[edge, 0] = int(
+            np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 0])[0][0])
+        mx_cmp_conn_pb_graph_edges[edge, 1] = int(
+            np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 1])[0][0])
+    
+    # Save fundamental graph constituents
+    np.savetxt(mx_cmp_conn_n_filename, [mx_cmp_conn_graph_n], fmt="%d")
+    np.savetxt(mx_cmp_core_node_type_filename, mx_cmp_core_node_type, fmt="%d")
+    np.savetxt(
+        mx_cmp_conn_core_edges_filename, mx_cmp_conn_core_graph_edges, fmt="%d")
+    np.savetxt(
+        mx_cmp_conn_pb_edges_filename, mx_cmp_conn_pb_graph_edges, fmt="%d")
+    
+    # Save the core node x- and y-coordinates
+    np.savetxt(mx_cmp_core_x_filename, mx_cmp_core_x)
+    np.savetxt(mx_cmp_core_y_filename, mx_cmp_core_y)
+
+def aelp_dim_3_network_topology_initialization(
+        network: str,
+        L: float,
+        core_x: np.ndarray,
+        core_y: np.ndarray,
+        core_z: np.ndarray,
+        b: float,
+        xi: float,
+        k: int,
+        n: int,
+        nu: int,
+        max_try: int,
+        filename_prefix: str) -> None:
+    """Network topology initialization procedure for three-dimensional
+    artificial end-linked polymer networks.
+
+    This function initializes and saves the topology of a
+    three-dimensional artificial end-linked polymer network via a
+    modified Gusev-Hanson procedure.
+
+    Args:
+        network (str): Lower-case acronym indicating the particular type
+        of network that is being represented by the eventual network
+        topology; here, either "auelp" or "apelp" are applicable
+        (corresponding to artificial uniform end-linked polymer networks
+        ("auelp") or artificial polydisperse end-linked polymer networks
+        ("apelp")).
+        L (float): Simulation box size.
+        core_x (np.ndarray): x-coordinates of the core cross-linkers.
+        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        core_z (np.ndarray): z-coordinates of the core cross-linkers.
+        b (float): Chain segment and/or cross-linker diameter.
+        xi (float): Chain-to-cross-link connection probability.
+        k (int): Maximum cross-linker degree/functionality; either 3, 4,
+        5, 6, 7, or 8.
+        n (int): Number of core cross-linkers.
+        nu (int): (Average) Number of segments per chain.
+        max_try (int): Maximum number of dangling chain instantiation
+        attempts.
+        filename_prefix (str): Baseline filename prefix for data files.
+    
+    """
+    # Network topology initialization procedure is only applicable for
+    # artificial end-linked polymer networks. Exit if a different type
+    # of network is passed.
+    if network != "auelp":
+        if network != "apelp":
+            error_str = (
+                "Network topology initialization procedure is only "
+                + "applicable for artificial end-linked polymer "
+                + "networks. This calculation will only proceed if "
+                + "network = ``auelp'' or network = ``apelp''."
+            )
+            sys.exit(error_str)
+    
+    # Generate filenames
+    mx_cmp_conn_n_filename = filename_prefix + "-conn_n" + ".dat"
+    mx_cmp_core_node_type_filename = (
+        filename_prefix + "-core_node_type" + ".dat"
+    )
+    mx_cmp_conn_core_edges_filename = (
+        filename_prefix + "-conn_core_edges" + ".dat"
+    )
+    mx_cmp_conn_pb_edges_filename = filename_prefix + "-conn_pb_edges" + ".dat"
+    mx_cmp_core_x_filename = filename_prefix + "-core_x" + ".dat"
+    mx_cmp_core_y_filename = filename_prefix + "-core_y" + ".dat"
+    mx_cmp_core_z_filename = filename_prefix + "-core_z" + ".dat"
+    
+    # Calculate the stoichiometric number of chains
+    m = m_arg_stoich_func(n, k)
+
+    # As a fail-safe check, force int-valued parameters to be ints
+    k = int(np.floor(k))
+    n = int(np.floor(n))
+    nu = int(np.floor(nu))
+    max_try = int(np.floor(max_try))
+    m = int(np.floor(m))
+
+    # Core cross-linker nodes
+    core_nodes = np.arange(n, dtype=int)
+
+    # Identify core nodes as cross-linkers
+    core_node_type = np.ones(n, dtype=int)
+
+    # Copy the core_x, core_y, and core_z np.ndarrays as the first n
+    # entries in the tessellated cross-linker x-, y-, and z-coordinate
+    # np.ndarrays
+    tsslltd_core_x = core_x.copy()
+    tsslltd_core_y = core_y.copy()
+    tsslltd_core_z = core_z.copy()
+
+    # Three-dimensional tessellation protocol
+    dim_3_tsslltn, dim_3_tsslltn_num = tessellation_protocol(3)
+        
+    # Use three-dimensional tessellation protocol to tessellate the core
+    # cross-linkers
+    for tsslltn in range(dim_3_tsslltn_num):
+        x_tsslltn = dim_3_tsslltn[tsslltn, 0]
+        y_tsslltn = dim_3_tsslltn[tsslltn, 1]
+        z_tsslltn = dim_3_tsslltn[tsslltn, 2]
+        # Skip the (hold, hold, hold) tessellation call because the core
+        # cross-linkers are being tessellated about themselves
+        if (x_tsslltn == 0) and (y_tsslltn == 0) and (z_tsslltn == 0): continue
+        else:
+            # x-, y-, and z-coordinates from three-dimensional
+            # tessellation protocol
+            core_tsslltn_x, core_tsslltn_y, core_tsslltn_z = dim_3_tessellation(
+                L, core_x, core_y, core_z, x_tsslltn, y_tsslltn, z_tsslltn)
+            # Concatenate the tessellated x-, y-, and z-coordinates
+            tsslltd_core_x = np.concatenate((tsslltd_core_x, core_tsslltn_x))
+            tsslltd_core_y = np.concatenate((tsslltd_core_y, core_tsslltn_y))
+            tsslltd_core_z = np.concatenate((tsslltd_core_z, core_tsslltn_z))
+
+    del core_tsslltn_x, core_tsslltn_y, core_tsslltn_z
+
+    # Construct the pb2core_nodes np.ndarray such that
+    # pb2core_nodes[core_pb_node] = core_node
+    pb2core_nodes = np.tile(core_nodes, dim_3_tsslltn_num)
+
+    # Maximal core cross-linker sampling neighborhood radius as per the
+    # minimum image criterion 
+    r_mic = L / 2.
+    # Polymer chain contour length
+    l_cntr = nu * b
+    # Determine the core cross-linker sampling neighborhood radius
+    r_nghbrhd = np.minimum(r_mic, l_cntr)
+
+    # Finely discretize the core cross-linker sampling neighborhood
+    # radius
+    r_nghbrhd_chns = np.linspace(0, r_nghbrhd, 10001)
+    # Depending on the type of artificial end-linked polymer network,
+    # calculate the polymer chain probability distribution
+    p_nghbrhd_chns = np.asarray([])
+    if network == "auelp":
+        p_nghbrhd_chns = p_gaussian_cnfrmtn_func(b, nu, r_nghbrhd_chns)
+    elif network == "apelp":
+        p_nghbrhd_chns = p_rel_net_r_arr_gaussian_cnfrmtn_func(
+            b, nu, r_nghbrhd_chns)
+    # Normalize the polymer chain probability distribution
+    p_nghbrhd_chns /= np.sum(p_nghbrhd_chns, dtype=float)
+
+    # Initialize core cross-linker sampling neighborhood list
+    core_nodes_nghbrhd_init = []
+    r_core_nodes_nghbrhd_init = []
+
+    # Determine core cross-linker sampling neighborhood
+    for core_node in np.nditer(core_nodes):
+        core_node = int(core_node)
+        # x-, y-, and z-coordinates of core cross-linker
+        core_node_x = tsslltd_core_x[core_node]
+        core_node_y = tsslltd_core_y[core_node]
+        core_node_z = tsslltd_core_z[core_node]
+        # Core cross-linker position
+        core_node_pstn = np.asarray(
+            [
+                core_node_x,
+                core_node_y,
+                core_node_z
+            ]
+        )
+        # Downselect the local square neighborhood about the core node
+        # defined by r_nghbrhd. Start by gathering the tessellated
+        # cross-linker nodes that meet this criterion in each x-, y-,
+        # and z-coordinate.
+        lcl_nghbr_x_lb = core_node_x - r_nghbrhd
+        lcl_nghbr_x_ub = core_node_x + r_nghbrhd
+        lcl_nghbr_y_lb = core_node_y - r_nghbrhd
+        lcl_nghbr_y_ub = core_node_y + r_nghbrhd
+        lcl_nghbr_z_lb = core_node_z - r_nghbrhd
+        lcl_nghbr_z_ub = core_node_z + r_nghbrhd
+        psbl_lcl_nghbr_x_nodes = (
+            np.where(np.logical_and(tsslltd_core_x>=lcl_nghbr_x_lb, tsslltd_core_x<=lcl_nghbr_x_ub))[0]
+        )
+        psbl_lcl_nghbr_y_nodes = (
+            np.where(np.logical_and(tsslltd_core_y>=lcl_nghbr_y_lb, tsslltd_core_y<=lcl_nghbr_y_ub))[0]
+        )
+        psbl_lcl_nghbr_z_nodes = (
+            np.where(np.logical_and(tsslltd_core_z>=lcl_nghbr_z_lb, tsslltd_core_z<=lcl_nghbr_z_ub))[0]
+        )
+        # Gather the nodes from each x-, y-, and z-coordinate together
+        # to assess all possible local cross-linker neighbors. Retain
+        # unique possible local cross-linker neighbor nodes, and the
+        # number of times each such node appears.
+        psbl_lcl_nghbr_nodes, psbl_lcl_nghbr_nodes_counts = np.unique(
+            np.concatenate((psbl_lcl_nghbr_x_nodes, psbl_lcl_nghbr_y_nodes, psbl_lcl_nghbr_z_nodes), dtype=int),
+            return_counts=True)
+        # The true local cross-linker neighbor nodes are those who
+        # appear thrics in the possible cross-linker neighbor node array
+        # -- equal to the network dimensionality
+        lcl_nghbr_nodes_indcs = np.where(psbl_lcl_nghbr_nodes_counts == 3)[0]
+        lcl_nghbr_node_num = np.shape(lcl_nghbr_nodes_indcs)[0]
+        # Further downselect to the neighborhood of tessellated
+        # cross-linker nodes that are a distance of r_nghbrhd away from
+        # the core cross-linker node
+        if lcl_nghbr_node_num > 0:
+            # Gather the indices of the local cross-linker neighbors
+            lcl_nghbr_nodes = psbl_lcl_nghbr_nodes[lcl_nghbr_nodes_indcs]
+            # Extract local cross-linker neighbor x-, y-, and
+            # z-coordinates
+            lcl_nghbr_x = tsslltd_core_x[lcl_nghbr_nodes]
+            lcl_nghbr_y = tsslltd_core_y[lcl_nghbr_nodes]
+            lcl_nghbr_z = tsslltd_core_z[lcl_nghbr_nodes]
+            # Calculate the distance between the core node and the local
+            # cross-linker neighbor nodes
+            r_lcl_nghbr_nodes = np.empty(lcl_nghbr_node_num)
+            for lcl_nghbr_node_indx in range(lcl_nghbr_node_num):
+                lcl_nghbr_pstn = np.asarray(
+                    [
+                        lcl_nghbr_x[lcl_nghbr_node_indx],
+                        lcl_nghbr_y[lcl_nghbr_node_indx],
+                        lcl_nghbr_z[lcl_nghbr_node_indx]
+                    ]
+                )
+                r_lcl_nghbr_nodes[lcl_nghbr_node_indx] = (
+                    np.linalg.norm(core_node_pstn-lcl_nghbr_pstn)
+                )
+            # The true cross-linker neighbor nodes are those whose
+            # distance to the core node is less than r_nghbrhd
+            nghbr_nodes_indcs = np.where(r_lcl_nghbr_nodes <= r_nghbrhd)[0]
+            nghbr_nodes = lcl_nghbr_nodes[nghbr_nodes_indcs]
+            r_nghbr_nodes = r_lcl_nghbr_nodes[nghbr_nodes_indcs]
+            # Add the cross-linker neighbor nodes array to the core
+            # cross-linker sampling neighborhood list
+            core_nodes_nghbrhd_init.append(nghbr_nodes)
+            r_core_nodes_nghbrhd_init.append(r_nghbr_nodes)
+        else:
+            core_nodes_nghbrhd_init.append(np.asarray([]))
+            r_core_nodes_nghbrhd_init.append(np.asarray([]))
+    
+    # Retain unique nodes from the core and periodic boundary
+    # cross-linkers in the core cross-linker sampling neighborhood list
+    core_pb_nodes = np.unique(
+        np.concatenate(
+            tuple(nghbrhd for nghbrhd in core_nodes_nghbrhd_init), dtype=int))
+
+    # Extract the core and periodic boundary cross-linker x-, y-, and
+    # z-coordinates using the corresponding node numbers
+    core_pb_x = tsslltd_core_x[core_pb_nodes].copy()
+    core_pb_y = tsslltd_core_y[core_pb_nodes].copy()
+    core_pb_z = tsslltd_core_z[core_pb_nodes].copy()
+
+    del tsslltd_core_x, tsslltd_core_y, tsslltd_core_z
+
+    # Extract the core and periodic boundary cross-linker nodes in the
+    # pb2core_nodes np.ndarray
+    pb2core_nodes = pb2core_nodes[core_pb_nodes].copy()
+
+    # Construct the core2pb_nodes list
+    core2pb_nodes = core2pb_nodes_func(core_nodes, pb2core_nodes)
+
+    # Refactor the node numbers in the core cross-linker sampling
+    # neighborhood list
+    for core_node in np.nditer(core_nodes):
+        core_node = int(core_node)
+        nghbr_nodes = core_nodes_nghbrhd_init[core_node]
+        for nghbr_node_indx in range(np.shape(nghbr_nodes)[0]):
+            nghbr_nodes[nghbr_node_indx] = int(
+                np.where(core_pb_nodes == nghbr_nodes[nghbr_node_indx])[0][0])
+        core_nodes_nghbrhd_init[core_node] = nghbr_nodes
+
+    # Initialize tracker for failure of dangling chain creation
+    dnglng_chn_fail = False
+
+    # Initialize random number generator
+    rng = np.random.default_rng()
+
+    # Initialize dangling chain free end node x-, y-, and z-coordinates
+    core_dnglng_chns_x = []
+    core_dnglng_chns_y = []
+    core_dnglng_chns_z = []
+
+    # Initialize edge lists
+    conn_core_edges = []
+    conn_pb_edges = []
+    conn_core_dnglng_edges = []
+    conn_pb_dnglng_edges = []
+
+    # Initialize dangling chain node and edge numbers
+    core_dnglng_m = 0
+    pb_dnglng_m = 0
+    dnglng_n = -1
+
+    # Network topology initialization
+    while True:
+        # Initialize anti-degree of the core cross-linker nodes
+        core_nodes_anti_k = k*np.ones(n, dtype=int)
+        # Initialize core cross-linker node active sites
+        core_nodes_active_sites = np.repeat(core_nodes, k)
+        core_nodes_active_sites_num = np.shape(core_nodes_active_sites)[0]
+
+        # Initialize core cross-linker sampling neighborhood list
+        core_nodes_nghbrhd = core_nodes_nghbrhd_init.copy()
+        r_core_nodes_nghbrhd = r_core_nodes_nghbrhd_init.copy()
+        
+        # Initialize cross-linker node x-, y-, and z-coordinates for
+        # dangling chains
+        core_pb_dnglng_chns_x = core_pb_x.copy()
+        core_pb_dnglng_chns_y = core_pb_y.copy()
+        core_pb_dnglng_chns_z = core_pb_z.copy()
+
+        # Initialize dangling chain free end node x-, y-, and
+        # z-coordinates
+        core_dnglng_chns_x = []
+        core_dnglng_chns_y = []
+        core_dnglng_chns_z = []
+
+        # Initialize edge array and lists
+        edges = np.full((m, 2), np.inf)
+        conn_core_edges = []
+        conn_pb_edges = []
+        conn_core_dnglng_edges = []
+        conn_pb_dnglng_edges = []
+
+        # Initialize dangling chain node and edge numbers
+        core_dnglng_m = 0
+        pb_dnglng_m = 0
+        dnglng_n = -1
+
+        # Initialize node number integer constants
+        core_node = 0
+        nghbr_node = 0
+
+        # Initialize and randomly shuffle chain end numbers
+        chn_ends = np.arange(2*m, dtype=int)
+        rng.shuffle(chn_ends)
+
+        # Initialize network topology on a chain end-by-chain end basis
+        for chn_end in np.nditer(chn_ends):
+            # Chain end is a free chain end
+            if rng.random() > xi: continue
+            else:
+                # Identify the chain and its ends
+                chn_end = int(chn_end)
+                chn = int(np.floor(chn_end/2))
+                chn_end_0 = int(chn_end%2)
+                chn_end_1 = 1 - chn_end_0
+                # If this chain has not yet been instantiated, then
+                # randomly select an active site from the core nodes to
+                # instantiate the chain
+                if (edges[chn, 0] == np.inf) and (edges[chn, 1] == np.inf):
+                    core_node_active_site_indx = rng.integers(
+                        np.shape(core_nodes_active_sites)[0], dtype=int)
+                    core_node = (
+                        core_nodes_active_sites[core_node_active_site_indx]
+                    )
+                    # Instantiate the chain at one end
+                    edges[chn, chn_end_0] = core_node
+                    # Update inactive sites, anti-degree, active core
+                    # cross-linker nodes, and the sampling neighborhood
+                    # list for the parent core cross-linker node
+                    (core_nodes_active_sites, core_nodes_active_sites_num, 
+                     core_nodes_anti_k, core_nodes_nghbrhd, r_core_nodes_nghbrhd) = core_node_update_func(
+                         core_node, core_node_active_site_indx,
+                         core_nodes_active_sites, core_nodes_active_sites_num,
+                         core_nodes_anti_k, core_nodes, core2pb_nodes,
+                         core_nodes_nghbrhd, r_core_nodes_nghbrhd)
+                # Otherwise, the chain has previously been instantiated
+                else:
+                    # Extract sampling neighborhood about the
+                    # previously-instantiated chain end
+                    core_node = int(edges[chn, chn_end_1])
+                    nghbr_nodes = core_nodes_nghbrhd[core_node]
+                    nghbr_nodes_num = np.shape(nghbr_nodes)[0]
+                    r_nghbr_nodes = r_core_nodes_nghbrhd[core_node]
+                    # Check if the sampling neighborhood is empty. If
+                    # so, then the chain is a dangling chain.
+                    if nghbr_nodes_num == 0:
+                        continue
+                    else:
+                        # Check if there is only one neighbor in the
+                        # sampling neighborhood
+                        if nghbr_nodes_num == 1:
+                            nghbr_node = nghbr_nodes[0]
+                        else:
+                            # Calculate and normalize weighting factors
+                            p_nghbrhd = np.asarray([])
+                            if network == "auelp":
+                                p_nghbrhd = p_gaussian_cnfrmtn_func(
+                                    b, nu, r_nghbr_nodes)
+                            elif network == "apelp":
+                                p_nghbrhd = np.empty(nghbr_nodes_num)
+                                for nghbr_node_indx in range(nghbr_nodes_num):
+                                    r_nghbr_node = (
+                                        r_nghbr_nodes[nghbr_node_indx]
+                                    )
+                                    if r_nghbr_node == 0.0:
+                                        p_nghbrhd[nghbr_node_indx] = 0.0
+                                    else:
+                                        # Linear interpolation
+                                        r_nghbrhd_chns_diff = (
+                                            r_nghbrhd_chns - r_nghbr_node
+                                        )
+                                        r_nghbrhd_chns_diff[r_nghbrhd_chns_diff < 0] = (
+                                            np.inf
+                                        )
+                                        indx_right = np.argmin(
+                                            r_nghbrhd_chns_diff)
+                                        r_right = r_nghbrhd_chns[indx_right]
+                                        p_right = p_nghbrhd_chns[indx_right]
+                                        indx_left = indx_right - 1
+                                        r_left = r_nghbrhd_chns[indx_left]
+                                        p_left = p_nghbrhd_chns[indx_left]
+                                        p_nghbrhd[nghbr_node_indx] = (
+                                            p_left + (r_nghbr_node-r_left)
+                                            * (p_right-p_left) / (r_right-r_left)
+                                        )
+                            p_nghbrhd /= np.sum(p_nghbrhd, dtype=float)
+                            # Randomly select a neighbor cross-linker
+                            # node to host the other end of the chain
+                            nghbr_node = int(
+                                rng.choice(nghbr_nodes, size=None, p=p_nghbrhd))
+                        # Instantiate the other end of the chain
+                        edges[chn, chn_end_0] = nghbr_node
+                        core_node = int(pb2core_nodes[nghbr_node])
+                        core_node_active_site_indx = int(
+                            np.where(core_nodes_active_sites == core_node)[0][0])
+                        # Update inactive sites, anti-degree, active core
+                        # cross-linker nodes, and the sampling neighborhood list
+                        # for the neighbor core cross-linker node
+                        (core_nodes_active_sites, core_nodes_active_sites_num,
+                         core_nodes_anti_k, core_nodes_nghbrhd,
+                         r_core_nodes_nghbrhd) = core_node_update_func(
+                            core_node, core_node_active_site_indx,
+                            core_nodes_active_sites, core_nodes_active_sites_num,
+                            core_nodes_anti_k, core_nodes, core2pb_nodes,
+                            core_nodes_nghbrhd, r_core_nodes_nghbrhd)
+        
+        # Post-process the edges array (that was populated during the
+        # network topology initialization) on a chain-by-chain basis
+        # into edges lists
+        for chn in range(m):
+            # Chain is a core edge
+            if (edges[chn, 0] < n) and (edges[chn, 1] < n):
+                conn_core_edges.append(
+                    (int(edges[chn, 0]), int(edges[chn, 1])))
+            # Chain is a periodic edge
+            elif (edges[chn, 0] < n) and (n <= edges[chn, 1] < np.inf):
+                conn_pb_edges.append(
+                    (int(edges[chn, 0]), int(pb2core_nodes[int(edges[chn, 1])])))
+            elif (n <= edges[chn, 0] < np.inf) and (edges[chn, 1] < n):
+                conn_pb_edges.append(
+                    (int(pb2core_nodes[int(edges[chn, 0])]), int(edges[chn, 1])))
+            # Chain is a dangling chain
+            elif (edges[chn, 0] < n) and (edges[chn, 1] == np.inf):
+                (dnglng_chn_fail, dnglng_n, core_dnglng_m, pb_dnglng_m,
+                 conn_core_dnglng_edges, conn_pb_dnglng_edges,
+                 core_dnglng_chns_x, core_dnglng_chns_y, core_dnglng_chns_z,
+                 core_pb_dnglng_chns_x, core_pb_dnglng_chns_y,
+                 core_pb_dnglng_chns_z) = dim_3_dangling_chains_update_func(
+                     int(edges[chn, 0]), max_try, rng, r_nghbrhd_chns,
+                     p_nghbrhd_chns, b, L, dnglng_chn_fail, dnglng_n,
+                     core_dnglng_m, pb_dnglng_m, conn_core_dnglng_edges,
+                     conn_pb_dnglng_edges, core_dnglng_chns_x,
+                     core_dnglng_chns_y, core_dnglng_chns_z,
+                     core_pb_dnglng_chns_x, core_pb_dnglng_chns_y,
+                     core_pb_dnglng_chns_z)
+                # Break if a dangling chain failed to be instantiated
+                if dnglng_chn_fail == True: break
+            elif (edges[chn, 0] == np.inf) and (edges[chn, 1] < n):
+                (dnglng_chn_fail, dnglng_n, core_dnglng_m, pb_dnglng_m,
+                 conn_core_dnglng_edges, conn_pb_dnglng_edges,
+                 core_dnglng_chns_x, core_dnglng_chns_y, core_dnglng_chns_z,
+                 core_pb_dnglng_chns_x, core_pb_dnglng_chns_y,
+                 core_pb_dnglng_chns_z) = dim_3_dangling_chains_update_func(
+                     int(edges[chn, 1]), max_try, rng, r_nghbrhd_chns,
+                     p_nghbrhd_chns, b, L, dnglng_chn_fail, dnglng_n,
+                     core_dnglng_m, pb_dnglng_m, conn_core_dnglng_edges,
+                     conn_pb_dnglng_edges, core_dnglng_chns_x,
+                     core_dnglng_chns_y, core_dnglng_chns_z,
+                     core_pb_dnglng_chns_x, core_pb_dnglng_chns_y,
+                     core_pb_dnglng_chns_z)
+                # Break if a dangling chain failed to be instantiated
+                if dnglng_chn_fail == True: break
+            # Chain is a free chain
+            elif (edges[chn, 0] == np.inf) and (edges[chn, 1] == np.inf):
+                continue
+
+        # Restart the network topology initialization protocol if a
+        # dangling chain failed to be instantiated
+        if dnglng_chn_fail == True: continue
+        
+        del core_nodes_anti_k, core_nodes_active_sites
+        del core_pb_dnglng_chns_x, core_pb_dnglng_chns_y, core_pb_dnglng_chns_z
+        del edges, chn_ends
+        # Break out of acceptable initialized topology 
+        break
+
+    del core_pb_nodes, pb2core_nodes, core2pb_nodes
+    del core_pb_x, core_pb_y, core_pb_z
+    del core_nodes_nghbrhd_init, core_nodes_nghbrhd
+    del r_core_nodes_nghbrhd_init, r_core_nodes_nghbrhd
+    del r_nghbrhd_chns, p_nghbrhd_chns
+
+    # Refactor edge lists to np.ndarrays
+    conn_core_edges = np.asarray(conn_core_edges, dtype=int)
+    conn_pb_edges = np.asarray(conn_pb_edges, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+
+    # Create nx.MultiGraphs
+    conn_core_graph = nx.MultiGraph()
+    conn_pb_graph = nx.MultiGraph()
+    conn_graph = nx.MultiGraph()
+    
+    # Recalibrate number of dangling chains
+    dnglng_n += 1
+
+    # No dangling chains were added to the network
+    if dnglng_n == 0:
+        conn_core_graph = add_nodes_from_numpy_array(
+            conn_core_graph, core_nodes)
+        conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+        conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+        
+        conn_core_graph = add_edges_from_numpy_array(
+            conn_core_graph, conn_core_edges)
+        conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
+        conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
+    # Only core dangling chains were added to the network
+    elif core_dnglng_m > 0 and pb_dnglng_m == 0:
+        # Update core dangling chain node numbers
+        for edge in conn_core_dnglng_edges: edge[1] += n
+        # Update edge lists
+        conn_core_dnglng_edges = np.asarray(
+            list(tuple(edge) for edge in conn_core_dnglng_edges), dtype=int)
+        conn_core_edges = np.vstack(
+            (conn_core_edges, conn_core_dnglng_edges), dtype=int)
+        conn_edges = np.vstack((conn_edges, conn_core_dnglng_edges), dtype=int)
+    # Only periodic boundary dangling chains were added to the network
+    elif core_dnglng_m == 0 and pb_dnglng_m > 0:
+        # Update periodic boundary dangling chain node numbers
+        for edge in conn_pb_dnglng_edges: edge[1] += n
+        # Update edge lists
+        conn_pb_dnglng_edges = np.asarray(
+            list(tuple(edge) for edge in conn_pb_dnglng_edges), dtype=int)
+        conn_pb_edges = np.vstack(
+            (conn_pb_edges, conn_pb_dnglng_edges), dtype=int)
+        conn_edges = np.vstack((conn_edges, conn_pb_dnglng_edges), dtype=int)
+    # Both core and periodic boundary dangling chains were added to the
+    # network
+    else:
+        # Update core and periodic boundary dangling chain node numbers
+        for edge in conn_core_dnglng_edges: edge[1] += n
+        for edge in conn_pb_dnglng_edges: edge[1] += n
+        # Update edge lists
+        conn_core_dnglng_edges = np.asarray(
+            list(tuple(edge) for edge in conn_core_dnglng_edges), dtype=int)
+        conn_pb_dnglng_edges = np.asarray(
+            list(tuple(edge) for edge in conn_pb_dnglng_edges), dtype=int)
+        conn_core_edges = np.vstack(
+            (conn_core_edges, conn_core_dnglng_edges), dtype=int)
+        conn_pb_edges = np.vstack(
+            (conn_pb_edges, conn_pb_dnglng_edges), dtype=int)
+        conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+    # Update core_node_type correspondingly to end-linked polymer
+    # network code
+    core_node_type = np.concatenate(
+        (core_node_type, np.repeat(3, dnglng_n)), dtype=int)
+    # Add core coordinates from dangling chains
+    core_x = np.concatenate((core_x, np.asarray(core_dnglng_chns_x)))
+    core_y = np.concatenate((core_y, np.asarray(core_dnglng_chns_y)))
+    core_z = np.concatenate((core_z, np.asarray(core_dnglng_chns_z)))
+    # Update core_nodes
+    core_nodes = np.arange(n+dnglng_n, dtype=int)
+    # Update nx.MultiGraph nodes
+    conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
+    conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    # Update nx.MultiGraph edges
+    conn_core_graph = add_edges_from_numpy_array(
+        conn_core_graph, conn_core_edges)
+    conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
+
+    # Isolate largest/maximum connected component in a nodewise fashion
+    mx_cmp_conn_graph_nodes = max(nx.connected_components(conn_graph), key=len)
+    # Extract largest/maximum connected component subgraphs
+    mx_cmp_conn_core_graph = (
+        conn_core_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
+    )
+    mx_cmp_conn_pb_graph = (
+        conn_pb_graph.subgraph(mx_cmp_conn_graph_nodes).copy()
+    )
+    # Extract edges
+    mx_cmp_conn_core_graph_edges = np.asarray(
+        list(mx_cmp_conn_core_graph.edges()), dtype=int)
+    mx_cmp_conn_pb_graph_edges = np.asarray(
+        list(mx_cmp_conn_pb_graph.edges()), dtype=int)
+    # Number of edges in the largest/maximum connected component
+    mx_cmp_conn_core_graph_m = np.shape(mx_cmp_conn_core_graph_edges)[0]
+    mx_cmp_conn_pb_graph_m = np.shape(mx_cmp_conn_pb_graph_edges)[0]
+    # Nodes from the largest/maximum connected component, sorted in
+    # ascending order
+    mx_cmp_conn_graph_nodes = np.sort(
+        np.fromiter(mx_cmp_conn_graph_nodes, dtype=int))
+    # Number of nodes in the largest/maximum connected component
+    mx_cmp_conn_graph_n = np.shape(mx_cmp_conn_graph_nodes)[0]
+
+    # Isolate core_node_type for the largest/maximum connected component
+    mx_cmp_core_node_type = core_node_type[mx_cmp_conn_graph_nodes]
+    # Isolate the cross-linker coordinates for the largest/maximum
+    # connected component
+    mx_cmp_core_x = core_x[mx_cmp_conn_graph_nodes]
+    mx_cmp_core_y = core_y[mx_cmp_conn_graph_nodes]
+    mx_cmp_core_z = core_z[mx_cmp_conn_graph_nodes]
+
+    # Update all original node values with updated node values
+    for edge in range(mx_cmp_conn_core_graph_m):
+        mx_cmp_conn_core_graph_edges[edge, 0] = int(
+            np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 0])[0][0])
+        mx_cmp_conn_core_graph_edges[edge, 1] = int(
+            np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_core_graph_edges[edge, 1])[0][0])
+    for edge in range(mx_cmp_conn_pb_graph_m):
+        mx_cmp_conn_pb_graph_edges[edge, 0] = int(
+            np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 0])[0][0])
+        mx_cmp_conn_pb_graph_edges[edge, 1] = int(
+            np.where(mx_cmp_conn_graph_nodes == mx_cmp_conn_pb_graph_edges[edge, 1])[0][0])
+    
+    # Save fundamental graph constituents
+    np.savetxt(mx_cmp_conn_n_filename, [mx_cmp_conn_graph_n], fmt="%d")
+    np.savetxt(mx_cmp_core_node_type_filename, mx_cmp_core_node_type, fmt="%d")
+    np.savetxt(
+        mx_cmp_conn_core_edges_filename, mx_cmp_conn_core_graph_edges, fmt="%d")
+    np.savetxt(
+        mx_cmp_conn_pb_edges_filename, mx_cmp_conn_pb_graph_edges, fmt="%d")
+    
+    # Save the core node x-, y- and z-coordinates
+    np.savetxt(mx_cmp_core_x_filename, mx_cmp_core_x)
+    np.savetxt(mx_cmp_core_y_filename, mx_cmp_core_y)
+    np.savetxt(mx_cmp_core_z_filename, mx_cmp_core_z)
+
+def aelp_network_topology_initialization(
+        network: str,
+        date: str,
+        batch: str,
+        sample: int,
+        scheme: str,
+        dim: int,
+        b: float,
+        xi: float,
+        k: int,
+        n: int,
+        nu: int,
+        config: int,
+        max_try: int,) -> None:
+    """Network topology initialization procedure for artificial
+    end-linked polymer networks.
+
+    This function loads the simulation box size and the core
+    cross-linker coordinates previously generated by the
+    node_seeding() function. Then, depending on the network
+    dimensionality, this function calls upon a corresponding helper
+    function to initialize the artificial end-linked polymer network
+    topology.
+
+    Args:
+        network (str): Lower-case acronym indicating the particular type
+        of network that is being represented by the eventual network
+        topology; here, either "auelp" or "apelp" are applicable
+        (corresponding to artificial uniform end-linked polymer networks
+        ("auelp") or artificial polydisperse end-linked polymer networks
+        ("apelp")).
+        date (str): "YYYYMMDD" string indicating the date during which
+        the network batch and sample data was generated.
+        batch (str): Single capitalized letter (e.g., A, B, C, ...)
+        indicating the batch label of the network sample data.
+        sample (int): Label of a particular network in the batch.
+        scheme (str): Lower-case acronym indicating the particular
+        scheme used to generate the positions of the core nodes;
+        either "random", "prhd", "pdhu", or "lammps" (corresponding to
+        the random node placement procedure ("random"), periodic random
+        hard disk node placement procedure ("prhd"), periodic disordered
+        hyperuniform node placement procedure ("pdhu"), or nodes
+        randomly placed and minimized via LAMMPS ("lammps")).
+        dim (int): Physical dimensionality of the network; either 2 or 3
+        (for two-dimensional or three-dimensional networks).
+        b (float): Chain segment and/or cross-linker diameter.
+        xi (float): Chain-to-cross-link connection probability.
+        k (int): Maximum cross-linker degree/functionality; either 3, 4,
+        5, 6, 7, or 8.
+        n (int): Number of core cross-linkers.
+        nu (int): (Average) Number of segments per chain.
+        config (int): Configuration number.
+        max_try (int): Maximum number of dangling chain instantiation
+        attempts.
+    
+    """
+    # Network topology initialization procedure is only applicable for
+    # artificial end-linked polymer networks. Exit if a different type
+    # of network is passed.
+    if network != "auelp":
+        if network != "apelp":
+            error_str = (
+                "Network topology initialization procedure is only "
+                + "applicable for artificial end-linked polymer "
+                + "networks. This calculation will only proceed if "
+                + "network = ``auelp'' or network = ``apelp''."
+            )
+            sys.exit(error_str)
+    
+    # Generate filename prefix
+    filename_prefix = filename_str(network, date, batch, sample)
+    L_filename = filename_prefix + "-L" + ".dat"
+    
+    # Load L
+    L = np.loadtxt(L_filename)
+
+    # Append configuration number to filename prefix
+    filename_prefix = filename_prefix + f"C{config:d}"
+
+    # Generate config filename
+    config_filename = filename_prefix + ".config"
+
+    # Call appropriate helper function to initialize network topology
+    if (scheme == "random") or (scheme == "prhd") or (scheme == "pdhu"):
+        # Load core cross-linker coordinates
+        coords = np.loadtxt(config_filename)
+    elif scheme == "lammps":
+        skiprows_num = 15
+        # Load core cross-linker coordinates
+        coords = np.loadtxt(config_filename, skiprows=skiprows_num, max_rows=n)
+    # Actual number of core cross-linkers
+    n = np.shape(coords)[0]
+    # Separate core cross-linkers x- and y-coordinates
+    x = coords[:, 0].copy()
+    y = coords[:, 1].copy()
+    if dim == 2:
+        del coords
+        aelp_dim_2_network_topology_initialization(
+            network, L, x, y, b, xi, k, n, nu, max_try, filename_prefix)
+    elif dim == 3:
+        # Separate core cross-linker z-coordinates
+        z = coords[:, 2].copy()
+        del coords
+        aelp_dim_3_network_topology_initialization(
+            network, L, x, y, z, b, xi, k, n, nu, max_try, filename_prefix)
 
 def elastically_effective_graph(graph):
     """Elastically-effective graph.
@@ -2043,14 +5019,14 @@ def swidt_network_k_counts(
         config: int,
         pruning: int,
         elastically_effective: bool) -> None:
-    """Cross-linker node degree counts in spider web-inspired
-    Delaunay-triangulated networks.
+    """Node degree counts in spider web-inspired Delaunay-triangulated
+    networks.
 
     This function generates the filename prefix associated with
     fundamental graph constituents for spider web-inspired
     Delaunay-triangulated networks. This function then calls upon a
-    corresponding helper function to calculate and save the cross-linker
-    node degree counts.
+    corresponding helper function to calculate and save the node degree
+    counts.
 
     Args:
         network (str): Lower-case acronym indicating the particular type
@@ -2069,13 +5045,13 @@ def swidt_network_k_counts(
         elastically-effective network should be analyzed.
     
     """
-    # Cross-linker node degree counts calculation is only applicable for
-    # spider web-inspired Delaunay-triangulated networks. Exit if a
-    # different type of network is passed.
+    # Node degree counts calculation is only applicable for spider
+    # web-inspired Delaunay-triangulated networks. Exit if a different
+    # type of network is passed.
     if network != "swidt":
         error_str = (
-            "Cross-linker node degree count calculation is only applicable for "
-            + "the spider web-inspired Delaunay-triangulated networks. This "
+            "Node degree count calculation is only applicable for the "
+            + "spider web-inspired Delaunay-triangulated networks. This "
             + "procedure will only proceed if network = ``swidt''."
         )
         sys.exit(error_str)
@@ -2095,8 +5071,7 @@ def swidt_network_k_counts(
     conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
     conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
 
-    # Create nx.Graph, load fundamental graph constituents, and add
-    # nodes before edges
+    # Create nx.Graph and add nodes before edges
     conn_graph = nx.Graph()
     conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
     conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
@@ -2298,7 +5273,7 @@ def dim_2_core_pb_edge_identification(
     """Two-dimensional periodic boundary edge and node identification.
 
     This function uses the minimum image criterion to determine/identify
-    the nodal coordinates of a particular periodic boundary edge in a
+    the node coordinates of a particular periodic boundary edge in a
     two-dimensional network.
 
     Args:
@@ -2365,7 +5340,7 @@ def dim_3_core_pb_edge_identification(
     """Three-dimensional periodic boundary edge and node identification.
 
     This function uses the minimum image criterion to determine/identify
-    the nodal coordinates of a particular periodic boundary edge in a
+    the node coordinates of a particular periodic boundary edge in a
     three-dimensional network.
 
     Args:
@@ -2446,16 +5421,16 @@ def dim_2_l_edges_calculation(
         conn_core_graph: (Undirected) NetworkX graph that can be of
         type nx.Graph or nx.MultiGraph. This graph represents the core
         edges from the graph capturing the periodic connections between
-        the core cross-linkers.
+        the core nodes.
         conn_pb_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph represents the periodic
         boundary edges from the graph capturing the periodic connections
-        between the core cross-linkers.
+        between the core nodes.
         conn_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph captures the periodic
-        connections between the core cross-linkers.
-        core_x (np.ndarray): x-coordinates of the core cross-linkers.
-        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        connections between the core nodes.
+        core_x (np.ndarray): x-coordinates of the core nodes.
+        core_y (np.ndarray): y-coordinates of the core nodes.
         L (float): Tessellation scaling distance (i.e., simulation box
         size).
     
@@ -2532,17 +5507,17 @@ def dim_3_l_edges_calculation(
         conn_core_graph: (Undirected) NetworkX graph that can be of
         type nx.Graph or nx.MultiGraph. This graph represents the core
         edges from the graph capturing the periodic connections between
-        the core cross-linkers.
+        the core nodes.
         conn_pb_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph represents the periodic
         boundary edges from the graph capturing the periodic connections
-        between the core cross-linkers.
+        between the core nodes.
         conn_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph captures the periodic
-        connections between the core cross-linkers.
-        core_x (np.ndarray): x-coordinates of the core cross-linkers.
-        core_y (np.ndarray): y-coordinates of the core cross-linkers.
-        core_z (np.ndarray): z-coordinates of the core cross-linkers.
+        connections between the core nodes.
+        core_x (np.ndarray): x-coordinates of the core nodes.
+        core_y (np.ndarray): y-coordinates of the core nodes.
+        core_z (np.ndarray): z-coordinates of the core nodes.
         L (float): Tessellation scaling distance (i.e., simulation box
         size).
     
@@ -2731,16 +5706,16 @@ def dim_2_l_nrmlzd_edges_calculation(
         conn_core_graph: (Undirected) NetworkX graph that can be of
         type nx.Graph or nx.MultiGraph. This graph represents the core
         edges from the graph capturing the periodic connections between
-        the core cross-linkers.
+        the core nodes.
         conn_pb_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph represents the periodic
         boundary edges from the graph capturing the periodic connections
-        between the core cross-linkers.
+        between the core nodes.
         conn_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph captures the periodic
-        connections between the core cross-linkers.
-        core_x (np.ndarray): x-coordinates of the core cross-linkers.
-        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        connections between the core nodes.
+        core_x (np.ndarray): x-coordinates of the core nodes.
+        core_y (np.ndarray): y-coordinates of the core nodes.
         L (float): Tessellation scaling distance (i.e., simulation box
         size).
     
@@ -2775,17 +5750,17 @@ def dim_3_l_nrmlzd_edges_calculation(
         conn_core_graph: (Undirected) NetworkX graph that can be of
         type nx.Graph or nx.MultiGraph. This graph represents the core
         edges from the graph capturing the periodic connections between
-        the core cross-linkers.
+        the core nodes.
         conn_pb_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph represents the periodic
         boundary edges from the graph capturing the periodic connections
-        between the core cross-linkers.
+        between the core nodes.
         conn_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph captures the periodic
-        connections between the core cross-linkers.
-        core_x (np.ndarray): x-coordinates of the core cross-linkers.
-        core_y (np.ndarray): y-coordinates of the core cross-linkers.
-        core_z (np.ndarray): z-coordinates of the core cross-linkers.
+        connections between the core nodes.
+        core_x (np.ndarray): x-coordinates of the core nodes.
+        core_y (np.ndarray): y-coordinates of the core nodes.
+        core_z (np.ndarray): z-coordinates of the core nodes.
         L (float): Tessellation scaling distance (i.e., simulation box
         size).
     
@@ -2927,16 +5902,16 @@ def dim_2_l_cmpnts_edges_calculation(
         conn_core_graph: (Undirected) NetworkX graph that can be of
         type nx.Graph or nx.MultiGraph. This graph represents the core
         edges from the graph capturing the periodic connections between
-        the core cross-linkers.
+        the core nodes.
         conn_pb_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph represents the periodic
         boundary edges from the graph capturing the periodic connections
-        between the core cross-linkers.
+        between the core nodes.
         conn_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph captures the periodic
-        connections between the core cross-linkers.
-        core_x (np.ndarray): x-coordinates of the core cross-linkers.
-        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        connections between the core nodes.
+        core_x (np.ndarray): x-coordinates of the core nodes.
+        core_y (np.ndarray): y-coordinates of the core nodes.
         L (float): Tessellation scaling distance (i.e., simulation box
         size).
     
@@ -3006,17 +5981,17 @@ def dim_3_l_cmpnts_edges_calculation(
         conn_core_graph: (Undirected) NetworkX graph that can be of
         type nx.Graph or nx.MultiGraph. This graph represents the core
         edges from the graph capturing the periodic connections between
-        the core cross-linkers.
+        the core nodes.
         conn_pb_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph represents the periodic
         boundary edges from the graph capturing the periodic connections
-        between the core cross-linkers.
+        between the core nodes.
         conn_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph captures the periodic
-        connections between the core cross-linkers.
-        core_x (np.ndarray): x-coordinates of the core cross-linkers.
-        core_y (np.ndarray): y-coordinates of the core cross-linkers.
-        core_z (np.ndarray): z-coordinates of the core cross-linkers.
+        connections between the core nodes.
+        core_x (np.ndarray): x-coordinates of the core nodes.
+        core_y (np.ndarray): y-coordinates of the core nodes.
+        core_z (np.ndarray): z-coordinates of the core nodes.
         L (float): Tessellation scaling distance (i.e., simulation box
         size).
     
@@ -3215,16 +6190,16 @@ def dim_2_l_cmpnts_nrmlzd_edges_calculation(
         conn_core_graph: (Undirected) NetworkX graph that can be of
         type nx.Graph or nx.MultiGraph. This graph represents the core
         edges from the graph capturing the periodic connections between
-        the core cross-linkers.
+        the core nodes.
         conn_pb_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph represents the periodic
         boundary edges from the graph capturing the periodic connections
-        between the core cross-linkers.
+        between the core nodes.
         conn_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph captures the periodic
-        connections between the core cross-linkers.
-        core_x (np.ndarray): x-coordinates of the core cross-linkers.
-        core_y (np.ndarray): y-coordinates of the core cross-linkers.
+        connections between the core nodes.
+        core_x (np.ndarray): x-coordinates of the core nodes.
+        core_y (np.ndarray): y-coordinates of the core nodes.
         L (float): Tessellation scaling distance (i.e., simulation box
         size).
     
@@ -3264,17 +6239,17 @@ def dim_3_l_cmpnts_nrmlzd_edges_calculation(
         conn_core_graph: (Undirected) NetworkX graph that can be of
         type nx.Graph or nx.MultiGraph. This graph represents the core
         edges from the graph capturing the periodic connections between
-        the core cross-linkers.
+        the core nodes.
         conn_pb_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph represents the periodic
         boundary edges from the graph capturing the periodic connections
-        between the core cross-linkers.
+        between the core nodes.
         conn_graph: (Undirected) NetworkX graph that can be of type
         nx.Graph or nx.MultiGraph. This graph captures the periodic
-        connections between the core cross-linkers.
-        core_x (np.ndarray): x-coordinates of the core cross-linkers.
-        core_y (np.ndarray): y-coordinates of the core cross-linkers.
-        core_z (np.ndarray): z-coordinates of the core cross-linkers.
+        connections between the core nodes.
+        core_x (np.ndarray): x-coordinates of the core nodes.
+        core_y (np.ndarray): y-coordinates of the core nodes.
+        core_z (np.ndarray): z-coordinates of the core nodes.
         L (float): Tessellation scaling distance (i.e., simulation box
         size).
     
