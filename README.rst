@@ -43,9 +43,9 @@ The core functions can then be called upon in Python files or Jupyter notebooks 
 
 In the near future, additional Python files or Jupyter notebooks will be supplied that can plot the spatially-embedded structure of each network, generate files that store topological descriptor values, and analyze topological descriptor statistics.
 
-*********
-**Usage**
-*********
+*****
+Usage
+*****
 
 **Before running any of the code, it is required that the user verify the baseline filepath in the ``filepath_str()`` function of the ``file_io.py`` Python file. Note that filepath string conventions are operating system-sensitive.**
 
