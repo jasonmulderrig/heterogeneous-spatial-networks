@@ -14,7 +14,7 @@ from network_topology_initialization_utils import (
     tessellation,
     core_node_tessellation,
     core2pb_nodes_func,
-    orb_neighborhood_identification
+    orb_neighborhood_id
 )
 from polymer_network_chain_statistics import (
     p_gaussian_cnfrmtn_func,
@@ -25,11 +25,12 @@ from graph_utils import (
     add_nodes_from_numpy_array,
     add_edges_from_numpy_array
 )
-from general_topological_descriptors import l_edges_calculation
+from general_topological_descriptors import l_func
 from node_placement import (
     additional_node_seeding,
     hilbert_node_label_assignment
 )
+from network_topological_descriptors import network_topological_descriptor
 
 def aelp_filename_str(
         network: str,
@@ -60,15 +61,14 @@ def aelp_filename_str(
     # is passed.
     if network != "auelp":
         if network != "apelp":
-            import sys
-            
             error_str = (
                 "This filename prefix convention is only applicable "
                 + "for artificial end-linked polymer networks. This "
                 + "calculation will only proceed if "
                 + "network = ``auelp'' or network = ``apelp''."
             )
-            sys.exit(error_str)
+            print(error_str)
+            return None
     return config_filename_str(network, date, batch, sample, config)
 
 def aelp_L(
@@ -103,15 +103,14 @@ def aelp_L(
     # is passed.
     if network != "auelp":
         if network != "apelp":
-            import sys
-            
             error_str = (
                 "This calculation for L is only applicable for "
                 + "artificial end-linked polymer networks. This "
                 + "calculation will only proceed if "
                 + "network = ``auelp'' or network = ``apelp''."
             )
-            sys.exit(error_str)
+            print(error_str)
+            return None
     
     # Calculate the stoichiometric (average) number of chain segments in
     # the simulation box
@@ -295,7 +294,7 @@ def dangling_chains_update_func(
         
         # Downselect the local orb neighborhood with radius b about
         # the free end of the dangling chain
-        _, orb_nghbr_num = orb_neighborhood_identification(
+        _, orb_nghbr_num = orb_neighborhood_id(
             dim, core_pb_dnglng_chns_coords, node_dnglng_chn_cnddt, b,
             inclusive=False, indices=True)
         
@@ -420,8 +419,6 @@ def apelp_network_nu_assignment(
             # chain segment number is less than or equal to the
             # specified maximum chain segment number
             if int(np.max(nu_min_bin)) > nu_max:
-                import sys
-                
                 error_str = (
                     "The specified maximum chain segment number is "
                     + "less than the largest physically-constrained "
@@ -429,7 +426,8 @@ def apelp_network_nu_assignment(
                     + "Please modify the specified maximum chain "
                     + "segment number accordingly."
                 )
-                sys.exit(error_str)
+                print(error_str)
+                return None
             # Determine minimum chain segment number for all chains in
             # the bin
             nu_min = int(np.min(nu_min_bin))
@@ -437,8 +435,6 @@ def apelp_network_nu_assignment(
             # chain segment number is less than or equal to the
             # specified maximum chain segment number
             if nu_min > nu_max:
-                import sys
-                
                 error_str = (
                     "The specified maximum chain segment number is "
                     + "less than the smallest physically-constrained "
@@ -446,7 +442,8 @@ def apelp_network_nu_assignment(
                     + "Please modify the specified maximum chain "
                     + "segment number accordingly."
                 )
-                sys.exit(error_str)
+                print(error_str)
+                return None
             # Range of available chain segment numbers in the bin
             nu_bin = np.arange(nu_min, nu_max+1, dtype=int)
             # Calculate and normalize the probability distribution of
@@ -455,6 +452,9 @@ def apelp_network_nu_assignment(
             # chain conformation
             p_bin = p_net_gaussian_cnfrmtn_func(
                 b, nu, nu_bin.astype(float), r_chn_bin_midpoint)
+            Z_p_bin = np.sum(p_bin, dtype=float)
+            p_bin /= Z_p_bin
+            p_bin[np.isnan(p_bin)] = 0.
             Z_p_bin = np.sum(p_bin, dtype=float)
             if Z_p_bin == 0:
                 p_bin = np.ones(np.shape(p_bin)[0]) / np.shape(p_bin)[0]
@@ -583,6 +583,9 @@ def apelp_network_nu_assignment(
                         # probability distribution
                         p_chn_bin = p_bin[nu_min_chn-nu_min:nu_max_chn+1-nu_min]
                         Z_p_chn_bin = np.sum(p_chn_bin, dtype=float)
+                        p_chn_bin /= Z_p_chn_bin
+                        p_chn_bin[np.isnan(p_chn_bin)] = 0.
+                        Z_p_chn_bin = np.sum(p_chn_bin, dtype=float)
                         if Z_p_chn_bin == 0:
                             p_chn_bin = (
                                 np.ones(np.shape(p_chn_bin)[0])
@@ -640,7 +643,7 @@ def aelp_network_topology_initialization(
         max_try (int): Maximum number of dangling chain instantiation attempts.
     
     """
-    # Load L
+    # Load simulation box size
     L = np.loadtxt(L_filename_str(network, date, batch, sample))
 
     # Generate configuration filename prefix. This establishes the
@@ -734,7 +737,7 @@ def aelp_network_topology_initialization(
 
         # Downselect the local orb neighborhood with radius r_nghbrhd
         # about the core node cross-linker
-        orb_nghbr_indcs, orb_nghbr_num = orb_neighborhood_identification(
+        orb_nghbr_indcs, orb_nghbr_num = orb_neighborhood_id(
             dim, tsslltd_coords, core_node, r_nghbrhd, inclusive=True,
             indices=True)
         
@@ -1167,8 +1170,7 @@ def aelp_network_topology_initialization(
         conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
 
         # Calculate end-to-end chain length (Euclidean edge length)
-        r_chn = l_edges_calculation(
-            conn_core_graph, conn_pb_graph, conn_graph, coords, L)
+        r_chn = l_func(conn_core_graph, conn_pb_graph, conn_graph, coords, L)
         
         # Assign a chain segment number to each chain
         conn_nu_core_edges, conn_nu_pb_edges = apelp_network_nu_assignment(
@@ -1222,15 +1224,14 @@ def aelp_network_topology(
     # of network is passed.
     if network != "auelp":
         if network != "apelp":
-            import sys
-            
             error_str = (
                 "Network topology initialization procedure is only "
                 + "applicable for artificial end-linked polymer "
                 + "networks. This calculation will only proceed if "
                 + "network = ``auelp'' or network = ``apelp''."
             )
-            sys.exit(error_str)
+            print(error_str)
+            return None
     aelp_network_topology_initialization(
         network, date, batch, sample, scheme, dim, b, xi, k, n, nu, nu_max,
         config, max_try)
@@ -1271,8 +1272,6 @@ def aelp_network_additional_node_seeding(
     # polymer networks. Exit if a different type of network is passed.
     if network != "auelp":
         if network != "apelp":
-            import sys
-
             error_str = (
                 "Artificial end-linked polymer network additional node "
                 + "placement procedure is only applicable for "
@@ -1280,7 +1279,8 @@ def aelp_network_additional_node_seeding(
                 + "procedure will only proceed if network = ``auelp'' "
                 + "or network = ``apelp''."
             )
-            sys.exit(error_str)
+            print(error_str)
+            return None
     
     # Generate filenames
     L_filename = L_filename_str(network, date, batch, sample)
@@ -1339,8 +1339,6 @@ def aelp_network_hilbert_node_label_assignment(
     # networks. Exit if a different type of network is passed.
     if network != "auelp":
         if network != "apelp":
-            import sys
-
             error_str = (
                 "Artificial end-linked polymer network node label "
                 + "assignment procedure is only applicable for "
@@ -1348,9 +1346,10 @@ def aelp_network_hilbert_node_label_assignment(
                 + "procedure will only proceed if network = ``auelp'' "
                 + "or network = ``apelp''."
             )
-            sys.exit(error_str)
+            print(error_str)
+            return None
     
-    # Load L
+    # Load simulation box size
     L = np.loadtxt(L_filename_str(network, date, batch, sample))
 
     # Generate filenames
@@ -1406,3 +1405,116 @@ def aelp_network_hilbert_node_label_assignment(
     np.savetxt(node_type_filename, node_type, fmt="%d")
     np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")
     np.savetxt(conn_pb_edges_filename, conn_pb_edges, fmt="%d")
+
+def aelp_network_topological_descriptor(
+        network: str,
+        date: str,
+        batch: str,
+        sample: int,
+        config: int,
+        length_bound: int,
+        tplgcl_dscrptr: str,
+        np_oprtn: str,
+        eeel_ntwrk: bool,
+        save_tplgcl_dscrptr_result: bool,
+        return_tplgcl_dscrptr_result: bool) -> np.ndarray | float | int | None:
+    """Spider web-inspired Delaunay-triangulated network topological
+    descriptor.
+    
+    This function extracts a Spider web-inspired Delaunay-triangulated
+    network and sets a variety of input parameters corresponding to a
+    particular topological descriptor (and numpy function) of interest.
+    These are then passed to the master network_topological_descriptor()
+    function, which calculates (and, if called for, saves) the result of
+    the topological descriptor for the Spider web-inspired
+    Delaunay-triangulated network.
+
+    Args:
+        network (str): Lower-case acronym indicating the particular type of network that is being represented by the eventual network topology; here, only "swidt" is applicable (corresponding to spider-web inspired Delaunay-triangulated networks ("swidt")).
+        date (str): "YYYYMMDD" string indicating the date during which the network batch and sample data was generated.
+        batch (str): Single capitalized letter (e.g., A, B, C, ...) indicating the batch label of the network sample data.
+        sample (int): Label of a particular network in the batch.
+        config (int): Configuration number.
+        length_bound (int): Maximum ring order (inclusive).
+        tplgcl_dscrptr (str): Topological descriptor name.
+        np_oprtn (str): numpy function/operation name.
+        eeel_ntwrk (bool): Boolean indicating if the elastically-effective end-linked network ought to be supplied for the topological descriptor calculation.
+        save_tplgcl_dscrptr_result (bool): Boolean indicating if the topological descriptor result ought to be saved.
+        return_tplgcl_dscrptr_result (bool): Boolean indicating if the topological descriptor result ought to be returned.
+    
+    Returns:
+        np.ndarray | float | int | None: Topological descriptor result.
+    
+    """
+    # This topological descriptor calculation is only applicable for
+    # data files associated with artificial end-linked polymer networks.
+    # Exit if a different type of network is passed.
+    if network != "auelp":
+        if network != "apelp":
+            error_str = (
+                "This topological descriptor calculation is only "
+                + "applicable for data files associated with "
+                + "artificial end-linked polymer networks. This "
+                + "calculation will only proceed if "
+                + "network = ``auelp'' or network = ``apelp''."
+            )
+            print(error_str)
+            return None
+    
+    # Generate filenames
+    L_filename = L_filename_str(network, date, batch, sample)
+    aelp_filename = aelp_filename_str(network, date, batch, sample, config)
+    coords_filename = aelp_filename + ".coords"
+    conn_core_edges_filename = aelp_filename + "-conn_core_edges.dat"
+    conn_pb_edges_filename = aelp_filename + "-conn_pb_edges.dat"
+    
+    if eeel_ntwrk == True:
+        if np_oprtn == "":
+            tplgcl_dscrptr_result_filename = (
+                aelp_filename + "-eeel-" + tplgcl_dscrptr + ".dat"
+            )
+        else:
+            tplgcl_dscrptr_result_filename = (
+                aelp_filename + "-eeel-" + np_oprtn + "-" + tplgcl_dscrptr
+                + ".dat"
+            )
+    else:
+        if np_oprtn == "":
+            tplgcl_dscrptr_result_filename = (
+                aelp_filename + "-" + tplgcl_dscrptr + ".dat"
+            )
+        else:
+            tplgcl_dscrptr_result_filename = (
+                aelp_filename + "-" + np_oprtn + "-" + tplgcl_dscrptr
+                + ".dat"
+            )
+
+    # Load simulation box size and node coordinates
+    L = np.loadtxt(L_filename)
+    coords = np.loadtxt(coords_filename)
+
+    # Load fundamental graph constituents
+    core_nodes = np.arange(np.shape(coords)[0], dtype=int)
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+
+    # Create nx.MultiGraphs, and add nodes before edges
+    conn_core_graph = nx.MultiGraph()
+    conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
+    conn_core_graph = add_edges_from_numpy_array(
+        conn_core_graph, conn_core_edges)
+    
+    conn_pb_graph = nx.MultiGraph()
+    conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+    conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
+    
+    conn_graph = nx.MultiGraph()
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
+
+    # Call the master network_topological_descriptor() function
+    return network_topological_descriptor(
+        tplgcl_dscrptr, np_oprtn, conn_core_graph, conn_pb_graph, conn_graph,
+        coords, L, length_bound, eeel_ntwrk, tplgcl_dscrptr_result_filename,
+        save_tplgcl_dscrptr_result, return_tplgcl_dscrptr_result)

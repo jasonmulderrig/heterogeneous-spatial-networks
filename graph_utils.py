@@ -41,33 +41,26 @@ def add_edges_from_numpy_array(
     graph.add_edges_from(list(tuple(edge) for edge in edges.tolist()))
     return graph
 
-def multiedge_identification(
-        graph: nx.Graph | nx.MultiGraph) -> tuple[np.ndarray, np.ndarray]:
-    """Multiedge identification.
+def edge_id(graph: nx.Graph | nx.MultiGraph) -> tuple[np.ndarray, np.ndarray]:
+    """Edge identification.
     
-    This function identifies the edges in a graph that are multiedges,
-    and calculates exactly how many edges are involved for each
-    multiedge.
+    This function identifies and counts the edges in a graph.
 
     Args:
         graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
     
     Returns:
-        tuple[np.ndarray, np.ndarray]: Multiedges and number of edges
-        involved for each multiedge.
+        tuple[np.ndarray, np.ndarray]: Edges and number of times each
+        edge occurs in the graph.
     
     """
-    # If the graph is of type nx.MultiGraph, then identify multiedges
-    # and count how many edges are involved for each multiedge
-    graph_edges = np.asarray([])
-    graph_edges_counts = np.asarray([])
+    # Gather edges and edges counts
+    graph_edges = np.asarray(list(graph.edges()), dtype=int)
     if graph.is_multigraph():
-        # Gather edges and edges counts
-        graph_edges, graph_edges_counts = (
-            np.unique(
-                np.sort(np.asarray(list(graph.edges()), dtype=int), axis=1),
-                return_counts=True, axis=0)
-        )
+        graph_edges, graph_edges_counts = np.unique(
+            np.sort(graph_edges, axis=1), return_counts=True, axis=0)
+    else:
+        graph_edges_counts = np.ones(np.shape(graph_edges)[0], dtype=int)
     
     return graph_edges, graph_edges_counts
 
@@ -89,7 +82,7 @@ def yasuda_morita_procedure(
         nodes involved with removed self-loops.
     """
     # Gather nodes
-    n = np.shape(A)[0] # number of nodes
+    n = np.shape(A)[0]
     nodes = np.arange(n, dtype=int)
 
     # Initialize lists
@@ -113,8 +106,8 @@ def yasuda_morita_procedure(
             # Check if node is a bridge center node
             if np.sum(A_row) == 2:
                 bridge_center_node_elim = True
-                # Check if the bridge bridges the same two nodes, and thus
-                # is actually a bridging loop
+                # Check if the bridge bridges the same two nodes, and
+                # thus is actually a bridging loop
                 if np.size(np.where(A_row == 2)[0]) > 0:
                     root_node = int(A_row_nodes[np.where(A_row == 2)[0][0]])
                     # Eliminate the bridge center node from the network
@@ -180,7 +173,7 @@ def yasuda_morita_procedure(
                         break
                 if loop_elim == True:
                     continue
-                else: break # procedure has finished
+                else: break # Yasuda-Morita procedure has finished
     
     return A, bridge_center_node_list, dangling_node_list, loop_list
 
@@ -238,11 +231,11 @@ def multiedge_restoration(
 
     Args:
         graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
-        np.ndarray: Multiedges.
-        np.ndarray: Number of edges involved for each multiedge.
+        np.ndarray: Edges.
+        np.ndarray: Number of (multi)edges involved for each edge.
     
     Returns:
-        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
+        nx.Graph | nx.MultiGraph: (Undirected) NetworkX graph.
     
     """
     # If the graph is of type nx.MultiGraph, then add back redundant
@@ -277,13 +270,13 @@ def elastically_effective_graph(
         graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
     
     Returns:
-        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph
+        nx.Graph | nx.MultiGraph: (Undirected) NetworkX graph
         corresponding to the elastically-effective network of the given
         graph.
     
     """
-    # Multiedge identification
-    graph_edges, graph_edges_counts = multiedge_identification(graph)
+    # Gather edges and edge counts
+    graph_edges, graph_edges_counts = edge_id(graph)
 
     # Acquire adjacency matrix with no multiedges
     if graph.is_multigraph():
@@ -305,6 +298,10 @@ def elastically_effective_graph(
     # Restore multiedges
     graph = multiedge_restoration(graph, graph_edges, graph_edges_counts)
 
+    # Remove self-loops and isolate nodes
+    graph.remove_edges_from(list(nx.selfloop_edges(graph)))
+    graph.remove_nodes_from(list(nx.isolates(graph)))
+
     return graph
 
 def elastically_effective_end_linked_graph(
@@ -318,13 +315,13 @@ def elastically_effective_end_linked_graph(
         graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
     
     Returns:
-        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph
+        nx.Graph | nx.MultiGraph: (Undirected) NetworkX graph
         corresponding to the elastically-effective end-linked network of
         the given graph.
     
     """
     # Multiedge identification
-    graph_edges, graph_edges_counts = multiedge_identification(graph)
+    graph_edges, graph_edges_counts = edge_id(graph)
 
     # Acquire adjacency matrix with no multiedges
     if graph.is_multigraph():
@@ -350,4 +347,8 @@ def elastically_effective_end_linked_graph(
     # Restore multiedges
     graph = multiedge_restoration(graph, graph_edges, graph_edges_counts)
 
+    # Remove self-loops and isolate nodes
+    graph.remove_edges_from(list(nx.selfloop_edges(graph)))
+    graph.remove_nodes_from(list(nx.isolates(graph)))
+    
     return graph

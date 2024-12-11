@@ -7,6 +7,7 @@ from file_io import (
 )
 from simulation_box_utils import L_arg_eta_func
 from delaunay_networks import delaunay_network_topology_initialization
+from nodal_degree_topological_descriptors import k_func
 from graph_utils import (
     add_nodes_from_numpy_array,
     add_edges_from_numpy_array
@@ -15,6 +16,7 @@ from node_placement import (
     additional_node_seeding,
     hilbert_node_label_assignment
 )
+from network_topological_descriptors import network_topological_descriptor
 
 def swidt_filename_str(
         network: str,
@@ -35,7 +37,7 @@ def swidt_filename_str(
         batch (str): Single capitalized letter (e.g., A, B, C, ...) indicating the batch label of the network sample data.
         sample (int): Label of a particular network in the batch.
         config (int): Configuration number.
-        pruning (int): Pruning number.
+        pruning (int): Edge pruning procedure number.
     
     Returns:
         str: The filename prefix associated with spider web-inspired
@@ -46,15 +48,14 @@ def swidt_filename_str(
     # associated with spider web-inspired Delaunay-triangulated
     # networks. Exit if a different type of network is passed.
     if network != "swidt":
-        import sys
-        
         error_str = (
             "This filename prefix convention is only applicable for "
             + "data files associated with spider web-inspired "
             + "Delaunay-triangulated networks. This filename prefix "
             + "will only be supplied if network = ``swidt''."
         )
-        sys.exit(error_str)
+        print(error_str)
+        return None
     return config_pruning_filename_str(
         network, date, batch, sample, config, pruning)
 
@@ -88,14 +89,13 @@ def swidt_L(
     # Delaunay-triangulated networks. Exit if a different type of
     # network is passed.
     if network != "swidt":
-        import sys
-        
         error_str = (
             "This calculation for L is only applicable for spider "
             + "web-inspired Delaunay-triangulated networks. This "
             + "calculation will only proceed if network = ``swidt''."
         )
-        sys.exit(error_str)
+        print(error_str)
+        return None
     
     # Calculate and save L
     np.savetxt(
@@ -133,15 +133,14 @@ def swidt_network_topology(
     # spider web-inspired Delaunay-triangulated networks. Exit if a
     # different type of network is passed.
     if network != "swidt":
-        import sys
-        
         error_str = (
             "Network topology initialization procedure is only "
             + "applicable for spider web-inspired "
             + "Delaunay-triangulated networks. This procedure will "
             + "only proceed if network = ``swidt''."
         )
-        sys.exit(error_str)
+        print(error_str)
+        return None
     delaunay_network_topology_initialization(
         network, date, batch, sample, scheme, dim, n, config)
 
@@ -177,15 +176,14 @@ def swidt_network_edge_pruning_procedure(
     # topology of spider web-inspired Delaunay-triangulated networks.
     # Exit if a different type of network is passed.
     if network != "swidt":
-        import sys
-        
         error_str = (
             "Edge pruning procedure is only applicable for the "
             + "initialized topology of spider web-inspired "
             + "Delaunay-triangulated networks. This procedure will "
             + "only proceed if network = ``swidt''."
         )
-        sys.exit(error_str)
+        print(error_str)
+        return None
     
     # Initialize random number generator
     rng = np.random.default_rng()
@@ -241,7 +239,7 @@ def swidt_network_edge_pruning_procedure(
     conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
 
     # Degree of nodes in the graph
-    conn_graph_k = np.asarray(list(conn_graph.degree()), dtype=int)[:, 1]
+    conn_graph_k = k_func(conn_graph)
 
     if np.any(conn_graph_k > k):
         # Explicit edge pruning procedure
@@ -268,16 +266,17 @@ def swidt_network_edge_pruning_procedure(
             core_node_1 = int(conn_edges[edge_indx2remove, 1])
 
             # Remove hyperconnected edge in the graphs
-            conn_graph.remove_edge(core_node_0, core_node_1)
-            conn_edges = np.delete(conn_edges, edge_indx2remove, axis=0)
-            if conn_core_graph.has_edge(core_node_0, core_node_1):
-                conn_core_graph.remove_edge(core_node_0, core_node_1)
-            elif conn_pb_graph.has_edge(core_node_0, core_node_1):
-                conn_pb_graph.remove_edge(core_node_0, core_node_1)
+            if conn_graph.has_edge(core_node_0, core_node_1):
+                conn_graph.remove_edge(core_node_0, core_node_1)
+                conn_edges = np.delete(conn_edges, edge_indx2remove, axis=0)
+                if conn_core_graph.has_edge(core_node_0, core_node_1):
+                    conn_core_graph.remove_edge(core_node_0, core_node_1)
+                elif conn_pb_graph.has_edge(core_node_0, core_node_1):
+                    conn_pb_graph.remove_edge(core_node_0, core_node_1)
 
-            # Update degree of nodes in the graph
-            conn_graph_k[core_node_0] -= 1
-            conn_graph_k[core_node_1] -= 1
+                # Update degree of nodes in the graph
+                conn_graph_k[core_node_0] -= 1
+                conn_graph_k[core_node_1] -= 1
                 
         # Isolate largest/maximum connected component in a nodewise
         # fashion
@@ -388,15 +387,14 @@ def swidt_network_additional_node_seeding(
     # web-inspired Delaunay-triangulated networks. Exit if a different
     # type of network is passed.
     if network != "swidt":
-        import sys
-
         error_str = (
             "Spider web-inspired Delaunay-triangulated network "
             + "additional node placement procedure is only applicable "
             + "for spider web-inspired Delaunay-triangulated networks. "
             + "This procedure will only proceed if network = ``swidt''."
         )
-        sys.exit(error_str)
+        print(error_str)
+        return None
 
     # Generate filenames
     L_filename = L_filename_str(network, date, batch, sample)
@@ -438,17 +436,16 @@ def swidt_network_hilbert_node_label_assignment(
     # Delaunay-triangulated networks. Exit if a different type of
     # network is passed.
     if network != "swidt":
-        import sys
-
         error_str = (
             "Spider web-inspired Delaunay-triangulated network "
             + "node label assignment procedure is only applicable for "
             + "spider web-inspired Delaunay-triangulated networks. "
             + "This procedure will only proceed if network = ``swidt''."
         )
-        sys.exit(error_str)
+        print(error_str)
+        return None
 
-    # Load L
+    # Load simulation box size
     L = np.loadtxt(L_filename_str(network, date, batch, sample))
 
     # Generate filenames
@@ -500,3 +497,117 @@ def swidt_network_hilbert_node_label_assignment(
     # Save updated edges
     np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")
     np.savetxt(conn_pb_edges_filename, conn_pb_edges, fmt="%d")
+
+def swidt_network_topological_descriptor(
+        network: str,
+        date: str,
+        batch: str,
+        sample: int,
+        config: int,
+        pruning: int,
+        length_bound: int,
+        tplgcl_dscrptr: str,
+        np_oprtn: str,
+        eeel_ntwrk: bool,
+        save_tplgcl_dscrptr_result: bool,
+        return_tplgcl_dscrptr_result: bool) -> np.ndarray | float | int | None:
+    """Spider web-inspired Delaunay-triangulated network topological
+    descriptor.
+    
+    This function extracts a Spider web-inspired Delaunay-triangulated
+    network and sets a variety of input parameters corresponding to a
+    particular topological descriptor (and numpy function) of interest.
+    These are then passed to the master network_topological_descriptor()
+    function, which calculates (and, if called for, saves) the result of
+    the topological descriptor for the Spider web-inspired
+    Delaunay-triangulated network.
+
+    Args:
+        network (str): Lower-case acronym indicating the particular type of network that is being represented by the eventual network topology; here, only "swidt" is applicable (corresponding to spider-web inspired Delaunay-triangulated networks ("swidt")).
+        date (str): "YYYYMMDD" string indicating the date during which the network batch and sample data was generated.
+        batch (str): Single capitalized letter (e.g., A, B, C, ...) indicating the batch label of the network sample data.
+        sample (int): Label of a particular network in the batch.
+        config (int): Configuration number.
+        pruning (int): Edge pruning procedure number.
+        length_bound (int): Maximum ring order (inclusive).
+        tplgcl_dscrptr (str): Topological descriptor name.
+        np_oprtn (str): numpy function/operation name.
+        eeel_ntwrk (bool): Boolean indicating if the elastically-effective end-linked network ought to be supplied for the topological descriptor calculation.
+        save_tplgcl_dscrptr_result (bool): Boolean indicating if the topological descriptor result ought to be saved.
+        return_tplgcl_dscrptr_result (bool): Boolean indicating if the topological descriptor result ought to be returned.
+    
+    Returns:
+        np.ndarray | float | int | None: Topological descriptor result.
+    
+    """
+    # This topological descriptor calculation is only applicable for
+    # data files associated with spider web-inspired
+    # Delaunay-triangulated networks. Exit if a different type of
+    # network is passed.
+    if network != "swidt":
+        error_str = (
+            "This topological descriptor calculation is only "
+            + "applicable for data files associated with spider "
+            + "web-inspired Delaunay-triangulated networks. This "
+            + "calculation will proceed only if network = ``swidt'."
+        )
+        print(error_str)
+        return None
+    
+    # Generate filenames
+    L_filename = L_filename_str(network, date, batch, sample)
+    swidt_filename = swidt_filename_str(
+        network, date, batch, sample, config, pruning)
+    coords_filename = swidt_filename + ".coords"
+    conn_core_edges_filename = swidt_filename + "-conn_core_edges.dat"
+    conn_pb_edges_filename = swidt_filename + "-conn_pb_edges.dat"
+    
+    if eeel_ntwrk == True:
+        if np_oprtn == "":
+            tplgcl_dscrptr_result_filename = (
+                swidt_filename + "-eeel-" + tplgcl_dscrptr + ".dat"
+            )
+        else:
+            tplgcl_dscrptr_result_filename = (
+                swidt_filename + "-eeel-" + np_oprtn + "-" + tplgcl_dscrptr
+                + ".dat"
+            )
+    else:
+        if np_oprtn == "":
+            tplgcl_dscrptr_result_filename = (
+                swidt_filename + "-" + tplgcl_dscrptr + ".dat"
+            )
+        else:
+            tplgcl_dscrptr_result_filename = (
+                swidt_filename + "-" + np_oprtn + "-" + tplgcl_dscrptr
+                + ".dat"
+            )
+
+    # Load simulation box size and node coordinates
+    L = np.loadtxt(L_filename)
+    coords = np.loadtxt(coords_filename)
+
+    # Load fundamental graph constituents
+    core_nodes = np.arange(np.shape(coords)[0], dtype=int)
+    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
+    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+
+    # Create nx.Graphs, and add nodes before edges
+    conn_core_graph = nx.Graph()
+    conn_core_graph = add_nodes_from_numpy_array(conn_core_graph, core_nodes)
+    conn_core_graph = add_edges_from_numpy_array(conn_core_graph, conn_core_edges)
+
+    conn_pb_graph = nx.Graph()
+    conn_pb_graph = add_nodes_from_numpy_array(conn_pb_graph, core_nodes)
+    conn_pb_graph = add_edges_from_numpy_array(conn_pb_graph, conn_pb_edges)
+
+    conn_graph = nx.Graph()
+    conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+    conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
+
+    # Call the master network_topological_descriptor() function
+    return network_topological_descriptor(
+        tplgcl_dscrptr, np_oprtn, conn_core_graph, conn_pb_graph, conn_graph,
+        coords, L, length_bound, eeel_ntwrk, tplgcl_dscrptr_result_filename,
+        save_tplgcl_dscrptr_result, return_tplgcl_dscrptr_result)

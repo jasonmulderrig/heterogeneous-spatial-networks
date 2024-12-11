@@ -34,14 +34,14 @@ The core functions in this repository are modularly distributed in the following
 * ``swidt_networks.py``
 * ``voronoi_networks.py``
 
-The core functions can then be called upon in Python files or Jupyter notebooks for various tasks. The following Jupyter notebooks synthesize various heterogeneous spatial networks:
+The core functions can then be called upon in Python files or Jupyter notebooks for various tasks. The following Python files synthesize various heterogeneous spatial networks and calculate topological descriptors when run in the order provided:
 
-* ``voronoi-network-topology-synthesis.ipynb``
-* ``delaunay-network-topology-synthesis.ipynb``
-* ``swidt-network-topology-synthesis.ipynb``
-* ``aelp-network-topology-synthesis.ipynb``
+* ``voronoi_network_topology_config.py`` |rarrow| ``voronoi_network_topology_synthesis.py`` |rarrow| ``voronoi_network_topology_descriptors.py``
+* ``delaunay_network_topology_config.py`` |rarrow| ``delaunay_network_topology_synthesis.py`` |rarrow| ``delaunay_network_topology_descriptors.py``
+* ``swidt_network_topology_config.py`` |rarrow| ``swidt_network_topology_synthesis.py`` |rarrow| ``swidt_network_topology_descriptors.py``
+* ``aelp_network_topology_config.py`` |rarrow| ``aelp_network_topology_synthesis.py`` |rarrow| ``aelp_network_topology_descriptors.py``
 
-In the near future, additional Python files or Jupyter notebooks will be supplied that can plot the spatially-embedded structure of each network, generate files that store topological descriptor values, and analyze topological descriptor statistics.
+In the near future, additional Python files will be supplied that can plot the spatially-embedded structure of each network and analyze the statistics of topological descriptors.
 
 *****
 Usage
@@ -53,9 +53,9 @@ Usage
 Example timing benchmarks
 *************************
 
-The following contains some timing benchmarks for the network synthesis Jupyter notebooks on my Dell Inspiron computer with ``cpu_num = 8`` for the ``20241121`` network parameters:
+The following contains some timing benchmarks for the network synthesis and topological descriptor Python files on my Dell Inspiron computer with ``cpu_num = 8`` for the ``20241121`` network parameters:
 
-* ``voronoi-network-topology-synthesis.ipynb`` ~ a few minutes
-* ``delaunay-network-topology-synthesis.ipynb`` ~ a few minutes
-* ``swidt-network-topology-synthesis.ipynb`` ~ a few minutes
-* ``aelp-network-topology-synthesis.ipynb`` ~ 1.75 hours
+* ``voronoi_network_topology_config.py`` |rarrow| ``voronoi_network_topology_synthesis.py`` |rarrow| ``voronoi_network_topology_descriptors.py``: ~ 10 minutes
+* ``delaunay_network_topology_config.py`` |rarrow| ``delaunay_network_topology_synthesis.py`` |rarrow| ``delaunay_network_topology_descriptors.py``: ~ 10 minutes
+* ``swidt_network_topology_config.py`` |rarrow| ``swidt_network_topology_synthesis.py`` |rarrow| ``swidt_network_topology_descriptors.py``: ~ 10 minutes
+* ``aelp_network_topology_config.py`` |rarrow| ``aelp_network_topology_synthesis.py`` |rarrow| ``aelp_network_topology_descriptors.py``: ~ 1.75 hours

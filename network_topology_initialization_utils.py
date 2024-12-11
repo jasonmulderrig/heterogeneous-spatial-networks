@@ -74,8 +74,6 @@ def core_node_tessellation(
     
     """
     if (np.shape(core_nodes)[0] != np.shape(core_coords)[0]) or (dim != np.shape(core_coords)[1]):
-        import sys
-        
         error_str = (
             "Either the number of core nodes does not match the number "
             + "of core node coordinates or the specified network "
@@ -84,7 +82,8 @@ def core_node_tessellation(
             + "both of those conditions are satisfied. Please modify "
             + "accordingly."
         )
-        sys.exit(error_str)
+        print(error_str)
+        return None
     else:
         # Tessellation protocol
         tsslltn, tsslltn_num = tessellation_protocol(dim)
@@ -157,7 +156,7 @@ def core2pb_nodes_func(
         core2pb_nodes.append(pb_nodes)
     return core2pb_nodes
 
-def box_neighborhood_identification(
+def box_neighborhood_id(
         dim: int,
         coords: np.ndarray,
         coord: np.ndarray,
@@ -241,7 +240,7 @@ def box_neighborhood_identification(
         else:
             return coords[box_nghbr_indcs], box_nghbr_num
 
-def orb_neighborhood_identification(
+def orb_neighborhood_id(
         dim: int,
         coords: np.ndarray,
         coord: np.ndarray,
@@ -268,7 +267,7 @@ def orb_neighborhood_identification(
     """
     # Gather the corresponding box neighborhood about the given
     # coordinate
-    box_nghbr_indcs, box_nghbr_num = box_neighborhood_identification(
+    box_nghbr_indcs, box_nghbr_num = box_neighborhood_id(
         dim, coords, coord, r, inclusive, indices=True)
     
     # Corresponding box neighborhood is empty, which implies that the

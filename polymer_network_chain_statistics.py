@@ -120,10 +120,9 @@ def p_rel_net_gaussian_cnfrmtn_func(
                 p_net_gaussian_cnfrmtn_func(b, nu_mean, nu_arr, r[r_indx]))
         return p_arr
     else:
-        import sys
-
         error_str = (
             "The end-to-end distance r must be provided as either a "
             + "float, int, or an np.ndarray of np.floats or np.ints."
         )
-        sys.exit(error_str)
+        print(error_str)
+        return None

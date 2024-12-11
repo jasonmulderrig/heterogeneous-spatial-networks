@@ -3,7 +3,7 @@ from hilbertcurve.hilbertcurve import HilbertCurve
 from network_topology_initialization_utils import (
     tessellation_protocol,
     tessellation,
-    orb_neighborhood_identification
+    orb_neighborhood_id
 )
 from file_io import (
     L_filename_str,
@@ -76,7 +76,7 @@ def periodic_random_hard_disk_node_placement(
         # Downselect the previously-accepted tessellated nodes to those
         # that reside in a local orb neighborhood with radius b about
         # the node candidate
-        _, orb_nghbr_num = orb_neighborhood_identification(
+        _, orb_nghbr_num = orb_neighborhood_id(
             dim, tsslltd_coords, seed_cnddt, b, inclusive=False, indices=True)
         
         # Try again if the local orb neighborhood has at least one
@@ -163,13 +163,12 @@ def initial_periodic_disordered_hyperuniform_node_placement(
         config_filename_prefix (str): Configuration filename prefix.
     
     """
-    import sys
-    
     error_str = (
         "Periodic disordered hyperuniform node placement procedure has "
         + "not been defined yet!"
     )
-    sys.exit(error_str)
+    print(error_str)
+    return None
 
 def initial_lammps_input_file_generator(
         dim: int,
@@ -420,13 +419,12 @@ def additional_periodic_disordered_hyperuniform_node_placement(
         n (int): Intended number of nodes.
     
     """
-    import sys
-    
     error_str = (
         "Periodic disordered hyperuniform node placement procedure has "
         + "not been defined yet!"
     )
-    sys.exit(error_str)
+    print(error_str)
+    return None
 
 def additional_lammps_input_file_generator(
         L_filename: str,
@@ -450,14 +448,13 @@ def additional_lammps_input_file_generator(
         n (int): Number of core nodes.
     
     """
-    import sys
-    
     error_str = (
         "Adding additional nodes to a LAMMPS input file capturing a "
         + "simulation box that already contains nodes has not been "
         + "defined yet!"
     )
-    sys.exit(error_str)
+    print(error_str)
+    return None
 
 def additional_node_seeding(
         L_filename: str,
