@@ -9,11 +9,8 @@ from multiprocessing_utils import (
     run_swidt_L,
     run_initial_node_seeding,
     run_swidt_network_topology,
-    run_swidt_network_edge_pruning_procedure,
-    run_swidt_network_additional_node_seeding,
-    run_swidt_network_hilbert_node_label_assignment
+    run_swidt_network_edge_pruning_procedure
 )
-from swidt_networks import swidt_filename_str
 
 def params_list_func(params_arr: np.ndarray) -> list[tuple]:
     if params_arr.ndim == 1:
@@ -229,95 +226,13 @@ def main():
         pool.map(
             run_swidt_network_edge_pruning_procedure,
             swidt_network_edge_pruning_procedure_args)
-    
-    ##### Perform the additional node seeding procedure for each spider
-    ##### web-inspired Delaunay-triangulated network parameter sample
-    print("Performing the additional node seeding procedure", flush=True)
-
-    # Initialize an array to store the maximum number of nodes in the
-    # initial network for each sample
-    sample_n_coords_max = np.empty(sample_num, dtype=int)
-
-    # Calculate maximum number of nodes in the initial network for each
-    # sample
-    for sample in range(sample_num):
-        sample_n_coords = np.asarray([], dtype=int)
-        for config in range(config_num):
-            for pruning in range(pruning_num):
-                coords_filename = (
-                    swidt_filename_str(network, date, batch, sample, config, pruning)
-                    + ".coords"
-                )
-                coords = np.loadtxt(coords_filename)
-                sample_n_coords = np.concatenate(
-                    (sample_n_coords, np.asarray([np.shape(coords)[0]])))
-        sample_n_coords_max[sample] = np.max(sample_n_coords)
-
-    # Populate the network sample configuration pruning parameters array
-    sample_config_pruning_addtnl_n_params_arr = np.empty(
-        (sample_config_pruning_num, 6))
-    sample = 0
-    indx = 0
-    for dim in np.nditer(dim_arr):
-        for b in np.nditer(b_arr):
-            for n in np.nditer(n_arr):
-                for k in np.nditer(k_arr):
-                    for eta_n in np.nditer(eta_n_arr):
-                        for config in np.nditer(config_arr):
-                            for pruning in np.nditer(pruning_arr):
-                                sample_config_pruning_addtnl_n_params_arr[indx, :] = (
-                                    np.asarray(
-                                        [
-                                            sample,
-                                            dim,
-                                            b,
-                                            sample_n_coords_max[sample],
-                                            config,
-                                            pruning
-                                        ]
-                                    )
-                                )
-                                indx += 1
-                        sample += 1
-
-    swidt_network_additional_node_seeding_params_list = params_list_func(
-        sample_config_pruning_addtnl_n_params_arr)
-    swidt_network_additional_node_seeding_args = (
-        [
-            (network, date, batch, int(sample), scheme, int(dim), float(b), int(n), int(config), int(pruning), int(max_try))
-            for (sample, dim, b, n, config, pruning) in swidt_network_additional_node_seeding_params_list
-        ]
-    )
-    random.shuffle(swidt_network_additional_node_seeding_args)
-
-    with multiprocessing.Pool(processes=cpu_num) as pool:
-        pool.map(
-            run_swidt_network_additional_node_seeding,
-            swidt_network_additional_node_seeding_args)
-    
-    ##### Reassign the node labels using the Hilbert space-filling curve
-    ##### for each spider web-inspired Delaunay-triangulated network
-    print(
-        "Reassigning node labels using the Hilbert space-filling curve",
-        flush=True)
-    
-    swidt_network_hilbert_node_label_assignment_params_arr = (
-        sample_config_pruning_params_arr[:, [0, 6, 7]]
-    ) # sample, config, pruning
-    swidt_network_hilbert_node_label_assignment_params_list = params_list_func(
-        swidt_network_hilbert_node_label_assignment_params_arr)
-    swidt_network_hilbert_node_label_assignment_args = (
-        [
-            (network, date, batch, int(sample), int(config), int(pruning))
-            for (sample, config, pruning) in swidt_network_hilbert_node_label_assignment_params_list
-        ]
-    )
-    random.shuffle(swidt_network_hilbert_node_label_assignment_args)
-
-    with multiprocessing.Pool(processes=cpu_num) as pool:
-        pool.map(
-            run_swidt_network_hilbert_node_label_assignment,
-            swidt_network_hilbert_node_label_assignment_args)
 
 if __name__ == "__main__":
+    import time
+    
+    start_time = time.perf_counter()
     main()
+    end_time = time.perf_counter()
+
+    execution_time = end_time - start_time
+    print(f"Spider web-inspired Delaunay network synthesis protocol took {execution_time} seconds to run")

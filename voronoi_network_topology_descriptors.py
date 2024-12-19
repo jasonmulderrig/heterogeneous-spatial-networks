@@ -92,8 +92,14 @@ def main():
 
     length_bound = 12
 
+    ##### Calculate first set of Voronoi network topology descriptors
+    print(
+        "Calculating first set of Voronoi network topology descriptors",
+        flush=True)
+
     tplgcl_dscrptr_list = [
-        "l", "l_cmpnts", "k_avrg_nn", "c", "e", "n_bc", "m_bc", "cc", "scc"
+        "l", "l_cmpnts", "avrg_nn_k", "avrg_k_diff", "c", "lcl_avrg_kappa", "e",
+        "avrg_d", "avrg_e", "n_bc", "m_bc", "cc", "scc"
     ]
     np_oprtn_list = ["", "mean"]
     save_tplgcl_dscrptr_result = True
@@ -128,6 +134,10 @@ def main():
             run_voronoi_network_topological_descriptor,
             batch_B_voronoi_network_topological_descriptor_args)
     
+    ##### Calculate second set of Voronoi network topology descriptors
+    print(
+        "Calculating second set of Voronoi network topology descriptors",
+        flush=True)
     tplgcl_dscrptr_list = [
         "k", "k_diff", "kappa", "epsilon", "d"
     ]
@@ -164,8 +174,12 @@ def main():
             run_voronoi_network_topological_descriptor,
             batch_B_voronoi_network_topological_descriptor_args)
     
+    ##### Calculate third set of Voronoi network topology descriptors
+    print(
+        "Calculating third set of Voronoi network topology descriptors",
+        flush=True)
     tplgcl_dscrptr_list = [
-        "n", "m", "rho_graph", "avrg_kappa", "lambda_1", "r", "sigma",
+        "n", "m", "rho_graph", "glbl_avrg_kappa", "lambda_1", "r", "sigma",
         "lcl_e", "glbl_e"
     ]
     np_oprtn = ""
@@ -200,4 +214,11 @@ def main():
             batch_B_voronoi_network_topological_descriptor_args)
 
 if __name__ == "__main__":
+    import time
+    
+    start_time = time.perf_counter()
     main()
+    end_time = time.perf_counter()
+
+    execution_time = end_time - start_time
+    print(f"Voronoi network topology descriptors calculation took {execution_time} seconds to run")

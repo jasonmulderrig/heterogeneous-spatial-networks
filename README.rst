@@ -53,9 +53,11 @@ Usage
 Example timing benchmarks
 *************************
 
-The following contains some timing benchmarks for the network synthesis and topological descriptor Python files on my Dell Inspiron computer with ``cpu_num = 8`` for the ``20241121`` network parameters:
+The following contains some timing benchmarks for the network synthesis and topological descriptor Python files on my Dell Inspiron computer with ``cpu_num = 8`` for the ``20241210`` network parameters:
 
-* ``voronoi_network_topology_config.py`` -> ``voronoi_network_topology_synthesis.py`` -> ``voronoi_network_topology_descriptors.py``: ~ 10 minutes
-* ``delaunay_network_topology_config.py`` -> ``delaunay_network_topology_synthesis.py`` -> ``delaunay_network_topology_descriptors.py``: ~ 10 minutes
-* ``swidt_network_topology_config.py`` -> ``swidt_network_topology_synthesis.py`` -> ``swidt_network_topology_descriptors.py``: ~ 10 minutes
-* ``aelp_network_topology_config.py`` -> ``aelp_network_topology_synthesis.py`` -> ``aelp_network_topology_descriptors.py``: ~ 1.75 hours
+* ``voronoi_network_topology_config.py`` -> ``voronoi_network_topology_synthesis.py`` -> ``voronoi_network_topology_descriptors.py``: ~ 30 seconds (for ``voronoi_network_topology_synthesis.py``) + ~ 25 minutes (for ``voronoi_network_topology_descriptors.py``)
+* ``delaunay_network_topology_config.py`` -> ``delaunay_network_topology_synthesis.py`` -> ``delaunay_network_topology_descriptors.py``: ~ 10 seconds (for ``delaunay_network_topology_synthesis.py``) + ~ 65 minutes (for ``delaunay_network_topology_descriptors.py``)
+* ``swidt_network_topology_config.py`` -> ``swidt_network_topology_synthesis.py`` -> ``swidt_network_topology_descriptors.py``: ~ 20 seconds (for ``swidt_network_topology_synthesis.py``) + ~ 20 minutes (for ``swidt_network_topology_descriptors.py``)
+* ``aelp_network_topology_config.py`` -> ``aelp_network_topology_synthesis.py`` -> ``aelp_network_topology_descriptors.py``: ~ 115 minutes (for ``aelp_network_topology_synthesis.py``) + ~ 55 minutes (for ``aelp_network_topology_descriptors.py``)
+
+Note that essentially every type of topological descriptor is calculated for each network in the topological descriptor Python files (for the sake of benchmarking).

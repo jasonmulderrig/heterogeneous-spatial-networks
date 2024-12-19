@@ -8,11 +8,8 @@ from file_io import (
 from multiprocessing_utils import (
     run_aelp_L,
     run_initial_node_seeding,
-    run_aelp_network_topology,
-    run_aelp_network_additional_node_seeding,
-    run_aelp_network_hilbert_node_label_assignment
+    run_aelp_network_topology
 )
-from aelp_networks import aelp_filename_str
 
 def params_list_func(params_arr: np.ndarray) -> list[tuple]:
     if params_arr.ndim == 1:
@@ -21,9 +18,10 @@ def params_list_func(params_arr: np.ndarray) -> list[tuple]:
         return list(map(tuple, params_arr))
 
 def main():
-    ##### Load in artificial end-linked network topology configuration
+    ##### Load in artificial end-linked polymer network topology
+    ##### configuration
     print(
-        "Loading in artificial end-linked network topology configuration",
+        "Loading in artificial end-linked polymer network topology configuration",
         flush=True)
     
     # This may or may not correspond to the number of cpus for optimal
@@ -608,7 +606,7 @@ def main():
     ##### Perform the network topology initialization procedure for each
     ##### artificial end-linked polymer network parameter sample
     print_str = (
-        "Performing the artificial end-linked network topology "
+        "Performing the artificial end-linked polymer network topology "
         + "initialization procedure"
     )
     print(print_str, flush=True)
@@ -667,290 +665,13 @@ def main():
         pool.map(run_aelp_network_topology, network_auelp_batch_B_topology_args)
         pool.map(run_aelp_network_topology, network_apelp_batch_A_topology_args)
         pool.map(run_aelp_network_topology, network_apelp_batch_B_topology_args)
-    
-    ##### Perform the additional node seeding procedure for each
-    ##### artificial end-linked polymer network parameter sample
-    print("Performing the additional node seeding procedure", flush=True)
-
-    # Initialize an array to store the maximum number of nodes in the
-    # initial network for each sample
-    network_auelp_batch_A_sample_n_coords_max = np.empty(
-        network_auelp_batch_A_sample_num, dtype=int)
-    network_auelp_batch_B_sample_n_coords_max = np.empty(
-        network_auelp_batch_B_sample_num, dtype=int)
-    network_apelp_batch_A_sample_n_coords_max = np.empty(
-        network_apelp_batch_A_sample_num, dtype=int)
-    network_apelp_batch_B_sample_n_coords_max = np.empty(
-        network_apelp_batch_B_sample_num, dtype=int)
-
-    # Calculate maximum number of nodes in the initial network for each
-    # sample
-    for sample in range(network_auelp_batch_A_sample_num):
-        sample_n_coords = np.asarray([], dtype=int)
-        for config in range(config_num):
-            coords_filename = (
-                aelp_filename_str(network_auelp, date, batch_A, sample, config)
-                + ".coords"
-            )
-            coords = np.loadtxt(coords_filename)
-            sample_n_coords = np.concatenate(
-                (sample_n_coords, np.asarray([np.shape(coords)[0]])))
-        network_auelp_batch_A_sample_n_coords_max[sample] = np.max(sample_n_coords)
-    for sample in range(network_auelp_batch_B_sample_num):
-        sample_n_coords = np.asarray([], dtype=int)
-        for config in range(config_num):
-            coords_filename = (
-                aelp_filename_str(network_auelp, date, batch_B, sample, config)
-                + ".coords"
-            )
-            coords = np.loadtxt(coords_filename)
-            sample_n_coords = np.concatenate(
-                (sample_n_coords, np.asarray([np.shape(coords)[0]])))
-        network_auelp_batch_B_sample_n_coords_max[sample] = np.max(sample_n_coords)
-    for sample in range(network_apelp_batch_A_sample_num):
-        sample_n_coords = np.asarray([], dtype=int)
-        for config in range(config_num):
-            coords_filename = (
-                aelp_filename_str(network_apelp, date, batch_A, sample, config)
-                + ".coords"
-            )
-            coords = np.loadtxt(coords_filename)
-            sample_n_coords = np.concatenate(
-                (sample_n_coords, np.asarray([np.shape(coords)[0]])))
-        network_apelp_batch_A_sample_n_coords_max[sample] = np.max(sample_n_coords)
-    for sample in range(network_apelp_batch_B_sample_num):
-        sample_n_coords = np.asarray([], dtype=int)
-        for config in range(config_num):
-            coords_filename = (
-                aelp_filename_str(network_apelp, date, batch_B, sample, config)
-                + ".coords"
-            )
-            coords = np.loadtxt(coords_filename)
-            sample_n_coords = np.concatenate(
-                (sample_n_coords, np.asarray([np.shape(coords)[0]])))
-        network_apelp_batch_B_sample_n_coords_max[sample] = np.max(sample_n_coords)
-
-    # Populate the network sample configuration parameters array
-    network_auelp_batch_A_sample_config_addtnl_n_params_arr = np.empty(
-        (network_auelp_batch_A_sample_config_num, 5))
-    sample = 0
-    indx = 0
-    for dim in np.nditer(dim_2_arr):
-        for b in np.nditer(b_arr):
-            for xi in np.nditer(xi_arr):
-                for rho_nu in np.nditer(rho_nu_arr):
-                    for k in np.nditer(k_arr):
-                        for n in np.nditer(n_arr):
-                            for nu in np.nditer(dim_2_nu_arr):
-                                for config in np.nditer(config_arr):
-                                    network_auelp_batch_A_sample_config_addtnl_n_params_arr[indx, :] = (
-                                        np.asarray(
-                                            [
-                                                sample,
-                                                dim,
-                                                b,
-                                                network_auelp_batch_A_sample_n_coords_max[sample],
-                                                config
-                                            ]
-                                        )
-                                    )
-                                    indx += 1
-                                sample += 1
-    network_auelp_batch_B_sample_config_addtnl_n_params_arr = np.empty(
-        (network_auelp_batch_B_sample_config_num, 5))
-    sample = 0
-    indx = 0
-    for dim in np.nditer(dim_3_arr):
-        for b in np.nditer(b_arr):
-            for xi in np.nditer(xi_arr):
-                for rho_nu in np.nditer(rho_nu_arr):
-                    for k in np.nditer(k_arr):
-                        for n in np.nditer(n_arr):
-                            for nu in np.nditer(dim_3_nu_arr):
-                                for config in np.nditer(config_arr):
-                                    network_auelp_batch_B_sample_config_addtnl_n_params_arr[indx, :] = (
-                                        np.asarray(
-                                            [
-                                                sample,
-                                                dim,
-                                                b,
-                                                network_auelp_batch_B_sample_n_coords_max[sample],
-                                                config
-                                            ]
-                                        )
-                                    )
-                                    indx += 1
-                                sample += 1
-    network_apelp_batch_A_sample_config_addtnl_n_params_arr = np.empty(
-        (network_apelp_batch_A_sample_config_num, 5))
-    sample = 0
-    indx = 0
-    for dim in np.nditer(dim_2_arr):
-        for b in np.nditer(b_arr):
-            for xi in np.nditer(xi_arr):
-                for rho_nu in np.nditer(rho_nu_arr):
-                    for k in np.nditer(k_arr):
-                        for n in np.nditer(n_arr):
-                            for nu in np.nditer(dim_2_nu_arr):
-                                for config in np.nditer(config_arr):
-                                    network_apelp_batch_A_sample_config_addtnl_n_params_arr[indx, :] = (
-                                        np.asarray(
-                                            [
-                                                sample,
-                                                dim,
-                                                b,
-                                                network_apelp_batch_A_sample_n_coords_max[sample],
-                                                config
-                                            ]
-                                        )
-                                    )
-                                    indx += 1
-                                sample += 1
-    network_apelp_batch_B_sample_config_addtnl_n_params_arr = np.empty(
-        (network_apelp_batch_B_sample_config_num, 5))
-    sample = 0
-    indx = 0
-    for dim in np.nditer(dim_3_arr):
-        for b in np.nditer(b_arr):
-            for xi in np.nditer(xi_arr):
-                for rho_nu in np.nditer(rho_nu_arr):
-                    for k in np.nditer(k_arr):
-                        for n in np.nditer(n_arr):
-                            for nu in np.nditer(dim_3_nu_arr):
-                                for config in np.nditer(config_arr):
-                                    network_apelp_batch_B_sample_config_addtnl_n_params_arr[indx, :] = (
-                                        np.asarray(
-                                            [
-                                                sample,
-                                                dim,
-                                                b,
-                                                network_apelp_batch_B_sample_n_coords_max[sample],
-                                                config
-                                            ]
-                                        )
-                                    )
-                                    indx += 1
-                                sample += 1
-
-    network_auelp_batch_A_additional_node_seeding_params_list = params_list_func(
-        network_auelp_batch_A_sample_config_addtnl_n_params_arr)
-    network_auelp_batch_B_additional_node_seeding_params_list = params_list_func(
-        network_auelp_batch_B_sample_config_addtnl_n_params_arr)
-    network_apelp_batch_A_additional_node_seeding_params_list = params_list_func(
-        network_apelp_batch_A_sample_config_addtnl_n_params_arr)
-    network_apelp_batch_B_additional_node_seeding_params_list = params_list_func(
-        network_apelp_batch_B_sample_config_addtnl_n_params_arr)
-    network_auelp_batch_A_additional_node_seeding_args = (
-        [
-            (network_auelp, date, batch_A, int(sample), scheme, int(dim), float(b), int(n), int(config), int(max_try))
-            for (sample, dim, b, n, config) in network_auelp_batch_A_additional_node_seeding_params_list
-        ]
-    )
-    network_auelp_batch_B_additional_node_seeding_args = (
-        [
-            (network_auelp, date, batch_B, int(sample), scheme, int(dim), float(b), int(n), int(config), int(max_try))
-            for (sample, dim, b, n, config) in network_auelp_batch_B_additional_node_seeding_params_list
-        ]
-    )
-    network_apelp_batch_A_additional_node_seeding_args = (
-        [
-            (network_apelp, date, batch_A, int(sample), scheme, int(dim), float(b), int(n), int(config), int(max_try))
-            for (sample, dim, b, n, config) in network_apelp_batch_A_additional_node_seeding_params_list
-        ]
-    )
-    network_apelp_batch_B_additional_node_seeding_args = (
-        [
-            (network_apelp, date, batch_B, int(sample), scheme, int(dim), float(b), int(n), int(config), int(max_try))
-            for (sample, dim, b, n, config) in network_apelp_batch_B_additional_node_seeding_params_list
-        ]
-    )
-    random.shuffle(network_auelp_batch_A_additional_node_seeding_args)
-    random.shuffle(network_auelp_batch_B_additional_node_seeding_args)
-    random.shuffle(network_apelp_batch_A_additional_node_seeding_args)
-    random.shuffle(network_apelp_batch_B_additional_node_seeding_args)
-
-    with multiprocessing.Pool(processes=cpu_num) as pool:
-        pool.map(
-            run_aelp_network_additional_node_seeding,
-            network_auelp_batch_A_additional_node_seeding_args)
-        pool.map(
-            run_aelp_network_additional_node_seeding,
-            network_auelp_batch_B_additional_node_seeding_args)
-        pool.map(
-            run_aelp_network_additional_node_seeding,
-            network_apelp_batch_A_additional_node_seeding_args)
-        pool.map(
-            run_aelp_network_additional_node_seeding,
-            network_apelp_batch_B_additional_node_seeding_args)
-    
-    ##### Reassign the node labels using the Hilbert space-filling curve
-    ##### for each artificial end-linked polymer network
-    print(
-        "Reassigning node labels using the Hilbert space-filling curve",
-        flush=True)
-
-    network_auelp_batch_A_hilbert_node_label_assignment_params_arr = (
-        network_auelp_batch_A_sample_config_params_arr[:, [0, 9]]
-    ) # sample, config
-    network_auelp_batch_B_hilbert_node_label_assignment_params_arr = (
-        network_auelp_batch_B_sample_config_params_arr[:, [0, 9]]
-    ) # sample, config
-    network_apelp_batch_A_hilbert_node_label_assignment_params_arr = (
-        network_apelp_batch_A_sample_config_params_arr[:, [0, 9]]
-    ) # sample, config
-    network_apelp_batch_B_hilbert_node_label_assignment_params_arr = (
-        network_apelp_batch_B_sample_config_params_arr[:, [0, 9]]
-    ) # sample, config
-    network_auelp_batch_A_hilbert_node_label_assignment_params_list = params_list_func(
-        network_auelp_batch_A_hilbert_node_label_assignment_params_arr)
-    network_auelp_batch_B_hilbert_node_label_assignment_params_list = params_list_func(
-        network_auelp_batch_B_hilbert_node_label_assignment_params_arr)
-    network_apelp_batch_A_hilbert_node_label_assignment_params_list = params_list_func(
-        network_apelp_batch_A_hilbert_node_label_assignment_params_arr)
-    network_apelp_batch_B_hilbert_node_label_assignment_params_list = params_list_func(
-        network_apelp_batch_B_hilbert_node_label_assignment_params_arr)
-    network_auelp_batch_A_hilbert_node_label_assignment_args = (
-        [
-            (network_auelp, date, batch_A, int(sample), int(config))
-            for (sample, config) in network_auelp_batch_A_hilbert_node_label_assignment_params_list
-        ]
-    )
-    network_auelp_batch_B_hilbert_node_label_assignment_args = (
-        [
-            (network_auelp, date, batch_B, int(sample), int(config))
-            for (sample, config) in network_auelp_batch_B_hilbert_node_label_assignment_params_list
-        ]
-    )
-    network_apelp_batch_A_hilbert_node_label_assignment_args = (
-        [
-            (network_apelp, date, batch_A, int(sample), int(config))
-            for (sample, config) in network_apelp_batch_A_hilbert_node_label_assignment_params_list
-        ]
-    )
-    network_apelp_batch_B_hilbert_node_label_assignment_args = (
-        [
-            (network_apelp, date, batch_B, int(sample), int(config))
-            for (sample, config) in network_apelp_batch_B_hilbert_node_label_assignment_params_list
-        ]
-    )
-    random.shuffle(network_auelp_batch_A_hilbert_node_label_assignment_args)
-    random.shuffle(network_auelp_batch_B_hilbert_node_label_assignment_args)
-    random.shuffle(network_apelp_batch_A_hilbert_node_label_assignment_args)
-    random.shuffle(network_apelp_batch_B_hilbert_node_label_assignment_args)
-
-    with multiprocessing.Pool(processes=cpu_num) as pool:
-        pool.map(
-            run_aelp_network_hilbert_node_label_assignment,
-            network_auelp_batch_A_hilbert_node_label_assignment_args)
-        pool.map(
-            run_aelp_network_hilbert_node_label_assignment,
-            network_auelp_batch_B_hilbert_node_label_assignment_args)
-        pool.map(
-            run_aelp_network_hilbert_node_label_assignment,
-            network_apelp_batch_A_hilbert_node_label_assignment_args)
-        pool.map(
-            run_aelp_network_hilbert_node_label_assignment,
-            network_apelp_batch_B_hilbert_node_label_assignment_args)
 
 if __name__ == "__main__":
+    import time
+    
+    start_time = time.perf_counter()
     main()
+    end_time = time.perf_counter()
+
+    execution_time = end_time - start_time
+    print(f"Artificial end-linked polymer network synthesis protocol took {execution_time} seconds to run")

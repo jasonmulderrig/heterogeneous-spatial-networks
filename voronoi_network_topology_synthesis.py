@@ -8,11 +8,8 @@ from file_io import (
 from multiprocessing_utils import (
     run_voronoi_L,
     run_initial_node_seeding,
-    run_voronoi_network_topology,
-    run_voronoi_network_additional_node_seeding,
-    run_voronoi_network_hilbert_node_label_assignment
+    run_voronoi_network_topology
 )
-from voronoi_networks import voronoi_filename_str
 
 def params_list_func(params_arr: np.ndarray) -> list[tuple]:
     if params_arr.ndim == 1:
@@ -278,150 +275,13 @@ def main():
             run_voronoi_network_topology, batch_A_voronoi_network_topology_args)
         pool.map(
             run_voronoi_network_topology, batch_B_voronoi_network_topology_args)
-    
-    ##### Perform the additional node seeding procedure for each
-    ##### Voronoi-tessellated network parameter sample
-    print("Performing the additional node seeding procedure", flush=True)
-
-    # Initialize an array to store the maximum number of nodes in the
-    # initial network for each sample
-    batch_A_sample_n_coords_max = np.empty(batch_A_sample_num, dtype=int)
-    batch_B_sample_n_coords_max = np.empty(batch_B_sample_num, dtype=int)
-
-    # Calculate maximum number of nodes in the initial network for each
-    # sample
-    for sample in range(batch_A_sample_num):
-        sample_n_coords = np.asarray([], dtype=int)
-        for config in range(config_num):
-            coords_filename = (
-                voronoi_filename_str(network, date, batch_A, sample, config)
-                + ".coords"
-            )
-            coords = np.loadtxt(coords_filename)
-            sample_n_coords = np.concatenate(
-                (sample_n_coords, np.asarray([np.shape(coords)[0]])))
-        batch_A_sample_n_coords_max[sample] = np.max(sample_n_coords)
-    for sample in range(batch_B_sample_num):
-        sample_n_coords = np.asarray([], dtype=int)
-        for config in range(config_num):
-            coords_filename = (
-                voronoi_filename_str(network, date, batch_B, sample, config)
-                + ".coords"
-            )
-            coords = np.loadtxt(coords_filename)
-            sample_n_coords = np.concatenate(
-                (sample_n_coords, np.asarray([np.shape(coords)[0]])))
-        batch_B_sample_n_coords_max[sample] = np.max(sample_n_coords)
-
-    # Populate the network sample configuration parameters array
-    batch_A_sample_config_addtnl_n_params_arr = np.empty((batch_A_sample_config_num, 5))
-    sample = 0
-    indx = 0
-    for dim in np.nditer(dim_2_arr):
-        for b in np.nditer(b_arr):
-            for n in np.nditer(dim_2_n_arr):
-                for eta_n in np.nditer(eta_n_arr):
-                    for config in np.nditer(config_arr):
-                        batch_A_sample_config_addtnl_n_params_arr[indx, :] = (
-                            np.asarray(
-                                [
-                                    sample,
-                                    dim,
-                                    b,
-                                    batch_A_sample_n_coords_max[sample],
-                                    config
-                                ]
-                            )
-                        )
-                        indx += 1
-                    sample += 1
-    batch_B_sample_config_addtnl_n_params_arr = np.empty((batch_B_sample_config_num, 5))
-    sample = 0
-    indx = 0
-    for dim in np.nditer(dim_3_arr):
-        for b in np.nditer(b_arr):
-            for n in np.nditer(dim_3_n_arr):
-                for eta_n in np.nditer(eta_n_arr):
-                    for config in np.nditer(config_arr):
-                        batch_B_sample_config_addtnl_n_params_arr[indx, :] = (
-                            np.asarray(
-                                [
-                                    sample,
-                                    dim,
-                                    b,
-                                    batch_B_sample_n_coords_max[sample],
-                                    config
-                                ]
-                            )
-                        )
-                        indx += 1
-                    sample += 1
-
-    batch_A_voronoi_network_additional_node_seeding_params_list = params_list_func(
-        batch_A_sample_config_addtnl_n_params_arr)
-    batch_B_voronoi_network_additional_node_seeding_params_list = params_list_func(
-        batch_B_sample_config_addtnl_n_params_arr)
-    batch_A_voronoi_network_additional_node_seeding_args = (
-        [
-            (network, date, batch_A, int(sample), scheme, int(dim), float(b), int(n), int(config), int(max_try))
-            for (sample, dim, b, n, config) in batch_A_voronoi_network_additional_node_seeding_params_list
-        ]
-    )
-    batch_B_voronoi_network_additional_node_seeding_args = (
-        [
-            (network, date, batch_B, int(sample), scheme, int(dim), float(b), int(n), int(config), int(max_try))
-            for (sample, dim, b, n, config) in batch_B_voronoi_network_additional_node_seeding_params_list
-        ]
-    )
-    random.shuffle(batch_A_voronoi_network_additional_node_seeding_args)
-    random.shuffle(batch_B_voronoi_network_additional_node_seeding_args)
-
-    with multiprocessing.Pool(processes=cpu_num) as pool:
-        pool.map(
-            run_voronoi_network_additional_node_seeding,
-            batch_A_voronoi_network_additional_node_seeding_args)
-        pool.map(
-            run_voronoi_network_additional_node_seeding,
-            batch_B_voronoi_network_additional_node_seeding_args)
-    
-    ##### Reassign the node labels using the Hilbert space-filling curve
-    ##### for each Voronoi-tessellated network
-    print(
-        "Reassigning node labels using the Hilbert space-filling curve",
-        flush=True)
-
-    batch_A_voronoi_network_hilbert_node_label_assignment_params_arr = (
-        batch_A_sample_config_params_arr[:, [0, 5]]
-    ) # sample, config
-    batch_B_voronoi_network_hilbert_node_label_assignment_params_arr = (
-        batch_B_sample_config_params_arr[:, [0, 5]]
-    ) # sample, config
-    batch_A_voronoi_network_hilbert_node_label_assignment_params_list = params_list_func(
-        batch_A_voronoi_network_hilbert_node_label_assignment_params_arr)
-    batch_B_voronoi_network_hilbert_node_label_assignment_params_list = params_list_func(
-        batch_B_voronoi_network_hilbert_node_label_assignment_params_arr)
-    batch_A_voronoi_network_hilbert_node_label_assignment_args = (
-        [
-            (network, date, batch_A, int(sample), int(config))
-            for (sample, config) in batch_A_voronoi_network_hilbert_node_label_assignment_params_list
-        ]
-    )
-    batch_B_voronoi_network_hilbert_node_label_assignment_args = (
-        [
-            (network, date, batch_B, int(sample), int(config))
-            for (sample, config) in batch_B_voronoi_network_hilbert_node_label_assignment_params_list
-        ]
-    )
-    random.shuffle(batch_A_voronoi_network_hilbert_node_label_assignment_args)
-    random.shuffle(batch_B_voronoi_network_hilbert_node_label_assignment_args)
-
-    with multiprocessing.Pool(processes=cpu_num) as pool:
-        pool.map(
-            run_voronoi_network_hilbert_node_label_assignment,
-            batch_A_voronoi_network_hilbert_node_label_assignment_args)
-        pool.map(
-            run_voronoi_network_hilbert_node_label_assignment,
-            batch_B_voronoi_network_hilbert_node_label_assignment_args)
 
 if __name__ == "__main__":
+    import time
+    
+    start_time = time.perf_counter()
     main()
+    end_time = time.perf_counter()
+
+    execution_time = end_time - start_time
+    print(f"Voronoi network synthesis protocol took {execution_time} seconds to run")

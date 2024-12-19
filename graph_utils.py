@@ -41,6 +41,23 @@ def add_edges_from_numpy_array(
     graph.add_edges_from(list(tuple(edge) for edge in edges.tolist()))
     return graph
 
+def largest_connected_component(
+        graph: nx.Graph | nx.MultiGraph) -> nx.Graph | nx.MultiGraph:
+    """Isolate and return the largest/maximum connected component, if
+    necessary.
+
+    Args:
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
+    
+    Returns:
+        nx.Graph | nx.MultiGraph: (Undirected) NetworkX graph that is
+        the largest/maximum connected component of the input graph.
+
+    """
+    if not nx.is_connected(graph):
+        graph = graph.subgraph(max(nx.connected_components(graph), key=len)).copy()
+    return graph
+
 def edge_id(graph: nx.Graph | nx.MultiGraph) -> tuple[np.ndarray, np.ndarray]:
     """Edge identification.
     
@@ -298,11 +315,9 @@ def elastically_effective_graph(
     # Restore multiedges
     graph = multiedge_restoration(graph, graph_edges, graph_edges_counts)
 
-    # Remove self-loops and isolate nodes
-    graph.remove_edges_from(list(nx.selfloop_edges(graph)))
-    graph.remove_nodes_from(list(nx.isolates(graph)))
-
-    return graph
+    # As a hard fail-safe, isolate and return the largest/maximum
+    # connected component
+    return largest_connected_component(graph)
 
 def elastically_effective_end_linked_graph(
         graph: nx.Graph | nx.MultiGraph) -> nx.Graph | nx.MultiGraph:
@@ -347,8 +362,6 @@ def elastically_effective_end_linked_graph(
     # Restore multiedges
     graph = multiedge_restoration(graph, graph_edges, graph_edges_counts)
 
-    # Remove self-loops and isolate nodes
-    graph.remove_edges_from(list(nx.selfloop_edges(graph)))
-    graph.remove_nodes_from(list(nx.isolates(graph)))
-    
-    return graph
+    # As a hard fail-safe, isolate and return the largest/maximum
+    # connected component
+    return largest_connected_component(graph)

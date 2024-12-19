@@ -21,9 +21,9 @@ def filepath_str(network: str) -> str:
     # For MacOS
     # filepath = f"/Users/jasonmulderrig/research/projects/heterogeneous-spatial-networks/{network}/"
     # For Windows OS
-    filepath = f"C:\\Users\\mulderjp\\projects\\polymer-network-topology-graph-design\\modular-sandbox\\heterogeneous-spatial-networks\\{network}\\"
+    filepath = f"C:\\Users\\mulderjp\\projects\\heterogeneous-spatial-networks\\{network}\\"
     # For Linux
-    # filepath = f"/p/home/jpm2225/projects/polymer-network-topology-graph-design/module-sandbox/heterogeneous-spatial-networks/{network}/"
+    # filepath = f"/p/home/jpm2225/projects/heterogeneous-spatial-networks/{network}/"
     if os.path.isdir(filepath) == False:
         pathlib.Path(filepath).mkdir(parents=True, exist_ok=True)
     return filepath

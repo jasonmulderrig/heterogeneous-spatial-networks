@@ -78,8 +78,15 @@ def main():
 
     length_bound = 25
 
+    ##### Calculate first set of spider web-inspired Delaunay network
+    ##### topology descriptors
+    print(
+        "Calculating first set of spider web-inspired Delaunay network topology descriptors",
+        flush=True)
+
     tplgcl_dscrptr_list = [
-        "l", "l_cmpnts", "k_avrg_nn", "c", "e", "n_bc", "m_bc", "cc", "scc"
+        "l", "l_cmpnts", "avrg_nn_k", "avrg_k_diff", "c", "lcl_avrg_kappa", "e",
+        "avrg_d", "avrg_e", "n_bc", "m_bc", "cc", "scc"
     ]
     np_oprtn_list = ["", "mean"]
     eeel_ntwrk = True
@@ -102,6 +109,12 @@ def main():
         pool.map(
             run_swidt_network_topological_descriptor,
             swidt_network_topological_descriptor_args)
+    
+    ##### Calculate second set of spider web-inspired Delaunay network
+    ##### topology descriptors
+    print(
+        "Calculating second set of spider web-inspired Delaunay network topology descriptors",
+        flush=True)
     
     tplgcl_dscrptr_list = [
         "k", "k_diff", "kappa", "epsilon", "d"
@@ -128,8 +141,14 @@ def main():
             run_swidt_network_topological_descriptor,
             swidt_network_topological_descriptor_args)
     
+    ##### Calculate third set of spider web-inspired Delaunay network
+    ##### topology descriptors
+    print(
+        "Calculating third set of spider web-inspired Delaunay network topology descriptors",
+        flush=True)
+    
     tplgcl_dscrptr_list = [
-        "n", "m", "rho_graph", "avrg_kappa", "lambda_1", "r_pearson",
+        "n", "m", "rho_graph", "glbl_avrg_kappa", "lambda_1", "r_pearson",
         "r", "sigma", "lcl_e", "glbl_e"
     ]
     np_oprtn = ""
@@ -152,6 +171,12 @@ def main():
         pool.map(
             run_swidt_network_topological_descriptor,
             swidt_network_topological_descriptor_args)
+    
+    ##### Calculate fourth set of spider web-inspired Delaunay network
+    ##### topology descriptors
+    print(
+        "Calculating fourth set of spider web-inspired Delaunay network topology descriptors",
+        flush=True)
     
     tplgcl_dscrptr_list = [
         "prop_eeel_n", "prop_eeel_m"
@@ -178,4 +203,11 @@ def main():
             swidt_network_topological_descriptor_args)
 
 if __name__ == "__main__":
+    import time
+    
+    start_time = time.perf_counter()
     main()
+    end_time = time.perf_counter()
+
+    execution_time = end_time - start_time
+    print(f"Spider web-inspired Delaunay network topology descriptors calculation took {execution_time} seconds to run")

@@ -61,8 +61,14 @@ def main():
 
     length_bound = 10
 
+    ##### Calculate first set of Delaunay network topology descriptors
+    print(
+        "Calculating first set of Delaunay network topology descriptors",
+        flush=True)
+
     tplgcl_dscrptr_list = [
-        "l", "l_cmpnts", "k_avrg_nn", "c", "e", "n_bc", "m_bc", "cc", "scc"
+        "l", "l_cmpnts", "avrg_nn_k", "avrg_k_diff", "c", "lcl_avrg_kappa", "e",
+        "avrg_d", "avrg_e", "n_bc", "m_bc", "cc", "scc"
     ]
     np_oprtn_list = ["", "mean"]
     save_tplgcl_dscrptr_result = True
@@ -83,6 +89,11 @@ def main():
         pool.map(
             run_delaunay_network_topological_descriptor,
             delaunay_network_topological_descriptor_args)
+    
+    ##### Calculate second set of Delaunay network topology descriptors
+    print(
+        "Calculating second set of Delaunay network topology descriptors",
+        flush=True)
     
     tplgcl_dscrptr_list = [
         "k", "k_diff", "kappa", "epsilon", "d"
@@ -107,8 +118,13 @@ def main():
             run_delaunay_network_topological_descriptor,
             delaunay_network_topological_descriptor_args)
     
+    ##### Calculate third set of Delaunay network topology descriptors
+    print(
+        "Calculating third set of Delaunay network topology descriptors",
+        flush=True)
+    
     tplgcl_dscrptr_list = [
-        "n", "m", "rho_graph", "avrg_kappa", "lambda_1", "r_pearson",
+        "n", "m", "rho_graph", "glbl_avrg_kappa", "lambda_1", "r_pearson",
         "r", "sigma", "lcl_e", "glbl_e"
     ]
     np_oprtn = ""
@@ -131,4 +147,11 @@ def main():
             delaunay_network_topological_descriptor_args)
 
 if __name__ == "__main__":
+    import time
+    
+    start_time = time.perf_counter()
     main()
+    end_time = time.perf_counter()
+
+    execution_time = end_time - start_time
+    print(f"Delaunay network topology descriptors calculation took {execution_time} seconds to run")

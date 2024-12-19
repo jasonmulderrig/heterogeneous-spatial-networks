@@ -72,9 +72,6 @@ def network_topological_descriptor(
     # Extract elastically-effective end-linked network (if called for)
     if eeel_ntwrk == True:
         conn_graph = elastically_effective_end_linked_graph(conn_graph).copy()
-        # Remove self-loops and isolate nodes
-        conn_graph.remove_edges_from(list(nx.selfloop_edges(conn_graph)))
-        conn_graph.remove_nodes_from(list(nx.isolates(conn_graph)))
         # Continue to extract the elastically-effective end-linked
         # network
         conn_core_graph = (
@@ -93,11 +90,7 @@ def network_topological_descriptor(
             print(error_str)
             return None
     
-    # Remove self-loops and isolate nodes
-    conn_graph.remove_edges_from(list(nx.selfloop_edges(conn_graph)))
-    conn_core_graph.remove_edges_from(list(nx.selfloop_edges(conn_core_graph)))
-    conn_pb_graph.remove_edges_from(list(nx.selfloop_edges(conn_pb_graph)))
-
+    # Remove isolate nodes
     conn_graph.remove_nodes_from(list(nx.isolates(conn_graph)))
     conn_core_graph.remove_nodes_from(list(nx.isolates(conn_core_graph)))
     conn_pb_graph.remove_nodes_from(list(nx.isolates(conn_pb_graph)))

@@ -8,11 +8,8 @@ from file_io import (
 from multiprocessing_utils import (
     run_delaunay_L,
     run_initial_node_seeding,
-    run_delaunay_network_topology,
-    run_delaunay_network_additional_node_seeding,
-    run_delaunay_network_hilbert_node_label_assignment
+    run_delaunay_network_topology
 )
-from delaunay_networks import delaunay_filename_str
 
 def params_list_func(params_arr: np.ndarray) -> list[tuple]:
     if params_arr.ndim == 1:
@@ -178,90 +175,13 @@ def main():
 
     with multiprocessing.Pool(processes=cpu_num) as pool:
         pool.map(run_delaunay_network_topology, delaunay_network_topology_args)
-    
-    ##### Perform the additional node seeding procedure for each
-    ##### Delaunay-triangulated network parameter sample
-    print("Performing the additional node seeding procedure", flush=True)
-    
-    # Initialize an array to store the maximum number of nodes in the
-    # initial network for each sample
-    sample_n_coords_max = np.empty(sample_num, dtype=int)
-
-    # Calculate maximum number of nodes in the initial network for each
-    # sample
-    for sample in range(sample_num):
-        sample_n_coords = np.asarray([], dtype=int)
-        for config in range(config_num):
-            coords_filename = (
-                delaunay_filename_str(network, date, batch, sample, config)
-                + ".coords"
-            )
-            coords = np.loadtxt(coords_filename)
-            sample_n_coords = np.concatenate(
-                (sample_n_coords, np.asarray([np.shape(coords)[0]])))
-        sample_n_coords_max[sample] = np.max(sample_n_coords)
-
-    # Populate the network sample configuration parameters array
-    sample_config_addtnl_n_params_arr = np.empty((sample_config_num, 5))
-    sample = 0
-    indx = 0
-    for dim in np.nditer(dim_arr):
-        for b in np.nditer(b_arr):
-            for n in np.nditer(n_arr):
-                for eta_n in np.nditer(eta_n_arr):
-                    for config in np.nditer(config_arr):
-                        sample_config_addtnl_n_params_arr[indx, :] = (
-                            np.asarray(
-                                [
-                                    sample,
-                                    dim,
-                                    b,
-                                    sample_n_coords_max[sample],
-                                    config
-                                ]
-                            )
-                        )
-                        indx += 1
-                    sample += 1
-
-    delaunay_network_additional_node_seeding_params_list = params_list_func(
-        sample_config_addtnl_n_params_arr)
-    delaunay_network_additional_node_seeding_args = (
-        [
-            (network, date, batch, int(sample), scheme, int(dim), float(b), int(n), int(config), int(max_try))
-            for (sample, dim, b, n, config) in delaunay_network_additional_node_seeding_params_list
-        ]
-    )
-    random.shuffle(delaunay_network_additional_node_seeding_args)
-
-    with multiprocessing.Pool(processes=cpu_num) as pool:
-        pool.map(
-            run_delaunay_network_additional_node_seeding,
-            delaunay_network_additional_node_seeding_args)
-    
-    ##### Reassign the node labels using the Hilbert space-filling curve
-    ##### for each Delaunay-triangulated network
-    print(
-        "Reassigning node labels using the Hilbert space-filling curve",
-        flush=True)
-
-    delaunay_network_hilbert_node_label_assignment_params_arr = (
-        sample_config_params_arr[:, [0, 5]]
-    ) # sample, config
-    delaunay_network_hilbert_node_label_assignment_params_list = params_list_func(
-        delaunay_network_hilbert_node_label_assignment_params_arr)
-    delaunay_network_hilbert_node_label_assignment_args = (
-        [
-            (network, date, batch, int(sample), int(config))
-            for (sample, config) in delaunay_network_hilbert_node_label_assignment_params_list
-        ]
-    )
-    random.shuffle(delaunay_network_hilbert_node_label_assignment_args)
-
-    with multiprocessing.Pool(processes=cpu_num) as pool:
-        pool.map(
-            run_delaunay_network_hilbert_node_label_assignment,
-            delaunay_network_hilbert_node_label_assignment_args)
 
 if __name__ == "__main__":
+    import time
+    
+    start_time = time.perf_counter()
     main()
+    end_time = time.perf_counter()
+
+    execution_time = end_time - start_time
+    print(f"Delaunay network synthesis protocol took {execution_time} seconds to run")

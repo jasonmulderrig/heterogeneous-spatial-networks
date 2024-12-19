@@ -1,6 +1,7 @@
 import numpy as np
 import networkx as nx
 from general_topological_descriptors import n_func
+from graph_utils import largest_connected_component
 
 def k_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     """Node degree.
@@ -14,9 +15,9 @@ def k_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
         np.ndarray: Node degree.
     
     """
-    return np.asarray(list(graph.degree()), dtype=int)[:, 1]
+    return np.asarray(list(dict(graph.degree()).values()), dtype=int)
 
-def k_avrg_nn_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
+def avrg_nn_k_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     """Average nearest neighbor degree.
 
     This function calculates the average nearest neighbor degree for
@@ -29,7 +30,7 @@ def k_avrg_nn_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
         np.ndarray: Nodewise average nearest neighbor degree.
     
     """
-    return np.asarray(list(nx.average_neighbor_degree(graph).items()))[:, 1]
+    return np.asarray(list(nx.average_neighbor_degree(graph).values()))
 
 def k_diff_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     """Degree difference.
@@ -62,6 +63,56 @@ def k_diff_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     
     return k_diff
 
+def avrg_k_diff_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
+    """Average degree difference.
+
+    This function calculates the average degree difference for each node
+    in an (undirected) graph.
+
+    Args:
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+    
+    Returns:
+        np.ndarray: Nodewise average degree difference.
+    
+    """
+    # Initialize nodewise average degree difference np.ndarray
+    n = n_func(graph)
+    avrg_k_diff = np.empty(n)
+
+    # Calculate and store graph degree in a dictionary
+    k_dict = dict(graph.degree())
+    
+    # Initialize a dictionary to store nodewise degree difference
+    # information
+    k_diff_dict = k_dict.copy()
+    for node in k_diff_dict: k_diff_dict[node] = 0
+    
+    # Gather edges
+    edges = list(graph.edges())
+
+    # Calculate the degree difference of each edge, and add that value
+    # to a running sum of nodewise degree difference
+    for edge in edges:
+        # Node numbers
+        node_0 = int(edge[0])
+        node_1 = int(edge[1])
+
+        # Calculate degree difference
+        k_diff = np.abs(k_dict[node_0]-k_dict[node_1], dtype=int)
+
+        # Add degree difference to each node involved in the edge
+        k_diff_dict[node_0] += k_diff
+        k_diff_dict[node_1] += k_diff
+    
+    # Calculate nodewise average degree difference
+    indx = 0
+    for node in k_diff_dict:
+        avrg_k_diff[indx] = k_diff_dict[node] / k_dict[node]
+        indx += 1
+    
+    return avrg_k_diff
+
 def c_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     """Clustering coefficient.
 
@@ -79,7 +130,7 @@ def c_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     # nx.Graph()
     if graph.is_multigraph(): graph = nx.Graph(graph)
     
-    return np.asarray(list(nx.clustering(graph).items()))[:, 1]
+    return np.asarray(list(nx.clustering(graph).values()))
 
 def kappa_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     """Nodal connectivity.
@@ -100,9 +151,9 @@ def kappa_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
         1-(n-1)), and so on.
     
     """
-    # Remove self-loops and isolate nodes from the as-provided graph
-    graph.remove_edges_from(list(nx.selfloop_edges(graph)))
-    graph.remove_nodes_from(list(nx.isolates(graph)))
+    # NetworkX nodal connectivity function is best applied to fully
+    # connected graphs
+    graph = largest_connected_component(graph)
 
     kappa_dict = nx.all_pairs_node_connectivity(graph)
     node_list = list(graph.nodes())
@@ -120,8 +171,36 @@ def kappa_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     
     return kappa
 
-def avrg_kappa_func(graph: nx.Graph | nx.MultiGraph) -> float:
-    """Average nodal connectivity.
+def lcl_avrg_kappa_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
+    """Local average nodal connectivity.
+
+    This function calculates the local average nodal connectivity for
+    all nodes in an (undirected) graph.
+
+    Args:
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+    
+    Returns:
+        np.ndarray: Average nodewise nodal connectivity.
+    
+    """
+    # Local average nodal connectivity function is best applied to fully
+    # connected graphs
+    graph = largest_connected_component(graph)
+
+    kappa_dict = nx.all_pairs_node_connectivity(graph)
+    n = n_func(graph)
+    lcl_avrg_kappa = np.empty(n)
+    
+    indx = 0
+    for node in kappa_dict:
+        lcl_avrg_kappa[indx] = sum(kappa_dict[node].values()) / (n-1)
+        indx += 1
+
+    return lcl_avrg_kappa
+
+def glbl_avrg_kappa_func(graph: nx.Graph | nx.MultiGraph) -> float:
+    """(Global) Average nodal connectivity.
 
     This function calculates the average nodal connectivity for all
     pairs of nodes in an (undirected) graph. The nodal connectivity for
@@ -134,11 +213,9 @@ def avrg_kappa_func(graph: nx.Graph | nx.MultiGraph) -> float:
         float: Average node-pairwise nodal connectivity.
     
     """
-    # Remove self-loops and isolate nodes from the as-provided graph
-    graph.remove_edges_from(list(nx.selfloop_edges(graph)))
-    graph.remove_nodes_from(list(nx.isolates(graph)))
-
-    return nx.average_node_connectivity(graph)
+    # NetworkX average nodal connectivity function is best applied to
+    # fully connected graphs
+    return nx.average_node_connectivity(largest_connected_component(graph))
 
 def lambda_1_func(graph: nx.Graph | nx.MultiGraph) -> float:
     """Algebraic connectivity.
@@ -154,20 +231,9 @@ def lambda_1_func(graph: nx.Graph | nx.MultiGraph) -> float:
         float: Algebraic connectivity.
     
     """
-    # Remove self-loops and isolate nodes from the as-provided graph
-    graph.remove_edges_from(list(nx.selfloop_edges(graph)))
-    graph.remove_nodes_from(list(nx.isolates(graph)))
-    
     # NetworkX algebraic connectivity function is best applied to fully
     # connected graphs
-    if nx.is_connected(graph):
-        return nx.algebraic_connectivity(graph)
-    else:
-        # Calculate the algebraic connectivity on the maximal component
-        # of the graph
-        mx_cmp_nodes = max(nx.connected_components(graph), key=len)
-        mx_cmp_graph = graph.subgraph(mx_cmp_nodes).copy()
-        return nx.algebraic_connectivity(mx_cmp_graph)
+    return nx.algebraic_connectivity(largest_connected_component(graph))
 
 def r_pearson_func(graph: nx.Graph | nx.MultiGraph) -> float:
     """Degree assortativity coefficient using the Pearson correlation
