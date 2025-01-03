@@ -53,7 +53,7 @@ Usage
 Example timing benchmarks
 *************************
 
-The following contains some timing benchmarks for the network synthesis and topological descriptor Python files on my Dell Inspiron computer with ``cpu_num = 8`` for the ``20241210`` network parameters:
+The following contains some timing benchmarks for the network synthesis and topological descriptor Python files on my Dell Inspiron computer with ``cpu_num = 8`` for the ``20250102`` network parameters:
 
 * ``voronoi_network_topology_config.py`` -> ``voronoi_network_topology_synthesis.py`` -> ``voronoi_network_topology_descriptors.py``: ~ 30 seconds (for ``voronoi_network_topology_synthesis.py``) + ~ 25 minutes (for ``voronoi_network_topology_descriptors.py``)
 * ``delaunay_network_topology_config.py`` -> ``delaunay_network_topology_synthesis.py`` -> ``delaunay_network_topology_descriptors.py``: ~ 10 seconds (for ``delaunay_network_topology_synthesis.py``) + ~ 65 minutes (for ``delaunay_network_topology_descriptors.py``)
