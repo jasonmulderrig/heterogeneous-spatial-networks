@@ -13,7 +13,7 @@ def main():
     # artificial end-linked polymer networks
     network_auelp = "auelp"
     network_apelp = "apelp"
-    date = "20241210"
+    date = "20250102"
     batch_A = "A"
     batch_B = "B"
     scheme = "prhd"

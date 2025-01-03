@@ -1,7 +1,6 @@
 import numpy as np
 import networkx as nx
 from general_topological_descriptors import n_func
-from graph_utils import largest_connected_component
 
 def k_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     """Node degree.
@@ -137,9 +136,10 @@ def kappa_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
 
     This function calculates the nodal connectivity for all pairs of
     nodes in an (undirected) graph (excluding all self-loop node pairs).
+    This function is best applied to fully connected graphs.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph. Ideally, this graph ought to be fully connected as-is.
     
     Returns:
         np.ndarray: Node-pairwise nodal connectivity, excluding all
@@ -151,10 +151,6 @@ def kappa_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
         1-(n-1)), and so on.
     
     """
-    # NetworkX nodal connectivity function is best applied to fully
-    # connected graphs
-    graph = largest_connected_component(graph)
-
     kappa_dict = nx.all_pairs_node_connectivity(graph)
     node_list = list(graph.nodes())
     n = n_func(graph)
@@ -175,19 +171,16 @@ def lcl_avrg_kappa_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     """Local average nodal connectivity.
 
     This function calculates the local average nodal connectivity for
-    all nodes in an (undirected) graph.
+    all nodes in an (undirected) graph. This function is best applied to
+    fully connected graphs.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph. Ideally, this graph ought to be fully connected as-is.
     
     Returns:
         np.ndarray: Average nodewise nodal connectivity.
     
     """
-    # Local average nodal connectivity function is best applied to fully
-    # connected graphs
-    graph = largest_connected_component(graph)
-
     kappa_dict = nx.all_pairs_node_connectivity(graph)
     n = n_func(graph)
     lcl_avrg_kappa = np.empty(n)
@@ -205,35 +198,33 @@ def glbl_avrg_kappa_func(graph: nx.Graph | nx.MultiGraph) -> float:
     This function calculates the average nodal connectivity for all
     pairs of nodes in an (undirected) graph. The nodal connectivity for
     each pair of nodes is averaged over all n choose 2 pairs of nodes.
+    This function is best applied to fully connected graphs.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph. Ideally, this graph ought to be fully connected as-is.
     
     Returns:
         float: Average node-pairwise nodal connectivity.
     
     """
-    # NetworkX average nodal connectivity function is best applied to
-    # fully connected graphs
-    return nx.average_node_connectivity(largest_connected_component(graph))
+    return nx.average_node_connectivity(graph)
 
 def lambda_1_func(graph: nx.Graph | nx.MultiGraph) -> float:
     """Algebraic connectivity.
 
     This function calculates the algebraic connectivity (the
     second-smallest eigenvalue of the Laplacian matrix) for an
-    (undirected) graph.
+    (undirected) graph. This function is best applied to fully connected
+    graphs.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph. Ideally, this graph ought to be fully connected as-is.
     
     Returns:
         float: Algebraic connectivity.
     
     """
-    # NetworkX algebraic connectivity function is best applied to fully
-    # connected graphs
-    return nx.algebraic_connectivity(largest_connected_component(graph))
+    return nx.algebraic_connectivity(graph)
 
 def r_pearson_func(graph: nx.Graph | nx.MultiGraph) -> float:
     """Degree assortativity coefficient using the Pearson correlation

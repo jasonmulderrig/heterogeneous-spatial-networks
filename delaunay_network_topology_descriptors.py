@@ -12,7 +12,7 @@ def main():
     # Initialization of identification information for this particular
     # batch of Voronoi-tessellated networks
     network = "delaunay"
-    date = "20241210"
+    date = "20250102"
     batch = "A"
     scheme = "prhd"
 

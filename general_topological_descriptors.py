@@ -104,9 +104,8 @@ def l_func(
         # Edge is a periodic boundary edge
         elif conn_pb_graph.has_edge(core_node_0, core_node_1):
             # Calculate and store periodic boundary edge length
-            _, l_pb_edge = core_pb_edge_id(
+            _, l[edge_indx] = core_pb_edge_id(
                 core_node_0_coords, core_node_1_coords, L)
-            l[edge_indx] = l_pb_edge
         else:
             error_str = (
                 "The edge in the overall graph was not detected in "
@@ -176,6 +175,120 @@ def l_cmpnts_func(
             return None
         
     return l_cmpnt
+
+def l_arr_func(
+        conn_core_edges: np.ndarray,
+        conn_pb_edges: np.ndarray,
+        coords: np.ndarray,
+        L: float) -> tuple[np.ndarray, np.ndarray]:
+    """Array-wise edge lengths.
+
+    This function calculates the length of each core and periodic
+    boundary edge supplied in np.ndarrays. Note that the length of each
+    edge is calculated as the true spatial length, not the naive length
+    present in the graph. Also note that each edge length entry
+    corresponds to the respective edge supplied in the input edge
+    arrays.
+
+    Args:
+        conn_core_graph (np.ndarray): Core edges from the graph capturing the periodic connections between the core nodes.
+        conn_pb_graph (np.ndarray): Periodic boundary edges from the graph capturing the periodic connections between the core nodes.
+        coords (np.ndarray): Coordinates of the core nodes.
+        L (float): Tessellation scaling distance (i.e., simulation box size).
+    
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Length of each core and periodic
+        boundary edge, respectively. Each edge length entry corresponds
+        to the respective edge supplied in the input edge arrays.
+    
+    """
+    # Initialize core edge length np.ndarray
+    conn_core_m = np.shape(conn_core_edges)[0]
+    l_core_edges = np.empty(conn_core_m)
+
+    # Calculate and store the length of each core edge
+    for edge in range(conn_core_m):
+        # Coordinates of each node
+        core_node_0_coords = coords[int(conn_core_edges[edge, 0])]
+        core_node_1_coords = coords[int(conn_core_edges[edge, 1])]
+
+        # Core edge length
+        l_core_edges[edge] = np.linalg.norm(
+            core_node_1_coords-core_node_0_coords)
+    
+    # Initialize periodic boundary edge length np.ndarray
+    conn_pb_m = np.shape(conn_pb_edges)[0]
+    l_pb_edges = np.empty(conn_pb_m)
+
+    # Calculate and store the length of each periodic boundary edge
+    for edge in range(conn_pb_m):
+        # Coordinates of each node
+        core_node_0_coords = coords[int(conn_pb_edges[edge, 0])]
+        core_node_1_coords = coords[int(conn_pb_edges[edge, 1])]
+
+        # Periodic boundary edge length
+        _, l_pb_edges[edge] = core_pb_edge_id(
+            core_node_0_coords, core_node_1_coords, L)
+        
+    return l_core_edges, l_pb_edges
+
+def l_cmpnts_arr_func(
+        conn_core_edges: np.ndarray,
+        conn_pb_edges: np.ndarray,
+        coords: np.ndarray,
+        L: float) -> tuple[np.ndarray, np.ndarray]:
+    """Array-wise edge length components.
+
+    This function calculates the length components of each core and
+    periodic boundary edge supplied in np.ndarrays. Note that the length
+    components of each edge are calculated as the true spatial length
+    components, not the naive length components present in the graph.
+    Also note that each edge length component entry corresponds to the
+    respective edge supplied in the input edge arrays.
+
+    Args:
+        conn_core_graph (np.ndarray): Core edges from the graph capturing the periodic connections between the core nodes.
+        conn_pb_graph (np.ndarray): Periodic boundary edges from the graph capturing the periodic connections between the core nodes.
+        coords (np.ndarray): Coordinates of the core nodes.
+        L (float): Tessellation scaling distance (i.e., simulation box size).
+    
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Edge length components of each
+        core and periodic boundary edge, respectively. Each edge length
+        component entry corresponds to the respective edge supplied in
+        the input edge arrays.
+    
+    """
+    # Initialize core edge length components np.ndarray
+    conn_core_m = np.shape(conn_core_edges)[0]
+    l_cmpnt_core_edges = np.empty((conn_core_m, np.shape(coords)[1]))
+
+    # Calculate and store the length components of each core edge
+    for edge in range(conn_core_m):
+        # Coordinates of each node
+        core_node_0_coords = coords[int(conn_core_edges[edge, 0])]
+        core_node_1_coords = coords[int(conn_core_edges[edge, 1])]
+
+        # Core edge length components
+        l_cmpnt_core_edges[edge] = core_node_1_coords - core_node_0_coords
+    
+    # Initialize periodic boundary edge length components np.ndarray
+    conn_pb_m = np.shape(conn_pb_edges)[0]
+    l_cmpnt_pb_edges = np.empty((conn_pb_m, np.shape(coords)[1]))
+
+    # Calculate and store the length components of each periodic
+    # boundary edge
+    for edge in range(conn_pb_m):
+        # Coordinates of each node
+        core_node_0_coords = coords[int(conn_pb_edges[edge, 0])]
+        core_node_1_coords = coords[int(conn_pb_edges[edge, 1])]
+
+        # Periodic boundary edge length components
+        pb_node_1_coords, _ = core_pb_edge_id(
+            core_node_0_coords, core_node_1_coords, L)
+        l_cmpnt_pb_edges[edge] = pb_node_1_coords - core_node_0_coords
+    
+    return l_cmpnt_core_edges, l_cmpnt_pb_edges
 
 def n_func(graph: nx.Graph | nx.MultiGraph) -> int:
     """Number of nodes.

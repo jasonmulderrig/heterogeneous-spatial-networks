@@ -43,8 +43,7 @@ def add_edges_from_numpy_array(
 
 def largest_connected_component(
         graph: nx.Graph | nx.MultiGraph) -> nx.Graph | nx.MultiGraph:
-    """Isolate and return the largest/maximum connected component, if
-    necessary.
+    """Isolate and return the largest/maximum connected component.
 
     Args:
         graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
@@ -54,9 +53,7 @@ def largest_connected_component(
         the largest/maximum connected component of the input graph.
 
     """
-    if not nx.is_connected(graph):
-        graph = graph.subgraph(max(nx.connected_components(graph), key=len)).copy()
-    return graph
+    return graph.subgraph(max(nx.connected_components(graph), key=len)).copy()
 
 def edge_id(graph: nx.Graph | nx.MultiGraph) -> tuple[np.ndarray, np.ndarray]:
     """Edge identification.

@@ -5,7 +5,7 @@ def main():
     # Initialization of identification information for this particular
     # batch of spider web-inspired Delaunay-triangulated networks
     network = "swidt"
-    date = "20241210"
+    date = "20250102"
     batch = "A"
     scheme = "prhd"
 

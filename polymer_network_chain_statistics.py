@@ -1,7 +1,8 @@
 import numpy as np
 
 def p_gaussian_cnfrmtn_func(
-        b: float, nu: np.ndarray | float | int,
+        b: float,
+        nu: np.ndarray | float | int,
         r: np.ndarray | float | int) -> np.ndarray | float:
     """Gaussian end-to-end distance polymer chain conformation
     probability distribution.

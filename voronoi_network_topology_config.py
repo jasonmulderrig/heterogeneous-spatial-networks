@@ -5,7 +5,7 @@ def main():
     # Initialization of identification information for these particular
     # batches of Voronoi-tessellated networks
     network = "voronoi"
-    date = "20241210"
+    date = "20250102"
     batch_A = "A"
     batch_B = "B"
     scheme = "prhd"

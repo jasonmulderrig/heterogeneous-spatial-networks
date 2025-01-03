@@ -1,6 +1,9 @@
 import numpy as np
 import networkx as nx
-from graph_utils import elastically_effective_end_linked_graph
+from graph_utils import (
+    largest_connected_component,
+    elastically_effective_end_linked_graph
+)
 import nodal_degree_topological_descriptors
 import shortest_path_topological_descriptors
 import general_topological_descriptors
@@ -69,17 +72,11 @@ def network_topological_descriptor(
         print(error_str)
         return None
     
-    # Extract elastically-effective end-linked network (if called for)
+    # Extract elastically-effective end-linked network
     if eeel_ntwrk == True:
-        conn_graph = elastically_effective_end_linked_graph(conn_graph).copy()
-        # Continue to extract the elastically-effective end-linked
-        # network
-        conn_core_graph = (
-            conn_core_graph.subgraph(list(conn_graph.nodes())).copy()
-        )
-        conn_pb_graph = (
-            conn_pb_graph.subgraph(list(conn_graph.nodes())).copy()
-        )
+        # The elastically-effective end-linked network function returns
+        # the largest connected component
+        conn_graph = elastically_effective_end_linked_graph(conn_graph)
         if (tplgcl_dscrptr == "prop_eeel_n") or (tplgcl_dscrptr == "prop_eeel_m"):
             error_str = (
                 "Only the original conn_graph ought to be supplied "
@@ -89,6 +86,12 @@ def network_topological_descriptor(
             )
             print(error_str)
             return None
+    # Extract largest connected component from network if the
+    # elastically-effective end-linked network is not called for
+    else: conn_graph = largest_connected_component(conn_graph)
+    # Complete the extraction of the largest connected component
+    conn_core_graph = conn_core_graph.subgraph(list(conn_graph.nodes())).copy()
+    conn_pb_graph = conn_pb_graph.subgraph(list(conn_graph.nodes())).copy()
     
     # Remove isolate nodes
     conn_graph.remove_nodes_from(list(nx.isolates(conn_graph)))
