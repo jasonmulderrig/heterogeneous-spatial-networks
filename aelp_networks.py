@@ -349,10 +349,12 @@ def dangling_chains_update_func(
 def apelp_network_nu_assignment(
         rng: np.random.Generator,
         b: float,
+        L: float,
         nu: int,
         nu_max: int,
-        r_core_chn: np.ndarray,
-        r_pb_chn: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        conn_core_edges: np.ndarray,
+        conn_pb_edges: np.ndarray,
+        coords: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Chain segment number assignment procedure for artificial
     polydisperse end-linked polymer networks.
 
@@ -363,20 +365,25 @@ def apelp_network_nu_assignment(
     Args:
         rng (np.random.Generator): np.random.Generator object.
         b (float): Chain segment and/or cross-linker diameter.
+        L (float): Simulation box size.
         nu (int): (Average) Number of segments per chain.
         nu_max (int): Maximum number of segments that could possibly be assigned to a chain.
-        r_core_chn (np.ndarray): End-to-end chain lengths for core edge chains.
-        r_pb_chn (np.ndarray): End-to-end chain lengths for periodic boundary edge chains.
+        conn_core_edges (np.ndarray): Edges representing chains that reside completely within the core simulation box.
+        conn_pb_edges (np.ndarray): Edges representing chains that cross the periodic boundaries of the core simulation box.
+        coords (np.ndarray): np.ndarray of node coordinates.
     
     Returns:
         tuple[np.ndarray, np.ndarray]: Chain segment numbers for core
         and periodic boundary edge chains, respectively.
     
     """
-    # Initialize chain segment number and chain length arrays
+    # Calculate end-to-end chain length (Euclidean edge length)
+    r_core_chn, r_pb_chn = l_arr_func(conn_core_edges, conn_pb_edges, coords, L)
     core_m = np.shape(r_core_chn)[0]
     pb_m = np.shape(r_pb_chn)[0]
-    nu_edges = np.empty(core_m+pb_m, dtype=int)
+    m = core_m + pb_m
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+    nu_edges = np.empty(m, dtype=int)
     r_chn = np.concatenate((r_core_chn, r_pb_chn))
 
     # Minimum and maximum end-to-end chain lengths
@@ -428,6 +435,8 @@ def apelp_network_nu_assignment(
             # Determine minimum chain segment number for all chains in
             # the bin
             nu_min = int(np.min(nu_min_bin))
+            # Reset the minimum chain segment number to 1 if a self-loop
+            # is present in the bin
             if nu_min < 1: nu_min = 1
             # Confirm that the minimal physically-constrained minimum
             # chain segment number is less than or equal to the
@@ -596,6 +605,12 @@ def apelp_network_nu_assignment(
                         # polymer network
                         nu_edges[chn_bin[chn]] = int(
                             rng.choice(nu_chn_bin, size=None, p=p_chn_bin))
+    
+    # Impose the self-loop chain segment number constraint (a self-loop
+    # chain must have at least 3 segments)
+    for edge in range(m):
+        if conn_edges[edge, 0] == conn_edges[edge, 1]:
+            if nu_edges[edge] < 3: nu_edges[edge] = 3
     
     # Return the chain segment numbers for core and periodic edge
     # chains, respectively
@@ -1148,13 +1163,9 @@ def aelp_network_topology_initialization(
         conn_pb_edges = mx_cmp_conn_pb_graph_edges.copy()
         coords = mx_cmp_coords.copy()
 
-        # Calculate end-to-end chain length (Euclidean edge length)
-        r_core_chn, r_pb_chn = l_arr_func(
-            conn_core_edges, conn_pb_edges, coords, L)
-
         # Assign a chain segment number to each chain
         nu_core_edges, nu_pb_edges = apelp_network_nu_assignment(
-            rng, b, nu, nu_max, r_core_chn, r_pb_chn)
+            rng, b, L, nu, nu_max, conn_core_edges, conn_pb_edges, coords)
         
         # Save the chain segment numbers
         np.savetxt(conn_nu_core_edges_filename, nu_core_edges, fmt="%d")
