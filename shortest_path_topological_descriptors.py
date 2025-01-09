@@ -270,10 +270,6 @@ def scc_func(
         np.ndarray: Nodewise spatial (Amamoto) closeness centrality.
     
     """
-    # Remove/Discard self-loops, which render a spatial (Amamoto)
-    # closeness centrality value of infinity
-    conn_graph.remove_edges_from(list(nx.selfloop_edges(conn_graph)))
-
     # Extract the core and periodic boundary graphs
     conn_core_graph = conn_core_graph.subgraph(list(conn_graph.nodes())).copy()
     conn_pb_graph = conn_pb_graph.subgraph(list(conn_graph.nodes())).copy()
