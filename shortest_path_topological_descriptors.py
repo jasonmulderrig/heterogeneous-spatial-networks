@@ -133,7 +133,9 @@ def e_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
         the first node (1-0, 1-2, 1-3, ..., 1-(n-1)), and so on.
     
     """
-    return np.reciprocal(d_func(graph), dtype=float)
+    d = d_func(graph)
+    d = d.astype(float)
+    return np.reciprocal(d, where=d!=0.0)
 
 def avrg_e_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     """Average graph efficiency.
@@ -158,9 +160,8 @@ def avrg_e_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     for node_0 in node_list:
         avrg_e_sum = 0.
         for node_1 in node_list:
-            if node_0 == node_1: continue
-            else:
-                avrg_e_sum += np.reciprocal(d_dict[node_0][node_1], dtype=float)
+            d = d_dict[node_0][node_1] * 1.0
+            avrg_e_sum += np.reciprocal(d, where=d!=0.0)
         avrg_e[indx] = avrg_e_sum / (n-1)
         indx += 1
     
@@ -270,17 +271,16 @@ def scc_func(
         np.ndarray: Nodewise spatial (Amamoto) closeness centrality.
     
     """
-    # Extract the core and periodic boundary graphs
-    conn_core_graph = conn_core_graph.subgraph(list(conn_graph.nodes())).copy()
-    conn_pb_graph = conn_pb_graph.subgraph(list(conn_graph.nodes())).copy()
+    # Calculate edge length
+    l = l_func(conn_core_graph, conn_pb_graph, conn_graph, coords, L)
 
-    # Calculate inverse edge length
-    l_inv = np.reciprocal(
-        l_func(conn_core_graph, conn_pb_graph, conn_graph, coords, L))
+    # Calculate inverse edge length (where the inverse edge length for
+    # self-loops is set to zero)
+    l_inv = np.reciprocal(l, where=l!=0.0)
+
+    # Clear edge attributes
+    for node_0, node_1, attr in list(conn_graph.edges(data=True)): attr.clear()
     
-    # Initialize edge weight attribute
-    nx.set_edge_attributes(conn_graph, values=1, name="l_inv")
-
     # Set edge weight attribute to the inverse edge length for each edge
     for edge_indx, edge in enumerate(list(conn_graph.edges())):
         # Node numbers
@@ -303,5 +303,3 @@ def scc_func(
                 nx.closeness_centrality(
                     conn_graph, distance="l_inv").values()))
     )
-
-# def scc_arr_func() # fill this in later, if necessary

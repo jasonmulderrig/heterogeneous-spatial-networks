@@ -361,12 +361,12 @@ def swidt_network_topological_descriptor(
     """Spider web-inspired Delaunay-triangulated network topological
     descriptor.
     
-    This function extracts a Spider web-inspired Delaunay-triangulated
+    This function extracts a spider web-inspired Delaunay-triangulated
     network and sets a variety of input parameters corresponding to a
     particular topological descriptor (and numpy function) of interest.
     These are then passed to the master network_topological_descriptor()
     function, which calculates (and, if called for, saves) the result of
-    the topological descriptor for the Spider web-inspired
+    the topological descriptor for the spider web-inspired
     Delaunay-triangulated network.
 
     Args:

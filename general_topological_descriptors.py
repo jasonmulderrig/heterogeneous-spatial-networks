@@ -93,27 +93,30 @@ def l_func(
         core_node_0 = int(edge[0])
         core_node_1 = int(edge[1])
 
-        # Coordinates of each node
-        core_node_0_coords = coords[core_node_0]
-        core_node_1_coords = coords[core_node_1]
-
-        # Edge is a core edge
-        if conn_core_graph.has_edge(core_node_0, core_node_1):
-            # Calculate and store core edge length
-            l[edge_indx] = np.linalg.norm(core_node_1_coords-core_node_0_coords)
-        # Edge is a periodic boundary edge
-        elif conn_pb_graph.has_edge(core_node_0, core_node_1):
-            # Calculate and store periodic boundary edge length
-            _, l[edge_indx] = core_pb_edge_id(
-                core_node_0_coords, core_node_1_coords, L)
+        # Self-loops have zero edge length
+        if core_node_0 == core_node_1: l[edge_indx] = 0.0
         else:
-            error_str = (
-                "The edge in the overall graph was not detected in "
-                + "either the core edge graph or the periodic boundary "
-                + "edge graph."
-            )
-            print(error_str)
-            return None
+            # Coordinates of each node
+            core_node_0_coords = coords[core_node_0]
+            core_node_1_coords = coords[core_node_1]
+
+            # Edge is a core edge
+            if conn_core_graph.has_edge(core_node_0, core_node_1):
+                # Calculate and store core edge length
+                l[edge_indx] = np.linalg.norm(core_node_1_coords-core_node_0_coords)
+            # Edge is a periodic boundary edge
+            elif conn_pb_graph.has_edge(core_node_0, core_node_1):
+                # Calculate and store periodic boundary edge length
+                _, l[edge_indx] = core_pb_edge_id(
+                    core_node_0_coords, core_node_1_coords, L)
+            else:
+                error_str = (
+                    "The edge in the overall graph was not detected in "
+                    + "either the core edge graph or the periodic boundary "
+                    + "edge graph."
+                )
+                print(error_str)
+                return None
         
     return l
 
@@ -143,7 +146,8 @@ def l_cmpnts_func(
     """
     # Gather edges and initialize edge length components np.ndarray
     conn_edges = list(conn_graph.edges())
-    l_cmpnt = np.empty((len(conn_edges), np.shape(coords)[1]))
+    dim = np.shape(coords)[1]
+    l_cmpnt = np.empty((len(conn_edges), dim))
 
     # Calculate and store the length component of each edge
     for edge_indx, edge in enumerate(conn_edges):
@@ -151,28 +155,31 @@ def l_cmpnts_func(
         core_node_0 = int(edge[0])
         core_node_1 = int(edge[1])
 
-        # Coordinates of each node
-        core_node_0_coords = coords[core_node_0]
-        core_node_1_coords = coords[core_node_1]
-
-        # Edge is a core edge
-        if conn_core_graph.has_edge(core_node_0, core_node_1):
-            # Calculate and store core edge length components
-            l_cmpnt[edge_indx] = core_node_1_coords - core_node_0_coords
-        # Edge is a periodic boundary edge
-        elif conn_pb_graph.has_edge(core_node_0, core_node_1):
-            # Calculate and store periodic boundary edge length
-            pb_node_1_coords, _ = core_pb_edge_id(
-                core_node_0_coords, core_node_1_coords, L)
-            l_cmpnt[edge_indx] = pb_node_1_coords - core_node_0_coords
+        # Self-loops have zero edge length components
+        if core_node_0 == core_node_1: l_cmpnt[edge_indx] = np.zeros(dim)
         else:
-            error_str = (
-                "The edge in the overall graph was not detected in "
-                + "either the core edge graph or the periodic boundary "
-                + "edge graph."
-            )
-            print(error_str)
-            return None
+            # Coordinates of each node
+            core_node_0_coords = coords[core_node_0]
+            core_node_1_coords = coords[core_node_1]
+
+            # Edge is a core edge
+            if conn_core_graph.has_edge(core_node_0, core_node_1):
+                # Calculate and store core edge length components
+                l_cmpnt[edge_indx] = core_node_1_coords - core_node_0_coords
+            # Edge is a periodic boundary edge
+            elif conn_pb_graph.has_edge(core_node_0, core_node_1):
+                # Calculate and store periodic boundary edge length
+                pb_node_1_coords, _ = core_pb_edge_id(
+                    core_node_0_coords, core_node_1_coords, L)
+                l_cmpnt[edge_indx] = pb_node_1_coords - core_node_0_coords
+            else:
+                error_str = (
+                    "The edge in the overall graph was not detected in "
+                    + "either the core edge graph or the periodic boundary "
+                    + "edge graph."
+                )
+                print(error_str)
+                return None
         
     return l_cmpnt
 
@@ -208,13 +215,16 @@ def l_arr_func(
 
     # Calculate and store the length of each core edge
     for edge in range(conn_core_m):
-        # Coordinates of each node
-        core_node_0_coords = coords[int(conn_core_edges[edge, 0])]
-        core_node_1_coords = coords[int(conn_core_edges[edge, 1])]
-
-        # Core edge length
-        l_core_edges[edge] = np.linalg.norm(
-            core_node_1_coords-core_node_0_coords)
+        # Node numbers
+        core_node_0 = int(conn_core_edges[edge, 0])
+        core_node_1 = int(conn_core_edges[edge, 1])
+        
+        # Self-loops have zero edge length
+        if core_node_0 == core_node_1: l_core_edges[edge] = 0.0
+        else:    
+            # Core edge length
+            l_core_edges[edge] = np.linalg.norm(
+                coords[core_node_1]-coords[core_node_0])
     
     # Initialize periodic boundary edge length np.ndarray
     conn_pb_m = np.shape(conn_pb_edges)[0]
@@ -222,13 +232,16 @@ def l_arr_func(
 
     # Calculate and store the length of each periodic boundary edge
     for edge in range(conn_pb_m):
-        # Coordinates of each node
-        core_node_0_coords = coords[int(conn_pb_edges[edge, 0])]
-        core_node_1_coords = coords[int(conn_pb_edges[edge, 1])]
-
-        # Periodic boundary edge length
-        _, l_pb_edges[edge] = core_pb_edge_id(
-            core_node_0_coords, core_node_1_coords, L)
+        # Node numbers
+        core_node_0 = int(conn_pb_edges[edge, 0])
+        core_node_1 = int(conn_pb_edges[edge, 1])
+        
+        # Self-loops have zero edge length
+        if core_node_0 == core_node_1: l_pb_edges[edge] = 0.0
+        else:
+            # Periodic boundary edge length
+            _, l_pb_edges[edge] = core_pb_edge_id(
+                coords[core_node_0], coords[core_node_1], L)
         
     return l_core_edges, l_pb_edges
 
@@ -261,16 +274,20 @@ def l_cmpnts_arr_func(
     """
     # Initialize core edge length components np.ndarray
     conn_core_m = np.shape(conn_core_edges)[0]
-    l_cmpnt_core_edges = np.empty((conn_core_m, np.shape(coords)[1]))
+    dim = np.shape(coords)[1]
+    l_cmpnt_core_edges = np.empty((conn_core_m, dim))
 
     # Calculate and store the length components of each core edge
     for edge in range(conn_core_m):
-        # Coordinates of each node
-        core_node_0_coords = coords[int(conn_core_edges[edge, 0])]
-        core_node_1_coords = coords[int(conn_core_edges[edge, 1])]
+        # Node numbers
+        core_node_0 = int(conn_core_edges[edge, 0])
+        core_node_1 = int(conn_core_edges[edge, 1])
 
-        # Core edge length components
-        l_cmpnt_core_edges[edge] = core_node_1_coords - core_node_0_coords
+        # Self-loops have zero edge length components
+        if core_node_0 == core_node_1: l_cmpnt_core_edges[edge] = np.zeros(dim)
+        else:
+            # Core edge length components
+            l_cmpnt_core_edges[edge] = coords[core_node_1] - coords[core_node_0]
     
     # Initialize periodic boundary edge length components np.ndarray
     conn_pb_m = np.shape(conn_pb_edges)[0]
@@ -279,14 +296,21 @@ def l_cmpnts_arr_func(
     # Calculate and store the length components of each periodic
     # boundary edge
     for edge in range(conn_pb_m):
-        # Coordinates of each node
-        core_node_0_coords = coords[int(conn_pb_edges[edge, 0])]
-        core_node_1_coords = coords[int(conn_pb_edges[edge, 1])]
+        # Node numbers
+        core_node_0 = int(conn_pb_edges[edge, 0])
+        core_node_1 = int(conn_pb_edges[edge, 1])
 
-        # Periodic boundary edge length components
-        pb_node_1_coords, _ = core_pb_edge_id(
-            core_node_0_coords, core_node_1_coords, L)
-        l_cmpnt_pb_edges[edge] = pb_node_1_coords - core_node_0_coords
+        # Self-loops have zero edge length components
+        if core_node_0 == core_node_1: l_cmpnt_pb_edges[edge] = np.zeros(dim)
+        else:
+            # Coordinates of each node
+            core_node_0_coords = coords[core_node_0]
+            core_node_1_coords = coords[core_node_1]
+
+            # Periodic boundary edge length components
+            pb_node_1_coords, _ = core_pb_edge_id(
+                core_node_0_coords, core_node_1_coords, L)
+            l_cmpnt_pb_edges[edge] = pb_node_1_coords - core_node_0_coords
     
     return l_cmpnt_core_edges, l_cmpnt_pb_edges
 

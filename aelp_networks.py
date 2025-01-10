@@ -1239,19 +1239,18 @@ def aelp_network_topological_descriptor(
         eeel_ntwrk: bool,
         save_tplgcl_dscrptr_result: bool,
         return_tplgcl_dscrptr_result: bool) -> np.ndarray | float | int | None:
-    """Spider web-inspired Delaunay-triangulated network topological
-    descriptor.
+    """Artificial end-linked polymer network topological descriptor.
     
-    This function extracts a Spider web-inspired Delaunay-triangulated
-    network and sets a variety of input parameters corresponding to a
-    particular topological descriptor (and numpy function) of interest.
-    These are then passed to the master network_topological_descriptor()
-    function, which calculates (and, if called for, saves) the result of
-    the topological descriptor for the Spider web-inspired
-    Delaunay-triangulated network.
+    This function extracts an artificial end-linked polymer network
+    and sets a variety of input parameters corresponding to a particular
+    topological descriptor (and numpy function) of interest. These are
+    then passed to the master network_topological_descriptor() function,
+    which calculates (and, if called for, saves) the result of the
+    topological descriptor for the artificial end-linked polymer
+    network.
 
     Args:
-        network (str): Lower-case acronym indicating the particular type of network that is being represented by the eventual network topology; here, only "swidt" is applicable (corresponding to spider-web inspired Delaunay-triangulated networks ("swidt")).
+        network (str): Lower-case acronym indicating the particular type of network that is being represented by the eventual network topology; here, either "auelp" or "apelp" are applicable (corresponding to artificial uniform end-linked polymer networks ("auelp") or artificial polydisperse end-linked polymer networks ("apelp")).
         date (str): "YYYYMMDD" string indicating the date during which the network batch and sample data was generated.
         batch (str): Single capitalized letter (e.g., A, B, C, ...) indicating the batch label of the network sample data.
         sample (int): Label of a particular network in the batch.
