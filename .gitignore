@@ -1,13 +1,5 @@
 # Edited by jasonmulderrig on 2024-08-29
 
-### Heterogeneous spatial network-specific directories
-voronoi/
-delaunay/
-swidt/
-auelp/
-apelp/
-aelp/
-
 ### Temporary files component of .gitignore
 *~
 *~Dropbox
