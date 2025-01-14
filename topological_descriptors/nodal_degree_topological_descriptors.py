@@ -1,6 +1,6 @@
 import numpy as np
 import networkx as nx
-from general_topological_descriptors import n_func
+from topological_descriptors.general_topological_descriptors import n_func
 
 def k_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     """Node degree.

@@ -1,18 +1,20 @@
 import numpy as np
 import networkx as nx
-from file_io import (
+from file_io.file_io import (
     L_filename_str,
     config_filename_str,
     config_pruning_filename_str
 )
-from simulation_box_utils import L_arg_eta_func
-from delaunay_networks import delaunay_network_topology_initialization
-from nodal_degree_topological_descriptors import k_func
-from graph_utils import (
+from helpers.simulation_box_utils import L_arg_eta_func
+from networks.delaunay_networks import delaunay_network_topology_initialization
+from topological_descriptors.nodal_degree_topological_descriptors import k_func
+from helpers.graph_utils import (
     add_nodes_from_numpy_array,
     add_edges_from_numpy_array
 )
-from network_topological_descriptors import network_topological_descriptor
+from topological_descriptors.network_topological_descriptors import (
+    network_topological_descriptor
+)
 
 def swidt_filename_str(
         network: str,

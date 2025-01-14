@@ -1,20 +1,22 @@
 import numpy as np
 import networkx as nx
-from file_io import (
+from file_io.file_io import (
     L_filename_str,
     config_filename_str
 )
-from simulation_box_utils import L_arg_eta_func
+from helpers.simulation_box_utils import L_arg_eta_func
 from scipy.spatial import Delaunay
-from network_topology_initialization_utils import (
+from helpers.network_topology_initialization_utils import (
     core_node_tessellation,
     unique_sorted_edges
 )
-from graph_utils import (
+from helpers.graph_utils import (
     add_nodes_from_numpy_array,
     add_edges_from_numpy_array
 )
-from network_topological_descriptors import network_topological_descriptor
+from topological_descriptors.network_topological_descriptors import (
+    network_topological_descriptor
+)
 
 def delaunay_filename_str(
         network: str,

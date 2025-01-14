@@ -1,6 +1,6 @@
 import numpy as np
 import networkx as nx
-from general_topological_descriptors import (
+from topological_descriptors.general_topological_descriptors import (
     n_func,
     l_func
 )

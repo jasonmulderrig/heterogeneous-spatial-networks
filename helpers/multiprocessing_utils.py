@@ -1,25 +1,27 @@
-from voronoi_networks import (
+from networks.voronoi_networks import (
     voronoi_L,
     voronoi_network_topology,
     voronoi_network_topological_descriptor
 )
-from delaunay_networks import (
+from networks.delaunay_networks import (
     delaunay_L,
     delaunay_network_topology,
     delaunay_network_topological_descriptor
 )
-from swidt_networks import (
+from networks.swidt_networks import (
     swidt_L,
     swidt_network_topology,
     swidt_network_edge_pruning_procedure,
     swidt_network_topological_descriptor
 )
-from aelp_networks import (
+from networks.aelp_networks import (
     aelp_L,
-    aelp_network_topology,
     aelp_network_topological_descriptor
 )
-from node_placement import initial_node_seeding
+from networks.auelp_networks import auelp_network_topology
+from networks.abelp_networks import abelp_network_topology
+from networks.apelp_networks import apelp_network_topology
+from helpers.node_placement import initial_node_seeding
 
 def run_voronoi_L(args):
     voronoi_L(*args)
@@ -45,8 +47,14 @@ def run_delaunay_network_topology(args):
 def run_swidt_network_topology(args):
     swidt_network_topology(*args)
 
-def run_aelp_network_topology(args):
-    aelp_network_topology(*args)
+def run_auelp_network_topology(args):
+    auelp_network_topology(*args)
+
+def run_abelp_network_topology(args):
+    abelp_network_topology(*args)
+
+def run_apelp_network_topology(args):
+    apelp_network_topology(*args)
 
 def run_swidt_network_edge_pruning_procedure(args):
     swidt_network_edge_pruning_procedure(*args)

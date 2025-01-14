@@ -1,11 +1,11 @@
 import numpy as np
 import networkx as nx
-from network_topology_initialization_utils import (
+from helpers.network_topology_initialization_utils import (
     tessellation_protocol,
     tessellation
 )
 from scipy.special import comb
-from graph_utils import (
+from helpers.graph_utils import (
     elastically_effective_graph,
     elastically_effective_end_linked_graph,
     edge_id

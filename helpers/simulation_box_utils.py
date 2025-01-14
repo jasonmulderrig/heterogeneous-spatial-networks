@@ -1,5 +1,5 @@
 import numpy as np
-from network_utils import a_or_v_func
+from helpers.network_utils import a_or_v_func
 
 def A_or_V_arg_L_func(dim: int, L: float) -> float:
     """Simulation box area or volume.

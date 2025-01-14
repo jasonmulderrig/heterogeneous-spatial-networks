@@ -1,10 +1,10 @@
 import numpy as np
-from network_topology_initialization_utils import (
+from helpers.network_topology_initialization_utils import (
     tessellation_protocol,
     tessellation,
     orb_neighborhood_id
 )
-from file_io import (
+from file_io.file_io import (
     L_filename_str,
     config_filename_str
 )

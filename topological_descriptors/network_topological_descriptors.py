@@ -1,12 +1,12 @@
 import numpy as np
 import networkx as nx
-from graph_utils import (
+from helpers.graph_utils import (
     largest_connected_component,
     elastically_effective_end_linked_graph
 )
-import nodal_degree_topological_descriptors
-import shortest_path_topological_descriptors
-import general_topological_descriptors
+import topological_descriptors.nodal_degree_topological_descriptors
+import topological_descriptors.shortest_path_topological_descriptors
+import topological_descriptors.general_topological_descriptors
 
 def network_topological_descriptor(
         tplgcl_dscrptr: str,
@@ -55,15 +55,15 @@ def network_topological_descriptor(
 
     # Probe each topological descriptors module to identify the
     # topological descriptor calculation function
-    if hasattr(nodal_degree_topological_descriptors, tplgcl_dscrptr_func_str):
+    if hasattr(topological_descriptors.nodal_degree_topological_descriptors, tplgcl_dscrptr_func_str):
         tplgcl_dscrptr_func = getattr(
-            nodal_degree_topological_descriptors, tplgcl_dscrptr_func_str)
-    elif hasattr(shortest_path_topological_descriptors, tplgcl_dscrptr_func_str):
+            topological_descriptors.nodal_degree_topological_descriptors, tplgcl_dscrptr_func_str)
+    elif hasattr(topological_descriptors.shortest_path_topological_descriptors, tplgcl_dscrptr_func_str):
         tplgcl_dscrptr_func = getattr(
-            shortest_path_topological_descriptors, tplgcl_dscrptr_func_str)
-    elif hasattr(general_topological_descriptors, tplgcl_dscrptr_func_str):
+            topological_descriptors.shortest_path_topological_descriptors, tplgcl_dscrptr_func_str)
+    elif hasattr(topological_descriptors.general_topological_descriptors, tplgcl_dscrptr_func_str):
         tplgcl_dscrptr_func = getattr(
-            general_topological_descriptors, tplgcl_dscrptr_func_str)
+            topological_descriptors.general_topological_descriptors, tplgcl_dscrptr_func_str)
     else:
         error_str = (
             "The topological descriptor ``" + tplgcl_dscrptr + "'' is "
