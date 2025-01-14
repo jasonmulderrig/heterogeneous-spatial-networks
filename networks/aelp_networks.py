@@ -361,7 +361,7 @@ def aelp_network_topological_descriptor(
     network.
 
     Args:
-        network (str): Lower-case acronym indicating the particular type of network that is being represented by the eventual network topology; here, either "auelp" or "apelp" are applicable (corresponding to artificial uniform end-linked polymer networks ("auelp") or artificial polydisperse end-linked polymer networks ("apelp")).
+        network (str): Lower-case acronym indicating the particular type of network that is being represented by the eventual network topology; here, either "auelp", "abelp", or "apelp" are applicable (corresponding to artificial uniform end-linked polymer networks ("auelp"), artificial bimodal end-linked polymer networks ("abelp"), or artificial polydisperse end-linked polymer networks ("apelp")).
         date (str): "YYYYMMDD" string indicating the date during which the network batch and sample data was generated.
         batch (str): Single capitalized letter (e.g., A, B, C, ...) indicating the batch label of the network sample data.
         sample (int): Label of a particular network in the batch.
