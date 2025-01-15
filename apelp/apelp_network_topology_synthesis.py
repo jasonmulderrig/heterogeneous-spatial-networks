@@ -92,8 +92,8 @@ def main():
     rho_nu_num = np.shape(rho_nu_arr)[0]
     k_num = np.shape(k_arr)[0]
     n_num = np.shape(n_arr)[0]
-    if nu_arr.ndim == 1: nu_num = 1
-    else: nu_num = np.shape(nu_arr)[0]
+    if nu_arr.ndim == 1: nu_arr = nu_arr.reshape(1, -1)
+    nu_num = np.shape(nu_arr)[0]
     config_num = np.shape(config_arr)[0]
 
     sample_num = dim_num * b_num * xi_num * rho_nu_num * k_num * n_num * nu_num

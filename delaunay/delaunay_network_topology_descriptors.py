@@ -18,7 +18,7 @@ def main():
     cpu_num = int(np.floor(multiprocessing.cpu_count()/2))
 
     # Initialization of identification information for this particular
-    # batch of Voronoi-tessellated networks
+    # batch of Delaunay-triangulated networks
     network = "delaunay"
     date = "20250102"
     batch = "A"

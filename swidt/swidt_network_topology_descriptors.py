@@ -18,7 +18,7 @@ def main():
     cpu_num = int(np.floor(multiprocessing.cpu_count()/2))
 
     # Initialization of identification information for this particular
-    # batch of Delaunay-triangulated networks
+    # batch of spider web-inspired Delaunay-triangulated networks
     network = "swidt"
     date = "20250102"
     batch = "A"
