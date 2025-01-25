@@ -440,7 +440,8 @@ def auelp_network_topology_initialization(
     core_node_type = np.concatenate(
         (core_node_type, np.repeat(3, dnglng_n)), dtype=int)
     # Add core coordinates from dangling chains
-    coords = np.vstack((coords, np.asarray(core_dnglng_chns_coords)))
+    if dnglng_n == 0: pass
+    else: coords = np.vstack((coords, np.asarray(core_dnglng_chns_coords)))
     # Update core_nodes
     core_nodes = np.arange(n+dnglng_n, dtype=int)
     

@@ -53,11 +53,11 @@ Example timing benchmarks
 
 The following contains some timing benchmarks for the network synthesis and topological descriptor Python files on my Dell Inspiron computer with ``cpu_num = 8`` for the ``20250102`` network parameters:
 
-* ``abelp_network_topology_config.py`` -> ``abelp_network_topology_synthesis.py`` -> ``abelp_network_topology_descriptors.py``: ~ 60 seconds (for ``abelp_network_topology_synthesis.py``) + ~ 25 minutes (for ``abelp_network_topology_descriptors.py``)
+* ``abelp_network_topology_config.py`` -> ``abelp_network_topology_synthesis.py`` -> ``abelp_network_topology_descriptors.py``: ~ 60 seconds (for ``abelp_network_topology_synthesis.py``) + ~ 30 minutes (for ``abelp_network_topology_descriptors.py``)
 * ``apelp_network_topology_config.py`` -> ``apelp_network_topology_synthesis.py`` -> ``apelp_network_topology_descriptors.py``: ~ 105 minutes (for ``apelp_network_topology_synthesis.py``) + ~ 25 minutes (for ``apelp_network_topology_descriptors.py``)
-* ``auelp_network_topology_config.py`` -> ``auelp_network_topology_synthesis.py`` -> ``auelp_network_topology_descriptors.py``: ~ 30 seconds (for ``auelp_network_topology_synthesis.py``) + ~ 25 minutes (for ``auelp_network_topology_descriptors.py``)
-* ``delaunay_network_topology_config.py`` -> ``delaunay_network_topology_synthesis.py`` -> ``delaunay_network_topology_descriptors.py``: ~ 10 seconds (for ``delaunay_network_topology_synthesis.py``) + ~ 65 minutes (for ``delaunay_network_topology_descriptors.py``)
-* ``swidt_network_topology_config.py`` -> ``swidt_network_topology_synthesis.py`` -> ``swidt_network_topology_descriptors.py``: ~ 20 seconds (for ``swidt_network_topology_synthesis.py``) + ~ 20 minutes (for ``swidt_network_topology_descriptors.py``)
-* ``voronoi_network_topology_config.py`` -> ``voronoi_network_topology_synthesis.py`` -> ``voronoi_network_topology_descriptors.py``: ~ 30 seconds (for ``voronoi_network_topology_synthesis.py``) + ~ 20 minutes (for ``voronoi_network_topology_descriptors.py``)
+* ``auelp_network_topology_config.py`` -> ``auelp_network_topology_synthesis.py`` -> ``auelp_network_topology_descriptors.py``: ~ 30 seconds (for ``auelp_network_topology_synthesis.py``) + ~ 30 minutes (for ``auelp_network_topology_descriptors.py``)
+* ``delaunay_network_topology_config.py`` -> ``delaunay_network_topology_synthesis.py`` -> ``delaunay_network_topology_descriptors.py``: ~ 10 seconds (for ``delaunay_network_topology_synthesis.py``) + ~ 80 minutes (for ``delaunay_network_topology_descriptors.py``)
+* ``swidt_network_topology_config.py`` -> ``swidt_network_topology_synthesis.py`` -> ``swidt_network_topology_descriptors.py``: ~ 20 seconds (for ``swidt_network_topology_synthesis.py``) + ~ 25 minutes (for ``swidt_network_topology_descriptors.py``)
+* ``voronoi_network_topology_config.py`` -> ``voronoi_network_topology_synthesis.py`` -> ``voronoi_network_topology_descriptors.py``: ~ 30 seconds (for ``voronoi_network_topology_synthesis.py``) + ~ 35 minutes (for ``voronoi_network_topology_descriptors.py``)
 
 Note that essentially every type of topological descriptor is calculated for each network in the topological descriptor Python files (for the sake of benchmarking).

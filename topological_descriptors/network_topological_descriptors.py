@@ -100,8 +100,15 @@ def network_topological_descriptor(
     
     # Deploy topological descriptor calculation function and carefully
     # handle the input parameter set in the process
-    if ((tplgcl_dscrptr == "l") or (tplgcl_dscrptr == "l_cmpnts")
-        or (tplgcl_dscrptr == "scc")):
+    l_tplgcl_dscrptr_list = [
+        "l", "l_cmpnts", "l_attr_r", "l_inv_attr_r", "l_attr_sigma",
+        "l_inv_attr_sigma", "l_attr_epsilon", "l_inv_attr_epsilon",
+        "l_attr_d", "l_inv_attr_d", "avrg_l_attr_d", "avrg_l_inv_attr_d",
+        "l_attr_e", "l_inv_attr_e", "avrg_l_attr_e", "avrg_l_inv_attr_e",
+        "l_attr_bc", "l_inv_attr_bc", "l_attr_ebc", "l_inv_attr_ebc",
+        "l_attr_cc", "l_inv_attr_cc"
+    ]
+    if tplgcl_dscrptr in l_tplgcl_dscrptr_list:
         tplgcl_dscrptr_result = tplgcl_dscrptr_func(
             conn_core_graph, conn_pb_graph, conn_graph, coords, L)
     elif tplgcl_dscrptr == "h":

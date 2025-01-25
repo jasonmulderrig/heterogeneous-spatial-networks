@@ -8,7 +8,7 @@ def k_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     This function calculates the node degree in an (undirected) graph.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
     
     Returns:
         np.ndarray: Node degree.
@@ -23,7 +23,7 @@ def avrg_nn_k_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     each node in an (undirected) graph.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
     
     Returns:
         np.ndarray: Nodewise average nearest neighbor degree.
@@ -38,7 +38,7 @@ def k_diff_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     (undirected) graph.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
     
     Returns:
         np.ndarray: Edgewise degree difference.
@@ -69,7 +69,7 @@ def avrg_k_diff_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     in an (undirected) graph.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
     
     Returns:
         np.ndarray: Nodewise average degree difference.
@@ -119,7 +119,7 @@ def c_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     an (undirected) graph.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
     
     Returns:
         np.ndarray: Nodewise clustering coefficient.
@@ -139,7 +139,7 @@ def kappa_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     This function is best applied to fully connected graphs.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph. Ideally, this graph ought to be fully connected as-is.
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph. Ideally, this graph ought to be fully connected as-is.
     
     Returns:
         np.ndarray: Node-pairwise nodal connectivity, excluding all
@@ -175,7 +175,7 @@ def lcl_avrg_kappa_func(graph: nx.Graph | nx.MultiGraph) -> np.ndarray:
     fully connected graphs.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph. Ideally, this graph ought to be fully connected as-is.
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph. Ideally, this graph ought to be fully connected as-is.
     
     Returns:
         np.ndarray: Average nodewise nodal connectivity.
@@ -201,7 +201,7 @@ def glbl_avrg_kappa_func(graph: nx.Graph | nx.MultiGraph) -> float:
     This function is best applied to fully connected graphs.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph. Ideally, this graph ought to be fully connected as-is.
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph. Ideally, this graph ought to be fully connected as-is.
     
     Returns:
         float: Average node-pairwise nodal connectivity.
@@ -218,7 +218,7 @@ def lambda_1_func(graph: nx.Graph | nx.MultiGraph) -> float:
     graphs.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph. Ideally, this graph ought to be fully connected as-is.
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph. Ideally, this graph ought to be fully connected as-is.
     
     Returns:
         float: Algebraic connectivity.
@@ -234,7 +234,7 @@ def r_pearson_func(graph: nx.Graph | nx.MultiGraph) -> float:
     the Pearson correlation coefficient for an (undirected) graph.
 
     Args:
-        graph: (Undirected) NetworkX graph that can be of type nx.Graph or nx.MultiGraph.
+        graph (nx.Graph | nx.MultiGraph): (Undirected) NetworkX graph.
     
     Returns:
         float: Degree assortativity coefficient.

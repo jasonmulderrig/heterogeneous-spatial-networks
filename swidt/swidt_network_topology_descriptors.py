@@ -93,8 +93,12 @@ def main():
         flush=True)
 
     tplgcl_dscrptr_list = [
-        "l", "l_cmpnts", "avrg_nn_k", "avrg_k_diff", "c", "lcl_avrg_kappa", "e",
-        "avrg_d", "avrg_e", "n_bc", "m_bc", "cc", "scc"
+        "l", "l_cmpnts", "avrg_nn_k", "avrg_k_diff", "c", "lcl_avrg_kappa",
+        "l_attr_epsilon", "l_inv_attr_epsilon", "l_attr_d", "l_inv_attr_d",
+        "avrg_d", "avrg_l_attr_d", "avrg_l_inv_attr_d", "e", "l_attr_e",
+        "l_inv_attr_e", "avrg_e", "avrg_l_attr_e", "avrg_l_inv_attr_e", "bc",
+        "l_attr_bc", "l_inv_attr_bc", "ebc", "l_attr_ebc", "l_inv_attr_ebc",
+        "cc", "l_attr_cc", "l_inv_attr_cc"
     ]
     np_oprtn_list = ["", "mean"]
     eeel_ntwrk = True
@@ -157,7 +161,8 @@ def main():
     
     tplgcl_dscrptr_list = [
         "n", "m", "rho_graph", "glbl_avrg_kappa", "lambda_1", "r_pearson",
-        "r", "sigma", "lcl_e", "glbl_e"
+        "r", "l_attr_r", "l_inv_attr_r", "sigma", "l_attr_sigma",
+        "l_inv_attr_sigma"
     ]
     np_oprtn = ""
     eeel_ntwrk = True
