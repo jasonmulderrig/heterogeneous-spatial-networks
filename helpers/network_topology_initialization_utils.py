@@ -108,26 +108,6 @@ def core_node_tessellation(
 
         return tsslltd_core_coords, pb2core_nodes
 
-def unique_sorted_edges(edges: list[tuple[int, int]]) -> np.ndarray:
-    """Unique edges.
-
-    This function takes a list of (A, B) nodes specifying edges,
-    converts this to an np.ndarray, and retains unique edges. If the
-    original edge list contains edges (A, B) and (B, A), then only
-    (A, B) will be retained (assuming that A <= B).
-
-    Args:
-        edges (list[tuple[int, int]]): List of edges.
-    
-    Returns:
-        np.ndarray: Unique edges.
-    
-    """
-    # Convert list of edges to np.ndarray, sort the order of each (A, B)
-    # edge entry so that A <= B for all entries (after sorting), and
-    # retain unique edges
-    return np.unique(np.sort(np.asarray(edges, dtype=int), axis=1), axis=0)
-
 def core2pb_nodes_func(
         core_nodes: np.ndarray,
         pb2core_nodes: np.ndarray) -> list[np.ndarray]:

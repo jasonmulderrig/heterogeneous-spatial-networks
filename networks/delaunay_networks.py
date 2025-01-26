@@ -6,11 +6,9 @@ from file_io.file_io import (
 )
 from helpers.simulation_box_utils import L_arg_eta_func
 from scipy.spatial import Delaunay
-from helpers.network_topology_initialization_utils import (
-    core_node_tessellation,
-    unique_sorted_edges
-)
+from helpers.network_topology_initialization_utils import core_node_tessellation
 from helpers.graph_utils import (
+    unique_lexsorted_edges,
     add_nodes_from_numpy_array,
     add_edges_from_numpy_array
 )
@@ -227,9 +225,10 @@ def delaunay_network_topology_initialization(
     
     del simplex, simplices, tsslltd_core_delaunay
 
-    # Convert edge list to np.ndarray, and retain the unique edges from
-    # the core and periodic boundary nodes
-    tsslltd_core_pb_edges = unique_sorted_edges(tsslltd_core_pb_edges)
+    # Convert edge list to np.ndarray, and retain the unique
+    # lexicographically sorted edges from the core and periodic boundary
+    # nodes
+    tsslltd_core_pb_edges = unique_lexsorted_edges(tsslltd_core_pb_edges)
 
     # Lists for the edges of the graph capturing the periodic
     # connections between the core nodes
@@ -249,9 +248,10 @@ def delaunay_network_topology_initialization(
             node_1 = int(pb2core_nodes[node_1])
             conn_pb_edges.append((node_0, node_1))
     
-    # Convert edge lists to np.ndarrays, and retain unique edges
-    conn_core_edges = unique_sorted_edges(conn_core_edges)
-    conn_pb_edges = unique_sorted_edges(conn_pb_edges)
+    # Convert edge lists to np.ndarrays, and retain unique and
+    # lexicographically sorted edges
+    conn_core_edges = unique_lexsorted_edges(conn_core_edges)
+    conn_pb_edges = unique_lexsorted_edges(conn_pb_edges)
 
     # Save fundamental graph constituents from this topology
     np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")

@@ -37,11 +37,11 @@ def main():
     dim_str = "dim"
     b_str = "b"
     xi_str = "xi"
-    rho_nu_str = "rho_nu"
+    rho_en_str = "rho_en"
     k_str = "k"
     n_str = "n"
-    nu_str = "nu"
-    nu_max_str = "nu_max"
+    en_str = "en"
+    en_max_str = "en_max"
     config_str = "config"
 
     filepath = filepath_str(network)
@@ -60,9 +60,12 @@ def main():
 
     k_max = int(np.max(sample_config_params_arr[:, 5]))
     k_list = list(range(k_max+1))
-    nu_min = int(np.max(sample_config_params_arr[:, 8]))
-    nu_max = int(np.max(sample_config_params_arr[:, 9]))
-    nu_chn = np.asarray([nu_min, nu_max], dtype=int)
+    en_min = int(np.max(sample_config_params_arr[:, 8]))
+    en_max = int(np.max(sample_config_params_arr[:, 9]))
+    en_chn = np.asarray([en_min, en_max], dtype=int)
+    nu_min = en_min - 1
+    nu_max = en_max - 1
+    nu_chn = en_chn - 1
     
     # Initialization
     dim_2_l_chns = np.asarray([])
@@ -96,10 +99,10 @@ def main():
         core_node_type_filename = aelp_filename + "-node_type" + ".dat"
         conn_core_edges_filename = aelp_filename + "-conn_core_edges" + ".dat"
         conn_pb_edges_filename = aelp_filename + "-conn_pb_edges" + ".dat"
-        conn_nu_core_edges_filename = (
-            aelp_filename + "-conn_nu_core_edges" + ".dat"
+        conn_en_core_edges_filename = (
+            aelp_filename + "-conn_en_core_edges" + ".dat"
         )
-        conn_nu_pb_edges_filename = aelp_filename + "-conn_nu_pb_edges" + ".dat"
+        conn_en_pb_edges_filename = aelp_filename + "-conn_en_pb_edges" + ".dat"
 
         # Load simulation box size, node coordinates, and node type
         L = np.loadtxt(L_filename)
@@ -123,8 +126,10 @@ def main():
             conn_core_edges, conn_pb_edges, coords, L)
         
         # Load chain segment number information
-        conn_nu_core_edges = np.loadtxt(conn_nu_core_edges_filename, dtype=int)
-        conn_nu_pb_edges = np.loadtxt(conn_nu_pb_edges_filename, dtype=int)
+        conn_en_core_edges = np.loadtxt(conn_en_core_edges_filename, dtype=int)
+        conn_en_pb_edges = np.loadtxt(conn_en_pb_edges_filename, dtype=int)
+        conn_nu_core_edges = conn_en_core_edges - 1
+        conn_nu_pb_edges = conn_en_pb_edges - 1
 
         # Number of dangling chains
         dnglng_n = np.count_nonzero(core_node_type==3)
@@ -382,11 +387,11 @@ def main():
             aelp_filename + "-conn_core_edges" + ".dat"
         )
         conn_pb_edges_filename = aelp_filename + "-conn_pb_edges" + ".dat"
-        conn_nu_core_edges_filename = (
-            aelp_filename + "-conn_nu_core_edges" + ".dat"
+        conn_en_core_edges_filename = (
+            aelp_filename + "-conn_en_core_edges" + ".dat"
         )
-        conn_nu_pb_edges_filename = (
-            aelp_filename + "-conn_nu_pb_edges" + ".dat"
+        conn_en_pb_edges_filename = (
+            aelp_filename + "-conn_en_pb_edges" + ".dat"
         )
 
         # Load simulation box size, node coordinates, and node type
@@ -407,11 +412,12 @@ def main():
         l_chns = np.concatenate((l_core_chn, l_pb_chn))
 
         # Load chain segment number information
-        conn_nu_core_edges = np.loadtxt(conn_nu_core_edges_filename, dtype=int)
-        conn_nu_pb_edges = np.loadtxt(conn_nu_pb_edges_filename, dtype=int)
-        conn_nu_edges = np.concatenate(
-            (conn_nu_core_edges, conn_nu_pb_edges), dtype=int)
-        
+        conn_en_core_edges = np.loadtxt(conn_en_core_edges_filename, dtype=int)
+        conn_en_pb_edges = np.loadtxt(conn_en_pb_edges_filename, dtype=int)
+        conn_en_edges = np.concatenate(
+            (conn_en_core_edges, conn_en_pb_edges), dtype=int)
+        conn_nu_edges = conn_en_edges - 1
+
         # Create nx.MultiGraph, and add nodes before edges
         conn_graph = nx.MultiGraph()
         conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)

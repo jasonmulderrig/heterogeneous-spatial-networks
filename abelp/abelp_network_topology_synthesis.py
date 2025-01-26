@@ -50,13 +50,13 @@ def main():
     dim_str = "dim"
     b_str = "b"
     xi_str = "xi"
-    rho_nu_str = "rho_nu"
+    rho_en_str = "rho_en"
     k_str = "k"
     n_str = "n"
-    nu_str = "nu"
+    en_str = "en"
     p_str = "p"
-    nu_min_str = "nu_min"
-    nu_max_str = "nu_max"
+    en_min_str = "en_min"
+    en_max_str = "en_max"
     config_str = "config"
 
     filepath = filepath_str(network)
@@ -66,10 +66,10 @@ def main():
     dim_filename = filename_prefix + f"-{dim_str}" + ".dat"
     b_filename = filename_prefix + f"-{b_str}" + ".dat"
     xi_filename = filename_prefix + f"-{xi_str}" + ".dat"
-    rho_nu_filename = filename_prefix + f"-{rho_nu_str}" + ".dat"
+    rho_en_filename = filename_prefix + f"-{rho_en_str}" + ".dat"
     k_filename = filename_prefix + f"-{k_str}" + ".dat"
     n_filename = filename_prefix + f"-{n_str}" + ".dat"
-    nu_filename = filename_prefix + f"-{nu_str}" + ".dat"
+    en_filename = filename_prefix + f"-{en_str}" + ".dat"
     config_filename = filename_prefix + f"-{config_str}" + ".dat"
     sample_params_filename = filename_prefix + "-sample_params" + ".dat"
     sample_config_params_filename = (
@@ -80,10 +80,10 @@ def main():
     dim_arr = np.loadtxt(dim_filename, dtype=int, ndmin=1)
     b_arr = np.loadtxt(b_filename, ndmin=1)
     xi_arr = np.loadtxt(xi_filename, ndmin=1)
-    rho_nu_arr = np.loadtxt(rho_nu_filename, ndmin=1)
+    rho_en_arr = np.loadtxt(rho_en_filename, ndmin=1)
     k_arr = np.loadtxt(k_filename, dtype=int, ndmin=1)
     n_arr = np.loadtxt(n_filename, dtype=int, ndmin=1)
-    nu_arr = np.loadtxt(nu_filename, ndmin=1)
+    en_arr = np.loadtxt(en_filename, ndmin=1)
     config_arr = np.loadtxt(config_filename, dtype=int, ndmin=1)
     
     sample_params_arr = np.loadtxt(sample_params_filename, ndmin=1)
@@ -92,14 +92,14 @@ def main():
     dim_num = np.shape(dim_arr)[0]
     b_num = np.shape(b_arr)[0]
     xi_num = np.shape(xi_arr)[0]
-    rho_nu_num = np.shape(rho_nu_arr)[0]
+    rho_en_num = np.shape(rho_en_arr)[0]
     k_num = np.shape(k_arr)[0]
     n_num = np.shape(n_arr)[0]
-    if nu_arr.ndim == 1: nu_arr = nu_arr.reshape(1, -1)
-    nu_num = np.shape(nu_arr)[0]
+    if en_arr.ndim == 1: en_arr = en_arr.reshape(1, -1)
+    en_num = np.shape(en_arr)[0]
     config_num = np.shape(config_arr)[0]
 
-    sample_num = dim_num * b_num * xi_num * rho_nu_num * k_num * n_num * nu_num
+    sample_num = dim_num * b_num * xi_num * rho_en_num * k_num * n_num * en_num
     sample_config_num = sample_num * config_num
 
     ##### Calculate and save L for each artificial polydisperse
@@ -109,32 +109,38 @@ def main():
     if sample_params_arr.ndim == 1:
         sample = sample_params_arr[0]
         dim = sample_params_arr[1]
-        rho_nu = sample_params_arr[4]
+        rho_en = sample_params_arr[4]
         k = sample_params_arr[5]
         n = sample_params_arr[6]
         p = sample_params_arr[7]
-        nu_min = int(sample_params_arr[8])
-        nu_max = int(sample_params_arr[9])
+        en_min = int(sample_params_arr[8])
+        en_max = int(sample_params_arr[9])
+        nu_min = en_min - 1
+        nu_max = en_max - 1
         nu = nu_mean_p_nu_bimodal_func(p, nu_min, nu_max)
-        L_params_arr = np.asarray([sample, dim, rho_nu, k, n, nu])
+        en = nu + 1
+        L_params_arr = np.asarray([sample, dim, rho_en, k, n, en])
     else:
         L_params_arr = np.empty((sample_num, 6))
         for indx in range(sample_num):
             sample = sample_params_arr[indx, 0]
             dim = sample_params_arr[indx, 1]
-            rho_nu = sample_params_arr[indx, 4]
+            rho_en = sample_params_arr[indx, 4]
             k = sample_params_arr[indx, 5]
             n = sample_params_arr[indx, 6]
             p = sample_params_arr[indx, 7]
-            nu_min = int(sample_params_arr[indx, 8])
-            nu_max = int(sample_params_arr[indx, 9])
+            en_min = int(sample_params_arr[indx, 8])
+            en_max = int(sample_params_arr[indx, 9])
+            nu_min = en_min - 1
+            nu_max = en_max - 1
             nu = nu_mean_p_nu_bimodal_func(p, nu_min, nu_max)
-            L_params_arr[indx, :] = np.asarray([sample, dim, rho_nu, k, n, nu])
+            en = nu + 1
+            L_params_arr[indx, :] = np.asarray([sample, dim, rho_en, k, n, en])
     L_params_list = params_list_func(L_params_arr)
     L_args = (
         [
-            (network, date, batch, int(sample), int(dim), rho_nu, int(k), int(n), int(nu))
-            for (sample, dim, rho_nu, k, n, nu) in L_params_list
+            (network, date, batch, int(sample), int(dim), rho_en, int(k), int(n), int(en))
+            for (sample, dim, rho_en, k, n, en) in L_params_list
         ]
     )
     random.shuffle(L_args)
@@ -216,12 +222,12 @@ def main():
 
     topology_params_arr = (
         np.delete(sample_config_params_arr, 4, axis=1)
-    ) # sample, dim, b, xi, k, n, p, nu_min, nu_max, config
+    ) # sample, dim, b, xi, k, n, p, en_min, en_max, config
     topology_params_list = params_list_func(topology_params_arr)
     topology_args = (
         [
-            (network, date, batch, int(sample), scheme, int(dim), b, xi, int(k), int(n), p, int(nu_min), int(nu_max), int(config), int(max_try))
-            for (sample, dim, b, xi, k, n, p, nu_min, nu_max, config) in topology_params_list
+            (network, date, batch, int(sample), scheme, int(dim), b, xi, int(k), int(n), p, int(en_min), int(en_max), int(config), int(max_try))
+            for (sample, dim, b, xi, k, n, p, en_min, en_max, config) in topology_params_list
         ]
     )
     random.shuffle(topology_args)

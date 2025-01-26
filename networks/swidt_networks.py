@@ -9,6 +9,7 @@ from helpers.simulation_box_utils import L_arg_eta_func
 from networks.delaunay_networks import delaunay_network_topology_initialization
 from topological_descriptors.nodal_degree_topological_descriptors import k_func
 from helpers.graph_utils import (
+    lexsorted_edges,
     add_nodes_from_numpy_array,
     add_edges_from_numpy_array
 )
@@ -327,6 +328,12 @@ def swidt_network_edge_pruning_procedure(
             mx_cmp_pruned_conn_pb_graph_edges[edge, 1] = int(
                 mx_cmp_pruned_conn_graph_nodes_indcs[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]])
                 
+        # Lexicographically sort the edges
+        mx_cmp_pruned_conn_core_graph_edges = lexsorted_edges(
+            mx_cmp_pruned_conn_core_graph_edges)
+        mx_cmp_pruned_conn_pb_graph_edges = lexsorted_edges(
+            mx_cmp_pruned_conn_pb_graph_edges)
+        
         # Save fundamental graph constituents from this topology
         np.savetxt(
             mx_cmp_pruned_conn_core_edges_filename,

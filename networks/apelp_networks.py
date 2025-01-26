@@ -16,6 +16,7 @@ from helpers.polymer_network_chain_statistics import (
     p_rel_net_flory_gaussian_cnfrmtn_func
 )
 from helpers.graph_utils import (
+    lexsorted_edges,
     add_nodes_from_numpy_array,
     add_edges_from_numpy_array
 )
@@ -129,8 +130,8 @@ def apelp_network_topology_initialization(
         xi: float,
         k: int,
         n: int,
-        nu: int,
-        nu_max: int,
+        en: int,
+        en_max: int,
         config: int,
         max_try: int) -> None:
     """Network topology initialization procedure for artificial
@@ -153,8 +154,8 @@ def apelp_network_topology_initialization(
         xi (float): Chain-to-cross-link connection probability.
         k (int): Maximum cross-linker degree/functionality; either 3, 4, 5, 6, 7, or 8.
         n (int): Number of core cross-linkers.
-        nu (int): Average number of segments per chain.
-        nu_max (int): Maximum number of segments that could possibly be assigned to a chain.
+        en (int): Average number of segment particles per chain.
+        en_max (int): Maximum number of segment particles that could possibly be assigned to a chain.
         config (int): Configuration number.
         max_try (int): Maximum number of dangling chain instantiation attempts.
     
@@ -181,11 +182,11 @@ def apelp_network_topology_initialization(
         config_filename_prefix + "-conn_pb_edges" + ".dat"
     )
     mx_cmp_coords_filename = config_filename_prefix + ".coords"
-    conn_nu_core_edges_filename = (
-        config_filename_prefix + "-conn_nu_core_edges" + ".dat"
+    conn_en_core_edges_filename = (
+        config_filename_prefix + "-conn_en_core_edges" + ".dat"
     )
-    conn_nu_pb_edges_filename = (
-        config_filename_prefix + "-conn_nu_pb_edges" + ".dat"
+    conn_en_pb_edges_filename = (
+        config_filename_prefix + "-conn_en_pb_edges" + ".dat"
     )
 
     # Call appropriate helper function to initialize network topology
@@ -206,10 +207,14 @@ def apelp_network_topology_initialization(
     # As a fail-safe check, force int-valued parameters to be ints
     k = int(np.floor(k))
     n = int(np.floor(n))
-    nu = int(np.floor(nu))
-    nu_max = int(np.floor(nu_max))
+    en = int(np.floor(en))
+    en_max = int(np.floor(en_max))
     max_try = int(np.floor(max_try))
     m = int(np.floor(m))
+
+    # Calculate average and maximum chain segment numbers
+    nu = en - 1
+    nu_max = en_max - 1
 
     # Core cross-linker nodes
     core_nodes = np.arange(n, dtype=int)
@@ -636,6 +641,10 @@ def apelp_network_topology_initialization(
         mx_cmp_conn_pb_graph_edges[edge, 1] = int(
             mx_cmp_conn_graph_nodes_indcs[mx_cmp_conn_pb_graph_edges[edge, 1]])
     
+    # Lexicographically sort the edges
+    mx_cmp_conn_core_graph_edges = lexsorted_edges(mx_cmp_conn_core_graph_edges)
+    mx_cmp_conn_pb_graph_edges = lexsorted_edges(mx_cmp_conn_pb_graph_edges)
+    
     # Save fundamental graph constituents
     np.savetxt(mx_cmp_core_node_type_filename, mx_cmp_core_node_type, fmt="%d")
     np.savetxt(
@@ -655,9 +664,13 @@ def apelp_network_topology_initialization(
     conn_nu_core_edges, conn_nu_pb_edges = apelp_network_nu_assignment(
         rng, b, L, nu, nu_max, conn_core_edges, conn_pb_edges, coords)
     
+    # Recalibrate back to segment particle number
+    conn_en_core_edges = conn_nu_core_edges + 1
+    conn_en_pb_edges = conn_nu_pb_edges + 1
+    
     # Save the chain segment numbers
-    np.savetxt(conn_nu_core_edges_filename, conn_nu_core_edges, fmt="%d")
-    np.savetxt(conn_nu_pb_edges_filename, conn_nu_pb_edges, fmt="%d")
+    np.savetxt(conn_en_core_edges_filename, conn_en_core_edges, fmt="%d")
+    np.savetxt(conn_en_pb_edges_filename, conn_en_pb_edges, fmt="%d")
 
 def apelp_network_topology(
         network: str,
@@ -670,8 +683,8 @@ def apelp_network_topology(
         xi: float,
         k: int,
         n: int,
-        nu: int,
-        nu_max: int,
+        en: int,
+        en_max: int,
         config: int,
         max_try: int) -> None:
     """Artificial polydisperse end-linked polymer network topology.
@@ -693,8 +706,8 @@ def apelp_network_topology(
         xi (float): Chain-to-cross-link connection probability.
         k (int): Maximum cross-linker degree/functionality; either 3, 4, 5, 6, 7, or 8.
         n (int): Number of core cross-linkers.
-        nu (int): Average number of segments per chain.
-        nu_max (int): Maximum number of segments that could possibly be assigned to a chain.
+        en (int): Average number of segment particles per chain.
+        en_max (int): Maximum number of segment particles that could possibly be assigned to a chain.
         config (int): Configuration number.
         max_try (int): Maximum number of dangling chain instantiation attempts.
     
@@ -712,5 +725,5 @@ def apelp_network_topology(
         print(error_str)
         return None
     apelp_network_topology_initialization(
-        network, date, batch, sample, scheme, dim, b, xi, k, n, nu, nu_max,
+        network, date, batch, sample, scheme, dim, b, xi, k, n, en, en_max,
         config, max_try)

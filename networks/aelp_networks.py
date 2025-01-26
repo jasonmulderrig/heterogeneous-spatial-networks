@@ -6,7 +6,7 @@ from file_io.file_io import (
 )
 from helpers.network_utils import (
     m_arg_stoich_func,
-    n_nu_arg_m_func
+    n_en_arg_m_func
 )
 from helpers.simulation_box_utils import L_arg_rho_func
 from helpers.network_topology_initialization_utils import (
@@ -66,10 +66,10 @@ def aelp_L(
         batch: str,
         sample: int,
         dim: int,
-        rho_nu: float,
+        rho_en: float,
         k: int,
         n: int,
-        nu: int) -> None:
+        en: int) -> None:
     """Simulation box size for artificial end-linked polymer networks.
 
     This function calculates the simulation box size for artificial
@@ -81,10 +81,10 @@ def aelp_L(
         batch (str): Single capitalized letter (e.g., A, B, C, ...) indicating the batch label of the network sample data.
         sample (int): Label of a particular network in the batch.
         dim (int): Physical dimensionality of the network; either 2 or 3 (for two-dimensional or three-dimensional networks).
-        rho_nu (float): Segment number density.
+        rho_en (float): Segment particle number density.
         k (int): Maximum cross-linker degree/functionality; either 3, 4, 5, 6, 7, or 8.
         n (int): Intended number of core cross-linkers.
-        nu (int): (Average) Number of segments per chain.
+        en (int): (Average) Number of segment particles per chain.
     
     """
     # This calculation for L is only applicable for artificial
@@ -100,14 +100,14 @@ def aelp_L(
         print(error_str)
         return None
     
-    # Calculate the stoichiometric (average) number of chain segments in
-    # the simulation box
-    n_nu = n_nu_arg_m_func(m_arg_stoich_func(n, k), nu)
+    # Calculate the stoichiometric (average) number of chain segment
+    # particles in the simulation box
+    n_en = n_en_arg_m_func(m_arg_stoich_func(n, k), en)
 
     # Calculate and save L
     np.savetxt(
         L_filename_str(network, date, batch, sample),
-        [L_arg_rho_func(dim, n_nu, rho_nu)])
+        [L_arg_rho_func(dim, n_en, rho_en)])
 
 def core_node_update_func(
         core_node_updt: int,

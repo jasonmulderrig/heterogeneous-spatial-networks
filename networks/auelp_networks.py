@@ -12,6 +12,7 @@ from helpers.network_topology_initialization_utils import (
 )
 from helpers.polymer_network_chain_statistics import p_gaussian_cnfrmtn_func
 from helpers.graph_utils import (
+    lexsorted_edges,
     add_nodes_from_numpy_array,
     add_edges_from_numpy_array
 )
@@ -31,7 +32,7 @@ def auelp_network_topology_initialization(
         xi: float,
         k: int,
         n: int,
-        nu: int,
+        en: int,
         config: int,
         max_try: int) -> None:
     """Network topology initialization procedure for artificial uniform
@@ -53,7 +54,7 @@ def auelp_network_topology_initialization(
         xi (float): Chain-to-cross-link connection probability.
         k (int): Maximum cross-linker degree/functionality; either 3, 4, 5, 6, 7, or 8.
         n (int): Number of core cross-linkers.
-        nu (int): Number of segments per chain.
+        en (int): Number of segment particles per chain.
         config (int): Configuration number.
         max_try (int): Maximum number of dangling chain instantiation attempts.
     
@@ -99,9 +100,12 @@ def auelp_network_topology_initialization(
     # As a fail-safe check, force int-valued parameters to be ints
     k = int(np.floor(k))
     n = int(np.floor(n))
-    nu = int(np.floor(nu))
+    en = int(np.floor(en))
     max_try = int(np.floor(max_try))
     m = int(np.floor(m))
+
+    # Calculate chain segment number
+    nu = en - 1
 
     # Core cross-linker nodes
     core_nodes = np.arange(n, dtype=int)
@@ -506,6 +510,10 @@ def auelp_network_topology_initialization(
         mx_cmp_conn_pb_graph_edges[edge, 1] = int(
             mx_cmp_conn_graph_nodes_indcs[mx_cmp_conn_pb_graph_edges[edge, 1]])
     
+    # Lexicographically sort the edges
+    mx_cmp_conn_core_graph_edges = lexsorted_edges(mx_cmp_conn_core_graph_edges)
+    mx_cmp_conn_pb_graph_edges = lexsorted_edges(mx_cmp_conn_pb_graph_edges)
+    
     # Save fundamental graph constituents
     np.savetxt(mx_cmp_core_node_type_filename, mx_cmp_core_node_type, fmt="%d")
     np.savetxt(
@@ -527,7 +535,7 @@ def auelp_network_topology(
         xi: float,
         k: int,
         n: int,
-        nu: int,
+        en: int,
         config: int,
         max_try: int) -> None:
     """Artificial uniform end-linked polymer network topology.
@@ -549,7 +557,7 @@ def auelp_network_topology(
         xi (float): Chain-to-cross-link connection probability.
         k (int): Maximum cross-linker degree/functionality; either 3, 4, 5, 6, 7, or 8.
         n (int): Number of core cross-linkers.
-        nu (int): Number of segments per chain.
+        en (int): Number of segment particles per chain.
         config (int): Configuration number.
         max_try (int): Maximum number of dangling chain instantiation attempts.
     
@@ -567,5 +575,5 @@ def auelp_network_topology(
         print(error_str)
         return None
     auelp_network_topology_initialization(
-        network, date, batch, sample, scheme, dim, b, xi, k, n, nu, config,
+        network, date, batch, sample, scheme, dim, b, xi, k, n, en, config,
         max_try)

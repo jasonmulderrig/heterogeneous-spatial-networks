@@ -38,19 +38,19 @@ def main():
     dim_3 = 3
     b = 1.0
     xi = 0.98
-    rho_nu = 0.85
+    rho_en = 0.85
     k = 4
     n = 100
     p = 0.75
-    nu_min = 40
-    nu_max = 80
+    en_min = 41
+    en_max = 81
     config = 0
 
     # Identification of the sample value for the desired network
     dim_2_sample = int(
-        np.where(np.all(params_arr == (dim_2, b, xi, rho_nu, k, n, p, nu_min, nu_max), axis=1))[0][0])
+        np.where(np.all(params_arr == (dim_2, b, xi, rho_en, k, n, p, en_min, en_max), axis=1))[0][0])
     dim_3_sample = int(
-        np.where(np.all(params_arr == (dim_3, b, xi, rho_nu, k, n, p, nu_min, nu_max), axis=1))[0][0])
+        np.where(np.all(params_arr == (dim_3, b, xi, rho_en, k, n, p, en_min, en_max), axis=1))[0][0])
 
     # Artificial bimodal end-linked polymer network plotting
     aelp_network_topology_plotter(

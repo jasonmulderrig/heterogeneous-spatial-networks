@@ -32,35 +32,37 @@ def m_arg_stoich_func(n: float, k: float) -> float:
     """
     return n * k / 2
 
-def m_arg_nu_func(n_nu: float, nu: float) -> float:
+def m_arg_en_func(n_en: float, en: float) -> float:
     """Number of chains.
 
     This function calculates the number of chains, given the number of
-    chain segments and the (average) number of segments per chain.
+    chain segment particles and the (average) number of segment
+    particles per chain.
 
     Args:
-        n_nu (float): Number of chain segments.
-        nu (float): (Average) Number of segments per chain.
+        n_en (float): Number of chain segment particles.
+        en (float): (Average) Number of segment particles per chain.
 
     Returns:
         float: Number of chains.
     """
-    return n_nu / nu
+    return n_en / en
 
-def nu_arg_m_func(n_nu: float, m: float) -> float:
-    """Number of chains.
+def en_arg_m_func(n_en: float, m: float) -> float:
+    """(Average) Number of segment particles per chain
 
-    This function calculates the number of chains, given the number of
-    chain segments and the (average) number of segments per chain.
+    This function calculates the (average) number of segment particles
+    per chain, given the number of chain segment particles and the
+    number of chains.
 
     Args:
-        n_nu (float): Number of chain segments.
+        n_en (float): Number of chain segment particles.
         m (float): Number of chains.
 
     Returns:
         float: (Average) Number of segments per chain.
     """
-    return n_nu / m
+    return n_en / m
 
 def n_arg_stoich_func(m: float, k: float) -> float:
     """Number of cross-linkers.
@@ -79,76 +81,78 @@ def n_arg_stoich_func(m: float, k: float) -> float:
     """
     return 2 * m / k
 
-def n_nu_arg_m_func(m: float, nu: float) -> float:
-    """Number of chain segments.
+def n_en_arg_m_func(m: float, en: float) -> float:
+    """Number of chain segment particles.
 
-    This function calculates the number of chain segments, given the
-    number of chains and the (average) number of segments per chain.
+    This function calculates the number of chain segment particles,
+    given the number of chains and the (average) number of segment
+    particles per chain.
 
     Args:
         m (float): Number of chains.
-        nu (float): (Average) Number of segments per chain.
+        en (float): (Average) Number of segment particles per chain.
 
     Returns:
-        float: Number of chain segments.
+        float: Number of chain segment particles.
     """
-    return m * nu
+    return m * en
 
 def n_arg_n_tot_func(n_tot: float, n_other: float) -> float:
-    """Number of particles (chain segments or cross-linkers).
+    """Number of particles (chain segment particles or cross-linkers).
 
-    This function calculates the number of particles (chain segments or
-    cross-linkers), given the number of constituents and the number of
-    the other type of particle (cross-linkers or chain segments,
-    respectively).
+    This function calculates the number of particles (chain segment
+    particles or cross-linkers), given the number of constituents and
+    the number of the other type of particle (cross-linkers or chain
+    segment particles, respectively).
 
     Args:
         n_tot (float): Number of constituents.
-        n_other (float): Number of the other type of particles (cross-linkers or chain segments).
+        n_other (float): Number of the other type of particles (cross-linkers or chain segment particles).
 
     Returns:
-        float: Number of particles (chain segments or cross-linkers,
-        respectively).
+        float: Number of particles (chain segment particles or
+        cross-linkers).
     """
     return n_tot - n_other
 
 def n_arg_f_func(f: float, n_tot: float) -> float:
-    """Number of particles (chain segments or cross-linkers).
+    """Number of particles (chain segment particles or cross-linkers).
 
-    This function calculates the number of particles (chain segments or
-    cross-linkers), given the particle number fraction and the number of
-    constituents.
+    This function calculates the number of particles (chain segment
+    particles or cross-linkers), given the particle number fraction and
+    the number of constituents.
 
     Args:
         f (float): Particle (chain segment or cross-linker) number fraction.
         n_tot (float): Number of constituents.
 
     Returns:
-        float: Number of particles (chain segments or cross-linkers).
+        float: Number of particles (chain segment particles or cross-linkers).
     """
     return f * n_tot
 
-def n_tot_arg_n_func(n_nu: float, n: float) -> float:
+def n_tot_arg_n_func(n_en: float, n: float) -> float:
     """Number of constituents.
 
     This function calculates the number of constituents,
-    given the number of chain segments and the number of cross-linkers.
+    given the number of chain segment particles and the number of
+    cross-linkers.
 
     Args:
-        n_nu (float): Number of chain segments.
+        n_en (float): Number of chain segment particles.
         n (float): Number of cross-linkers.
 
     Returns:
         float: Number of constituents.
     """
-    return n_nu + n
+    return n_en + n
 
 def n_tot_arg_f_func(n: float, f: float) -> float:
     """Number of constituents.
     
     This function calculates the number of constituents, given the
-    number of particles (chain segments or cross-linkers) and its number
-    fraction.
+    number of particles (chain segment particles or cross-linkers) and
+    its number fraction.
 
     Args:
         n (float): Number of particles (chain segments or cross-linkers)
@@ -164,10 +168,11 @@ def f_arg_n_func(n: float, n_tot: float) -> float:
 
     This function calculates the particle (chain segment or
     cross-linker) number fraction, given the number of particles (chain
-    segments or cross-linkers) and and the number of constituents.
+    segment particless or cross-linkers) and the number of constituents.
 
     Args:
-        n (float): Number of particles (chain segments or cross-linkers)
+        n (float): Number of particles (chain segment particles or
+        cross-linkers)
         n_tot (float): Number of constituents.
 
     Returns:

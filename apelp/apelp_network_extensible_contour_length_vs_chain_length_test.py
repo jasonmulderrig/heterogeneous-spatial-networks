@@ -28,11 +28,11 @@ def main():
     dim_str = "dim"
     b_str = "b"
     xi_str = "xi"
-    rho_nu_str = "rho_nu"
+    rho_en_str = "rho_en"
     k_str = "k"
     n_str = "n"
-    nu_str = "nu"
-    nu_max_str = "nu_max"
+    en_str = "en"
+    en_max_str = "en_max"
     config_str = "config"
 
     filepath = filepath_str(network)
@@ -42,10 +42,10 @@ def main():
     dim_filename = filename_prefix + f"-{dim_str}" + ".dat"
     b_filename = filename_prefix + f"-{b_str}" + ".dat"
     xi_filename = filename_prefix + f"-{xi_str}" + ".dat"
-    rho_nu_filename = filename_prefix + f"-{rho_nu_str}" + ".dat"
+    rho_en_filename = filename_prefix + f"-{rho_en_str}" + ".dat"
     k_filename = filename_prefix + f"-{k_str}" + ".dat"
     n_filename = filename_prefix + f"-{n_str}" + ".dat"
-    nu_filename = filename_prefix + f"-{nu_str}" + ".dat"
+    en_filename = filename_prefix + f"-{en_str}" + ".dat"
     config_filename = filename_prefix + f"-{config_str}" + ".dat"
     sample_params_filename = filename_prefix + "-sample_params" + ".dat"
     sample_config_params_filename = (
@@ -57,23 +57,23 @@ def main():
     dim_arr = np.loadtxt(dim_filename, dtype=int, ndmin=1)
     b_arr = np.loadtxt(b_filename, ndmin=1)
     xi_arr = np.loadtxt(xi_filename, ndmin=1)
-    rho_nu_arr = np.loadtxt(rho_nu_filename, ndmin=1)
+    rho_en_arr = np.loadtxt(rho_en_filename, ndmin=1)
     k_arr = np.loadtxt(k_filename, dtype=int, ndmin=1)
     n_arr = np.loadtxt(n_filename, dtype=int, ndmin=1)
-    nu_arr = np.loadtxt(nu_filename, dtype=int, ndmin=1)
+    en_arr = np.loadtxt(en_filename, dtype=int, ndmin=1)
     config_arr = np.loadtxt(config_filename, dtype=int, ndmin=1)
     
     dim_num = np.shape(dim_arr)[0]
     b_num = np.shape(b_arr)[0]
     xi_num = np.shape(xi_arr)[0]
-    rho_nu_num = np.shape(rho_nu_arr)[0]
+    rho_en_num = np.shape(rho_en_arr)[0]
     k_num = np.shape(k_arr)[0]
     n_num = np.shape(n_arr)[0]
-    if nu_arr.ndim == 1: nu_arr = nu_arr.reshape(1, -1)
-    nu_num = np.shape(nu_arr)[0]
+    if en_arr.ndim == 1: en_arr = en_arr.reshape(1, -1)
+    en_num = np.shape(en_arr)[0]
     config_num = np.shape(config_arr)[0]
 
-    sample_num = dim_num * b_num * xi_num * rho_nu_num * k_num * n_num * nu_num
+    sample_num = dim_num * b_num * xi_num * rho_en_num * k_num * n_num * en_num
 
     b = b_arr[0]
     
@@ -88,11 +88,11 @@ def main():
                 aelp_filename + "-conn_core_edges" + ".dat"
             )
             conn_pb_edges_filename = aelp_filename + "-conn_pb_edges" + ".dat"
-            conn_nu_core_edges_filename = (
-                aelp_filename + "-conn_nu_core_edges" + ".dat"
+            conn_en_core_edges_filename = (
+                aelp_filename + "-conn_en_core_edges" + ".dat"
             )
-            conn_nu_pb_edges_filename = (
-                aelp_filename + "-conn_nu_pb_edges" + ".dat"
+            conn_en_pb_edges_filename = (
+                aelp_filename + "-conn_en_pb_edges" + ".dat"
             )
 
             # Load simulation box size and node coordinates
@@ -103,9 +103,10 @@ def main():
             conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
             conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
             m = np.shape(conn_core_edges)[0] + np.shape(conn_pb_edges)[0]
-            conn_nu_core_edges = np.loadtxt(conn_nu_core_edges_filename, dtype=int)
-            conn_nu_pb_edges = np.loadtxt(conn_nu_pb_edges_filename, dtype=int)
-            conn_nu_edges = np.concatenate((conn_nu_core_edges, conn_nu_pb_edges), dtype=int)
+            conn_en_core_edges = np.loadtxt(conn_en_core_edges_filename, dtype=int)
+            conn_en_pb_edges = np.loadtxt(conn_en_pb_edges_filename, dtype=int)
+            conn_en_edges = np.concatenate((conn_en_core_edges, conn_en_pb_edges), dtype=int)
+            conn_nu_edges = conn_en_edges - 1
 
             # Calculate end-to-end chain length (Euclidean edge length)
             l_core_chn, l_pb_chn = l_arr_func(

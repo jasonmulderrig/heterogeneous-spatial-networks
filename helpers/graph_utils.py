@@ -1,6 +1,46 @@
 import numpy as np
 import networkx as nx
 
+def lexsorted_edges(
+        edges: list[tuple[int, int]] | np.ndarray,
+        return_indcs: bool=False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+    """Lexicographically sorted edges.
+
+    This function takes a list (or an np.ndarray) of (A, B) nodes
+    specifying edges, converts this to an np.ndarray, and
+    lexicographically sorts the edge entries.
+
+    Args:
+        edges (list[tuple[int, int]] | np.ndarray): Edges.
+        return_indcs (bool): Flag indicating if the indices of the lexicographic edge sort should be returned, or not. Default is False.
+    
+    Returns:
+        np.ndarray | tuple[np.ndarray, np.ndarray]: Lexicographically
+        sorted edges, or the lexicographically sorted edges and the
+        indices of the lexicographic edge sort.
+    
+    """
+    edges = np.sort(np.asarray(edges, dtype=int), axis=1)
+    lexsort_indcs = np.lexsort((edges[:, 1], edges[:, 0]))
+    if return_indcs: return edges[lexsort_indcs], lexsort_indcs
+    else: return edges[lexsort_indcs]
+
+def unique_lexsorted_edges(edges: list[tuple[int, int]]) -> np.ndarray:
+    """Unique lexicographically sorted edges.
+
+    This function takes a list (or an np.ndarray) of (A, B) nodes
+    specifying edges, converts this to an np.ndarray, lexicographically
+    sorts the edge entries, and extracts the resulting unique edges.
+
+    Args:
+        edges (list[tuple[int, int]] | np.ndarray): Edges.
+    
+    Returns:
+        np.ndarray: Unique lexicographically sorted edges.
+    
+    """
+    return np.unique(lexsorted_edges(edges), axis=0)
+
 def add_nodes_from_numpy_array(
         graph: nx.Graph | nx.MultiGraph,
         nodes: np.ndarray) -> nx.Graph | nx.MultiGraph:
