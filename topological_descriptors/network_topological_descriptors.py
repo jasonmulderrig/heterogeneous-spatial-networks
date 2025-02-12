@@ -18,6 +18,7 @@ def network_topological_descriptor(
         L: float,
         length_bound: int,
         eeel_ntwrk: bool,
+        remove_isolates: bool,
         tplgcl_dscrptr_result_filename: str,
         save_tplgcl_dscrptr_result: bool,
         return_tplgcl_dscrptr_result: bool) -> np.ndarray | float | int | None:
@@ -41,6 +42,7 @@ def network_topological_descriptor(
         L (float): Simulation box size.
         length_bound (int): Maximum ring order (inclusive).
         eeel_ntwrk (bool): Boolean indicating if the elastically-effective end-linked network in the supplied network ought to be extracted.
+        remove_isolates (bool): Boolean indicating if isolate nodes in the supplied network ought to be removed.
         tplgcl_dscrptr_result_filename (str): Filename for the topological descriptor result.
         save_tplgcl_dscrptr_result (bool): Boolean indicating if the topological descriptor result ought to be saved.
         return_tplgcl_dscrptr_result (bool): Boolean indicating if the topological descriptor result ought to be returned.
@@ -94,9 +96,10 @@ def network_topological_descriptor(
     conn_pb_graph = conn_pb_graph.subgraph(list(conn_graph.nodes())).copy()
     
     # Remove isolate nodes
-    conn_graph.remove_nodes_from(list(nx.isolates(conn_graph)))
-    conn_core_graph.remove_nodes_from(list(nx.isolates(conn_core_graph)))
-    conn_pb_graph.remove_nodes_from(list(nx.isolates(conn_pb_graph)))
+    if remove_isolates == True:
+        conn_graph.remove_nodes_from(list(nx.isolates(conn_graph)))
+        conn_core_graph.remove_nodes_from(list(nx.isolates(conn_core_graph)))
+        conn_pb_graph.remove_nodes_from(list(nx.isolates(conn_pb_graph)))
     
     # Deploy topological descriptor calculation function and carefully
     # handle the input parameter set in the process

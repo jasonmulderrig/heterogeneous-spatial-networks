@@ -348,6 +348,7 @@ def aelp_network_topological_descriptor(
         tplgcl_dscrptr: str,
         np_oprtn: str,
         eeel_ntwrk: bool,
+        remove_isolates: bool,
         save_tplgcl_dscrptr_result: bool,
         return_tplgcl_dscrptr_result: bool) -> np.ndarray | float | int | None:
     """Artificial end-linked polymer network topological descriptor.
@@ -370,6 +371,7 @@ def aelp_network_topological_descriptor(
         tplgcl_dscrptr (str): Topological descriptor name.
         np_oprtn (str): numpy function/operation name.
         eeel_ntwrk (bool): Boolean indicating if the elastically-effective end-linked network ought to be supplied for the topological descriptor calculation.
+        remove_isolates (bool): Boolean indicating if isolate nodes in the supplied network ought to be removed.
         save_tplgcl_dscrptr_result (bool): Boolean indicating if the topological descriptor result ought to be saved.
         return_tplgcl_dscrptr_result (bool): Boolean indicating if the topological descriptor result ought to be returned.
     
@@ -445,5 +447,6 @@ def aelp_network_topological_descriptor(
     # Call the master network_topological_descriptor() function
     return network_topological_descriptor(
         tplgcl_dscrptr, np_oprtn, conn_core_graph, conn_pb_graph, conn_graph,
-        coords, L, length_bound, eeel_ntwrk, tplgcl_dscrptr_result_filename,
-        save_tplgcl_dscrptr_result, return_tplgcl_dscrptr_result)
+        coords, L, length_bound, eeel_ntwrk, remove_isolates,
+        tplgcl_dscrptr_result_filename, save_tplgcl_dscrptr_result,
+        return_tplgcl_dscrptr_result)

@@ -1,0 +1,564 @@
+length_bound: 25
+# topological_descriptors = list[list[tplgcl_dscrptr, np_oprtn, eeel_ntwrk, remove_isolates, save_tplgcl_dscrptr_result, return_tplgcl_dscrptr_result]]
+# type(topological_descriptors) = list[list[str, str, bool, bool, bool, bool]]
+topological_descriptors:
+  -
+    - "l"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_cmpnts"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_nn_k"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_k_diff"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "c"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "lcl_avrg_kappa"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_epsilon"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_epsilon"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_d"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_d"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_d"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_l_attr_d"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_l_inv_attr_d"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "e"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_e"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_e"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_e"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_l_attr_e"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_l_inv_attr_e"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "bc"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_bc"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_bc"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "ebc"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_ebc"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_ebc"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "cc"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_cc"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_cc"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_cmpnts"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_nn_k"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_k_diff"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "c"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "lcl_avrg_kappa"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_epsilon"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_epsilon"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_d"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_d"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_d"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_l_attr_d"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_l_inv_attr_d"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "e"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_e"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_e"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_e"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_l_attr_e"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "avrg_l_inv_attr_e"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "bc"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_bc"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_bc"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "ebc"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_ebc"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_ebc"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "cc"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_cc"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_cc"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "k"
+    - "bincount"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "k_diff"
+    - "bincount"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "kappa"
+    - "bincount"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "epsilon"
+    - "bincount"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "d"
+    - "bincount"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "k"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "k_diff"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "kappa"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "epsilon"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "d"
+    - "mean"
+    - True
+    - True
+    - True
+    - False
+  -
+    - "n"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "m"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "rho_graph"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "glbl_avrg_kappa"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "lambda_1"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "r_pearson"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "r"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_r"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_r"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "sigma"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_attr_sigma"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "l_inv_attr_sigma"
+    - ""
+    - True
+    - True
+    - True
+    - False
+  -
+    - "prop_eeel_n"
+    - ""
+    - False
+    - True
+    - True
+    - False
+  -
+    - "prop_eeel_m"
+    - ""
+    - False
+    - True
+    - True
+    - False
