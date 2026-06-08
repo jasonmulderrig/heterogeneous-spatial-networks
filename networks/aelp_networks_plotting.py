@@ -18,12 +18,12 @@ from networks.aelp_networks import aelp_filename_str
 
 def aelp_network_core_node_marker_style(
         core_node: int,
-        node_type: int,
+        core_nodes_type: int,
         selfloop_edges: list[tuple[int, int]]) -> tuple[str, str, str]:
     marker = ""
     markerfacecolor = ""
     markeredgecolor = ""
-    if node_type == 1:
+    if core_nodes_type == 1:
         markerfacecolor = "black"
         markeredgecolor = "black"
         if len(selfloop_edges) == 0: marker = "."
@@ -36,7 +36,7 @@ def aelp_network_core_node_marker_style(
             elif core_node_selfloop_edge_order == 1: marker = "s"
             elif core_node_selfloop_edge_order == 2: marker = "h"
             elif core_node_selfloop_edge_order >= 3: marker = "8"
-    elif node_type == 3:
+    elif core_nodes_type == 3:
         marker = "."
         markerfacecolor = "red"
         markeredgecolor = "red"
@@ -61,9 +61,9 @@ def aelp_network_topology_plotter(
     # Generate filenames
     aelp_filename = aelp_filename_str(network, date, batch, sample, config)
     coords_filename = aelp_filename + ".coords"
-    node_type_filename = aelp_filename + "-node_type.dat"
-    conn_core_edges_filename = aelp_filename + "-conn_core_edges.dat"
-    conn_pb_edges_filename = aelp_filename + "-conn_pb_edges.dat"
+    core_nodes_type_filename = aelp_filename + "-core_nodes_type" + ".dat"
+    conn_edges_filename = aelp_filename + "-conn_edges" + ".dat"
+    conn_edges_type_filename = aelp_filename + "-conn_edges_type" + ".dat"
 
     # Load simulation box size
     L = np.loadtxt(L_filename_str(network, date, batch, sample))
@@ -74,10 +74,11 @@ def aelp_network_topology_plotter(
 
     # Load fundamental graph constituents
     core_nodes = np.arange(n, dtype=int)
-    node_type = np.loadtxt(node_type_filename, dtype=int)
-    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
-    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
-    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+    core_nodes_type = np.loadtxt(core_nodes_type_filename, dtype=int)
+    conn_edges = np.loadtxt(conn_edges_filename, dtype=int)
+    conn_edges_type = np.loadtxt(conn_edges_type_filename, dtype=int)
+    conn_core_edges = conn_edges[np.where(conn_edges_type==1)[0]]
+    conn_pb_edges = conn_edges[np.where(conn_edges_type==0)[0]]
 
     # Create nx.MultiGraphs and add nodes before edges
     conn_core_graph = nx.MultiGraph()
@@ -163,8 +164,8 @@ def aelp_network_topology_plotter(
                 core_node_1 = conn_core_edges[edge, 1]
                 alpha = aelp_network_edge_alpha(
                     core_node_0, core_node_1, conn_graph)
-                core_node_0_type = node_type[core_node_0]
-                core_node_1_type = node_type[core_node_1]
+                core_node_0_type = core_nodes_type[core_node_0]
+                core_node_1_type = core_nodes_type[core_node_1]
                 core_node_0_x = coords[core_node_0, 0]
                 core_node_0_y = coords[core_node_0, 1]
                 core_node_1_x = coords[core_node_1, 0]
@@ -208,8 +209,8 @@ def aelp_network_topology_plotter(
                 core_node_1 = conn_pb_edges[edge, 1]
                 alpha = aelp_network_edge_alpha(
                     core_node_0, core_node_1, conn_graph)
-                core_node_0_type = node_type[core_node_0]
-                core_node_1_type = node_type[core_node_1]
+                core_node_0_type = core_nodes_type[core_node_0]
+                core_node_1_type = core_nodes_type[core_node_1]
                 core_node_0_x = coords[core_node_0, 0]
                 core_node_0_y = coords[core_node_0, 1]
                 core_node_1_x = coords[core_node_1, 0]
@@ -293,8 +294,8 @@ def aelp_network_topology_plotter(
                 core_node_1 = conn_core_edges[edge, 1]
                 alpha = aelp_network_edge_alpha(
                     core_node_0, core_node_1, conn_graph)
-                core_node_0_type = node_type[core_node_0]
-                core_node_1_type = node_type[core_node_1]
+                core_node_0_type = core_nodes_type[core_node_0]
+                core_node_1_type = core_nodes_type[core_node_1]
                 core_node_0_x = coords[core_node_0, 0]
                 core_node_0_y = coords[core_node_0, 1]
                 core_node_0_z = coords[core_node_0, 2]
@@ -346,8 +347,8 @@ def aelp_network_topology_plotter(
                 core_node_1 = conn_pb_edges[edge, 1]
                 alpha = aelp_network_edge_alpha(
                     core_node_0, core_node_1, conn_graph)
-                core_node_0_type = node_type[core_node_0]
-                core_node_1_type = node_type[core_node_1]
+                core_node_0_type = core_nodes_type[core_node_0]
+                core_node_1_type = core_nodes_type[core_node_1]
                 core_node_0_x = coords[core_node_0, 0]
                 core_node_0_y = coords[core_node_0, 1]
                 core_node_0_z = coords[core_node_0, 2]
@@ -480,8 +481,8 @@ def aelp_network_topology_plotter(
                 core_node_1 = conn_core_edges[edge, 1]
                 alpha = aelp_network_edge_alpha(
                     core_node_0, core_node_1, conn_graph)
-                core_node_0_type = node_type[core_node_0]
-                core_node_1_type = node_type[core_node_1]
+                core_node_0_type = core_nodes_type[core_node_0]
+                core_node_1_type = core_nodes_type[core_node_1]
                 core_node_0_x = coords[core_node_0, 0]
                 core_node_0_y = coords[core_node_0, 1]
                 core_node_1_x = coords[core_node_1, 0]
@@ -524,8 +525,8 @@ def aelp_network_topology_plotter(
                 core_node_1 = conn_pb_edges[edge, 1]
                 alpha = aelp_network_edge_alpha(
                     core_node_0, core_node_1, conn_graph)
-                core_node_0_type = node_type[core_node_0]
-                core_node_1_type = node_type[core_node_1]
+                core_node_0_type = core_nodes_type[core_node_0]
+                core_node_1_type = core_nodes_type[core_node_1]
                 core_node_0_x = coords[core_node_0, 0]
                 core_node_0_y = coords[core_node_0, 1]
                 core_node_1_x = coords[core_node_1, 0]
@@ -574,8 +575,8 @@ def aelp_network_topology_plotter(
                 core_node_1 = conn_core_edges[edge, 1]
                 alpha = aelp_network_edge_alpha(
                     core_node_0, core_node_1, conn_graph)
-                core_node_0_type = node_type[core_node_0]
-                core_node_1_type = node_type[core_node_1]
+                core_node_0_type = core_nodes_type[core_node_0]
+                core_node_1_type = core_nodes_type[core_node_1]
                 core_node_0_x = coords[core_node_0, 0]
                 core_node_0_y = coords[core_node_0, 1]
                 core_node_0_z = coords[core_node_0, 2]
@@ -627,8 +628,8 @@ def aelp_network_topology_plotter(
                 core_node_1 = conn_pb_edges[edge, 1]
                 alpha = aelp_network_edge_alpha(
                     core_node_0, core_node_1, conn_graph)
-                core_node_0_type = node_type[core_node_0]
-                core_node_1_type = node_type[core_node_1]
+                core_node_0_type = core_nodes_type[core_node_0]
+                core_node_1_type = core_nodes_type[core_node_1]
                 core_node_0_x = coords[core_node_0, 0]
                 core_node_0_y = coords[core_node_0, 1]
                 core_node_0_z = coords[core_node_0, 2]

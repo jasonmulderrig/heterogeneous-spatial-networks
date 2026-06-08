@@ -9,5 +9,5 @@ k:
   - 4
 eta_n:
   - 0.01
-config: 200
+config: 3
 pruning: 1

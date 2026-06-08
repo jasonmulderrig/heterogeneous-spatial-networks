@@ -195,10 +195,10 @@ def swidt_network_edge_pruning_procedure(
     config_filename_prefix = config_filename_str(
         network, date, batch, sample, config)
     coords_filename = config_filename_prefix + ".coords"
-    conn_core_edges_filename = (
-        config_filename_prefix + "-conn_core_edges" + ".dat"
+    conn_edges_filename = config_filename_prefix + "-conn_edges" + ".dat"
+    conn_edges_type_filename = (
+        config_filename_prefix + "-conn_edges_type" + ".dat"
     )
-    conn_pb_edges_filename = config_filename_prefix + "-conn_pb_edges" + ".dat"
 
     # Generate configuration and pruning filename prefix. This
     # establishes the configuration and pruning filename prefix as the
@@ -208,18 +208,23 @@ def swidt_network_edge_pruning_procedure(
     config_pruning_filename_prefix = config_pruning_filename_str(
         network, date, batch, sample, config, pruning)
     mx_cmp_pruned_coords_filename = config_pruning_filename_prefix + ".coords"
-    mx_cmp_pruned_conn_core_edges_filename = (
-        config_pruning_filename_prefix + "-conn_core_edges" + ".dat"
+    mx_cmp_pruned_core_nodes_type_filename = (
+        config_pruning_filename_prefix + "-core_nodes_type" + ".dat"
     )
-    mx_cmp_pruned_conn_pb_edges_filename = (
-        config_pruning_filename_prefix + "-conn_pb_edges" + ".dat"
+    mx_cmp_pruned_conn_edges_filename = (
+        config_pruning_filename_prefix + "-conn_edges" + ".dat"
+    )
+    mx_cmp_pruned_conn_edges_type_filename = (
+        config_pruning_filename_prefix + "-conn_edges_type" + ".dat"
     )
     
     # Load fundamental graph constituents
     core_nodes = np.arange(n, dtype=int)
-    conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
-    conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
-    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+    core_nodes_type = np.ones(n, dtype=int)
+    conn_edges = np.loadtxt(conn_edges_filename, dtype=int)
+    conn_edges_type = np.loadtxt(conn_edges_type_filename, dtype=int)
+    conn_core_edges = conn_edges[np.where(conn_edges_type==1)[0]]
+    conn_pb_edges = conn_edges[np.where(conn_edges_type==0)[0]]
 
     # Load core node coordinates
     coords = np.loadtxt(coords_filename)
@@ -279,77 +284,99 @@ def swidt_network_edge_pruning_procedure(
                 
         # Isolate largest/maximum connected component in a nodewise
         # fashion
-        mx_cmp_pruned_conn_graph_nodes = max(
+        mx_cmp_pruned_core_nodes = max(
             nx.connected_components(conn_graph), key=len)
         mx_cmp_pruned_conn_core_graph = (
-            conn_core_graph.subgraph(mx_cmp_pruned_conn_graph_nodes).copy()
+            conn_core_graph.subgraph(mx_cmp_pruned_core_nodes).copy()
         )
         mx_cmp_pruned_conn_pb_graph = (
-            conn_pb_graph.subgraph(mx_cmp_pruned_conn_graph_nodes).copy()
+            conn_pb_graph.subgraph(mx_cmp_pruned_core_nodes).copy()
         )
-        mx_cmp_pruned_conn_core_graph_edges = np.asarray(
+        mx_cmp_pruned_conn_core_edges = np.asarray(
             list(mx_cmp_pruned_conn_core_graph.edges()), dtype=int)
-        mx_cmp_pruned_conn_pb_graph_edges = np.asarray(
+        mx_cmp_pruned_conn_pb_edges = np.asarray(
             list(mx_cmp_pruned_conn_pb_graph.edges()), dtype=int)
         # Number of edges in the largest/maximum connected component
-        mx_cmp_pruned_conn_core_graph_m = (
-            np.shape(mx_cmp_pruned_conn_core_graph_edges)[0]
-        )
-        mx_cmp_pruned_conn_pb_graph_m = (
-            np.shape(mx_cmp_pruned_conn_pb_graph_edges)[0]
-        )
+        mx_cmp_pruned_conn_core_m = np.shape(mx_cmp_pruned_conn_core_edges)[0]
+        mx_cmp_pruned_conn_pb_m = np.shape(mx_cmp_pruned_conn_pb_edges)[0]
         # Nodes from the largest/maximum connected component, sorted in
         # ascending order
-        mx_cmp_pruned_conn_graph_nodes = (
-            np.sort(np.fromiter(mx_cmp_pruned_conn_graph_nodes, dtype=int))
+        mx_cmp_pruned_core_nodes = (
+            np.sort(np.fromiter(mx_cmp_pruned_core_nodes, dtype=int))
         )
         # Construct an np.ndarray that returns the index for each node
-        # number in the mx_cmp_pruned_conn_graph_nodes np.ndarray
-        mx_cmp_pruned_conn_graph_nodes_indcs = (
-            -1 * np.ones(np.max(mx_cmp_pruned_conn_graph_nodes)+1, dtype=int)
+        # number in the mx_cmp_pruned_core_nodes np.ndarray
+        mx_cmp_pruned_core_nodes_indcs = (
+            -1 * np.ones(np.max(mx_cmp_pruned_core_nodes)+1, dtype=int)
         )
-        mx_cmp_pruned_conn_graph_nodes_indcs[mx_cmp_pruned_conn_graph_nodes] = (
-            np.arange(np.shape(mx_cmp_pruned_conn_graph_nodes)[0], dtype=int)
+        mx_cmp_pruned_core_nodes_indcs[mx_cmp_pruned_core_nodes] = (
+            np.arange(np.shape(mx_cmp_pruned_core_nodes)[0], dtype=int)
         )
 
         # Isolate the core node coordinates for the largest/maximum
         # connected component
-        mx_cmp_pruned_coords = coords[mx_cmp_pruned_conn_graph_nodes]
+        mx_cmp_pruned_coords = coords[mx_cmp_pruned_core_nodes]
+        
+        # Determine the type of each core node for the largest/maximum
+        # connected component based upon the degree of each node
+        mx_cmp_pruned_core_nodes_type = conn_graph_k[mx_cmp_pruned_core_nodes]
+        # Dangling nodes are of type 0, all other nodes are of type 1
+        mx_cmp_pruned_core_nodes_type[mx_cmp_pruned_core_nodes_type==1] = 0
+        mx_cmp_pruned_core_nodes_type[mx_cmp_pruned_core_nodes_type>1] = 1
 
         # Update all original node values with updated node values
-        for edge in range(mx_cmp_pruned_conn_core_graph_m):
-            mx_cmp_pruned_conn_core_graph_edges[edge, 0] = int(
-                mx_cmp_pruned_conn_graph_nodes_indcs[mx_cmp_pruned_conn_core_graph_edges[edge, 0]])
-            mx_cmp_pruned_conn_core_graph_edges[edge, 1] = int(
-                mx_cmp_pruned_conn_graph_nodes_indcs[mx_cmp_pruned_conn_core_graph_edges[edge, 1]])
-        for edge in range(mx_cmp_pruned_conn_pb_graph_m):
-            mx_cmp_pruned_conn_pb_graph_edges[edge, 0] = int(
-                mx_cmp_pruned_conn_graph_nodes_indcs[mx_cmp_pruned_conn_pb_graph_edges[edge, 0]])
-            mx_cmp_pruned_conn_pb_graph_edges[edge, 1] = int(
-                mx_cmp_pruned_conn_graph_nodes_indcs[mx_cmp_pruned_conn_pb_graph_edges[edge, 1]])
+        for edge in range(mx_cmp_pruned_conn_core_m):
+            mx_cmp_pruned_conn_core_edges[edge, 0] = int(
+                mx_cmp_pruned_core_nodes_indcs[mx_cmp_pruned_conn_core_edges[edge, 0]])
+            mx_cmp_pruned_conn_core_edges[edge, 1] = int(
+                mx_cmp_pruned_core_nodes_indcs[mx_cmp_pruned_conn_core_edges[edge, 1]])
+        for edge in range(mx_cmp_pruned_conn_pb_m):
+            mx_cmp_pruned_conn_pb_edges[edge, 0] = int(
+                mx_cmp_pruned_core_nodes_indcs[mx_cmp_pruned_conn_pb_edges[edge, 0]])
+            mx_cmp_pruned_conn_pb_edges[edge, 1] = int(
+                mx_cmp_pruned_core_nodes_indcs[mx_cmp_pruned_conn_pb_edges[edge, 1]])
                 
-        # Lexicographically sort the edges
-        mx_cmp_pruned_conn_core_graph_edges = lexsorted_edges(
-            mx_cmp_pruned_conn_core_graph_edges)
-        mx_cmp_pruned_conn_pb_graph_edges = lexsorted_edges(
-            mx_cmp_pruned_conn_pb_graph_edges)
+        # Explicitly denote edge type via np.ndarrays
+        mx_cmp_pruned_conn_core_edges_type = np.ones(
+            mx_cmp_pruned_conn_core_m, dtype=int)
+        mx_cmp_pruned_conn_pb_edges_type = np.zeros(
+            mx_cmp_pruned_conn_pb_m, dtype=int)
+
+        # Combine edge arrays and edge type arrays
+        mx_cmp_pruned_conn_edges = np.vstack(
+            (mx_cmp_pruned_conn_core_edges, mx_cmp_pruned_conn_pb_edges),
+            dtype=int)
+        mx_cmp_pruned_conn_edges_type = np.concatenate(
+            (mx_cmp_pruned_conn_core_edges_type, mx_cmp_pruned_conn_pb_edges_type),
+            dtype=int)
         
+        # Lexicographically sort the edges and edge types
+        mx_cmp_pruned_conn_edges, lexsort_indcs = lexsorted_edges(
+            mx_cmp_pruned_conn_edges, return_indcs=True)
+        mx_cmp_pruned_conn_edges_type = (
+            mx_cmp_pruned_conn_edges_type[lexsort_indcs]
+        )
+
         # Save fundamental graph constituents from this topology
         np.savetxt(
-            mx_cmp_pruned_conn_core_edges_filename,
-            mx_cmp_pruned_conn_core_graph_edges, fmt="%d")
+            mx_cmp_pruned_core_nodes_type_filename, mx_cmp_pruned_core_nodes_type,
+            fmt="%d")
         np.savetxt(
-            mx_cmp_pruned_conn_pb_edges_filename,
-            mx_cmp_pruned_conn_pb_graph_edges, fmt="%d")
+            mx_cmp_pruned_conn_edges_filename, mx_cmp_pruned_conn_edges,
+            fmt="%d")
+        np.savetxt(
+            mx_cmp_pruned_conn_edges_type_filename, mx_cmp_pruned_conn_edges_type,
+            fmt="%d")
         
         # Save the core node coordinates
         np.savetxt(mx_cmp_pruned_coords_filename, mx_cmp_pruned_coords)
     else:
         # Save fundamental graph constituents from this topology
         np.savetxt(
-            mx_cmp_pruned_conn_core_edges_filename, conn_core_edges, fmt="%d")
+            mx_cmp_pruned_core_nodes_type_filename, core_nodes_type, fmt="%d")
+        np.savetxt(mx_cmp_pruned_conn_edges_filename, conn_edges, fmt="%d")
         np.savetxt(
-            mx_cmp_pruned_conn_pb_edges_filename, conn_pb_edges, fmt="%d")
+            mx_cmp_pruned_conn_edges_type_filename, conn_edges_type, fmt="%d")
         
         # Save the core node coordinates
         np.savetxt(mx_cmp_pruned_coords_filename, coords)

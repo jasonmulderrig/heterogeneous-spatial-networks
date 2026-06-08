@@ -12,6 +12,7 @@ from helpers.network_topology_initialization_utils import (
 )
 from helpers.graph_utils import (
     unique_lexsorted_edges,
+    lexsorted_edges,
     add_nodes_from_numpy_array,
     add_edges_from_numpy_array
 )
@@ -142,10 +143,14 @@ def voronoi_network_topology_initialization(
     # Generate filenames
     coords_filename = config_filename_prefix + ".coords"
     germ_coords_filename = config_filename_prefix + "-germ" + ".coords"
-    conn_core_edges_filename = (
-        config_filename_prefix + "-conn_core_edges" + ".dat"
+    core_nodes_filename = config_filename_prefix + "-core_nodes" + ".dat"
+    core_nodes_type_filename = (
+        config_filename_prefix + "-core_nodes_type" + ".dat"
     )
-    conn_pb_edges_filename = config_filename_prefix + "-conn_pb_edges" + ".dat"
+    conn_edges_filename = config_filename_prefix + "-conn_edges" + ".dat"
+    conn_edges_type_filename = (
+        config_filename_prefix + "-conn_edges_type" + ".dat"
+    )
 
     # Call appropriate helper function to initialize network topology
     if (scheme == "random") or (scheme == "prhd") or (scheme == "pdhu"):
@@ -225,7 +230,7 @@ def voronoi_network_topology_initialization(
         dim, core_nodes, core_vertices, L)
     
     del core_nodes
-
+    
     # Extract the ridge vertices from the Voronoi tessellation
     ridge_vertices = tsslltd_core_voronoi.ridge_vertices
 
@@ -327,15 +332,28 @@ def voronoi_network_topology_initialization(
             node_0 = int(pb2core_nodes[node_0])
             node_1 = int(pb2core_nodes[node_1])
             conn_pb_edges.append((node_0, node_1))
-
+    
     # Convert edge lists to np.ndarrays, and retain unique and
     # lexicographically sorted edges
     conn_core_edges = unique_lexsorted_edges(conn_core_edges)
     conn_pb_edges = unique_lexsorted_edges(conn_pb_edges)
 
+    # Explicitly denote edge type via np.ndarrays
+    conn_core_edges_type = np.ones(np.shape(conn_core_edges)[0], dtype=int)
+    conn_pb_edges_type = np.zeros(np.shape(conn_pb_edges)[0], dtype=int)
+
+    # Combine edge arrays and edge type arrays
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+    conn_edges_type = np.concatenate(
+        (conn_core_edges_type, conn_pb_edges_type), dtype=int)
+    
+    # Lexicographically sort the edges and edge types
+    conn_edges, lexsort_indcs = lexsorted_edges(conn_edges, return_indcs=True)
+    conn_edges_type = conn_edges_type[lexsort_indcs]
+
     # Save fundamental graph constituents from this topology
-    np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")
-    np.savetxt(conn_pb_edges_filename, conn_pb_edges, fmt="%d")
+    np.savetxt(conn_edges_filename, conn_edges, fmt="%d")
+    np.savetxt(conn_edges_type_filename, conn_edges_type, fmt="%d")
 
     # Save the core node coordinates
     np.savetxt(coords_filename, core_vertices)

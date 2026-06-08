@@ -79,43 +79,42 @@ def main(cfg: abelpConfig) -> None:
         aelp_filename = aelp_filename_str(
             cfg.label.network, cfg.label.date, cfg.label.batch, sample, config)
         coords_filename = aelp_filename + ".coords"
-        core_node_type_filename = aelp_filename + "-node_type" + ".dat"
-        conn_core_edges_filename = aelp_filename + "-conn_core_edges" + ".dat"
-        conn_pb_edges_filename = aelp_filename + "-conn_pb_edges" + ".dat"
-        conn_en_core_edges_filename = (
-            aelp_filename + "-conn_en_core_edges" + ".dat"
-        )
-        conn_en_pb_edges_filename = aelp_filename + "-conn_en_pb_edges" + ".dat"
+        core_nodes_type_filename = aelp_filename + "-core_nodes_type" + ".dat"
+        conn_edges_filename = aelp_filename + "-conn_edges" + ".dat"
+        conn_edges_type_filename = aelp_filename + "-conn_edges_type" + ".dat"
+        en_conn_edges_filename = aelp_filename + "-en_conn_edges" + ".dat"
 
         # Load simulation box size, node coordinates, and node type
         L = np.loadtxt(L_filename)
         coords = np.loadtxt(coords_filename)
-        core_node_type = np.loadtxt(core_node_type_filename, dtype=int)
+        core_nodes_type = np.loadtxt(core_nodes_type_filename, dtype=int)
 
         # Load fundamental graph constituents
-        core_nodes = np.arange(np.shape(core_node_type)[0], dtype=int)
-        conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
-        conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
-        conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+        core_nodes = np.arange(np.shape(core_nodes_type)[0], dtype=int)
+        conn_edges = np.loadtxt(conn_edges_filename, dtype=int)
+        conn_edges_type = np.loadtxt(conn_edges_type_filename, dtype=int)
+        conn_core_edges = conn_edges[np.where(conn_edges_type==1)[0]]
+        conn_pb_edges = conn_edges[np.where(conn_edges_type==0)[0]]
         m = np.shape(conn_edges)[0]
-
-        # Create nx.MultiGraph, and add nodes before edges
-        conn_graph = nx.MultiGraph()
-        conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
-        conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
 
         # Calculate end-to-end chain length (Euclidean edge length)
         l_core_chn, l_pb_chn = l_arr_func(
             conn_core_edges, conn_pb_edges, coords, L)
         
         # Load chain segment number information
-        conn_en_core_edges = np.loadtxt(conn_en_core_edges_filename, dtype=int)
-        conn_en_pb_edges = np.loadtxt(conn_en_pb_edges_filename, dtype=int)
-        conn_nu_core_edges = conn_en_core_edges - 1
-        conn_nu_pb_edges = conn_en_pb_edges - 1
+        en_conn_edges = np.loadtxt(en_conn_edges_filename, dtype=int)
+        en_conn_core_edges = en_conn_edges[np.where(conn_edges_type==1)[0]]
+        en_conn_pb_edges = en_conn_edges[np.where(conn_edges_type==0)[0]]
+        nu_conn_core_edges = en_conn_core_edges - 1
+        nu_conn_pb_edges = en_conn_pb_edges - 1
+
+        # Create nx.MultiGraph, and add nodes before edges
+        conn_graph = nx.MultiGraph()
+        conn_graph = add_nodes_from_numpy_array(conn_graph, core_nodes)
+        conn_graph = add_edges_from_numpy_array(conn_graph, conn_edges)
 
         # Number of dangling chains
-        dnglng_n = np.count_nonzero(core_node_type==3)
+        dnglng_n = np.count_nonzero(core_nodes_type==0)
 
         if dim == 2:
             # End-to-end chain length for each/every chain
@@ -123,7 +122,7 @@ def main(cfg: abelpConfig) -> None:
 
             # Chain segment number for each/every chain
             dim_2_nu_chns = np.concatenate(
-                (dim_2_nu_chns, conn_nu_core_edges, conn_nu_pb_edges),
+                (dim_2_nu_chns, nu_conn_core_edges, nu_conn_pb_edges),
                 dtype=int)
 
             # Proportion of dangling chains
@@ -133,7 +132,7 @@ def main(cfg: abelpConfig) -> None:
             dim_2_k_clnkr_count = np.zeros(k_max+1, dtype=int)
             for node, k in list(conn_graph.degree()):
                 # If dangling chain node, then continue to next node
-                if core_node_type[node] == 3: continue
+                if core_nodes_type[node] == 0: continue
                 # Update cross-linker node degree occurance count
                 dim_2_k_clnkr_count[k] += 1
             dim_2_k_clnkr_count[0] = np.sum(dim_2_k_clnkr_count[1:])
@@ -154,7 +153,7 @@ def main(cfg: abelpConfig) -> None:
 
             # Chain segment number for each/every chain
             dim_3_nu_chns = np.concatenate(
-                (dim_3_nu_chns, conn_nu_core_edges, conn_nu_pb_edges),
+                (dim_3_nu_chns, nu_conn_core_edges, nu_conn_pb_edges),
                 dtype=int)
 
             # Proportion of dangling chains
@@ -164,7 +163,7 @@ def main(cfg: abelpConfig) -> None:
             dim_3_k_clnkr_count = np.zeros(k_max+1, dtype=int)
             for node, k in list(conn_graph.degree()):
                 # If dangling chain node, then continue to next node
-                if core_node_type[node] == 3: continue
+                if core_nodes_type[node] == 0: continue
                 # Update cross-linker node degree occurance count
                 dim_3_k_clnkr_count[k] += 1
             dim_3_k_clnkr_count[0] = np.sum(dim_3_k_clnkr_count[1:])
@@ -367,41 +366,37 @@ def main(cfg: abelpConfig) -> None:
         aelp_filename = aelp_filename_str(
             cfg.label.network, cfg.label.date, cfg.label.batch, sample, config)
         coords_filename = aelp_filename + ".coords"
-        core_node_type_filename = aelp_filename + "-node_type" + ".dat"
-        conn_core_edges_filename = (
-            aelp_filename + "-conn_core_edges" + ".dat"
-        )
-        conn_pb_edges_filename = aelp_filename + "-conn_pb_edges" + ".dat"
-        conn_en_core_edges_filename = (
-            aelp_filename + "-conn_en_core_edges" + ".dat"
-        )
-        conn_en_pb_edges_filename = (
-            aelp_filename + "-conn_en_pb_edges" + ".dat"
-        )
+        core_nodes_type_filename = aelp_filename + "-core_nodes_type" + ".dat"
+        conn_edges_filename = aelp_filename + "-conn_edges" + ".dat"
+        conn_edges_type_filename = aelp_filename + "-conn_edges_type" + ".dat"
+        en_conn_edges_filename = aelp_filename + "-en_conn_edges" + ".dat"
 
         # Load simulation box size, node coordinates, and node type
         L = np.loadtxt(L_filename)
         coords = np.loadtxt(coords_filename)
-        core_node_type = np.loadtxt(core_node_type_filename, dtype=int)
+        core_nodes_type = np.loadtxt(core_nodes_type_filename, dtype=int)
 
         # Load fundamental graph constituents
-        core_nodes = np.arange(np.shape(core_node_type)[0], dtype=int)
-        conn_core_edges = np.loadtxt(conn_core_edges_filename, dtype=int)
-        conn_pb_edges = np.loadtxt(conn_pb_edges_filename, dtype=int)
-        conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+        core_nodes = np.arange(np.shape(core_nodes_type)[0], dtype=int)
+        conn_edges = np.loadtxt(conn_edges_filename, dtype=int)
+        conn_edges_type = np.loadtxt(conn_edges_type_filename, dtype=int)
+        conn_core_edges = conn_edges[np.where(conn_edges_type==1)[0]]
+        conn_pb_edges = conn_edges[np.where(conn_edges_type==0)[0]]
         m = np.shape(conn_edges)[0]
 
         # Calculate end-to-end chain length (Euclidean edge length)
         l_core_chn, l_pb_chn = l_arr_func(
             conn_core_edges, conn_pb_edges, coords, L)
         l_chns = np.concatenate((l_core_chn, l_pb_chn))
-
+        
         # Load chain segment number information
-        conn_en_core_edges = np.loadtxt(conn_en_core_edges_filename, dtype=int)
-        conn_en_pb_edges = np.loadtxt(conn_en_pb_edges_filename, dtype=int)
-        conn_en_edges = np.concatenate(
-            (conn_en_core_edges, conn_en_pb_edges), dtype=int)
-        conn_nu_edges = conn_en_edges - 1
+        en_conn_edges = np.loadtxt(en_conn_edges_filename, dtype=int)
+        en_conn_core_edges = en_conn_edges[np.where(conn_edges_type==1)[0]]
+        en_conn_pb_edges = en_conn_edges[np.where(conn_edges_type==0)[0]]
+        nu_conn_core_edges = en_conn_core_edges - 1
+        nu_conn_pb_edges = en_conn_pb_edges - 1
+        nu_conn_edges = np.concatenate(
+            (nu_conn_core_edges, nu_conn_pb_edges), dtype=int)
 
         # Create nx.MultiGraph, and add nodes before edges
         conn_graph = nx.MultiGraph()
@@ -432,7 +427,7 @@ def main(cfg: abelpConfig) -> None:
                     # is empty
                     if not bool(eeel_conn_graph[node_0][node_1][multiedge]):
                         eeel_conn_graph[node_0][node_1][multiedge]["l"] = l_chns[edge]
-                        eeel_conn_graph[node_0][node_1][multiedge]["nu"] = conn_nu_edges[edge]
+                        eeel_conn_graph[node_0][node_1][multiedge]["nu"] = nu_conn_edges[edge]
                         break
                     else: multiedge += 1
         
@@ -504,7 +499,7 @@ def main(cfg: abelpConfig) -> None:
                 # If dangling chain node, then continue to next node.
                 # This should never occur in the elastically-effective
                 # end-linked network.
-                if core_node_type[node] == 3: continue
+                if core_nodes_type[node] == 0: continue
                 # Update elastically-effective end-linked network
                 # cross-linker node degree occurance count
                 dim_2_eeel_k_clnkr_count[k] += 1
@@ -591,7 +586,7 @@ def main(cfg: abelpConfig) -> None:
                 # If dangling chain node, then continue to next node.
                 # This should never occur in the elastically-effective
                 # end-linked network.
-                if core_node_type[node] == 3: continue
+                if core_nodes_type[node] == 0: continue
                 # Update elastically-effective end-linked network
                 # cross-linker node degree occurance count
                 dim_3_eeel_k_clnkr_count[k] += 1

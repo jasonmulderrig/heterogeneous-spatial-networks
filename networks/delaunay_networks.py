@@ -9,6 +9,7 @@ from scipy.spatial import Delaunay
 from helpers.network_topology_initialization_utils import core_node_tessellation
 from helpers.graph_utils import (
     unique_lexsorted_edges,
+    lexsorted_edges,
     add_nodes_from_numpy_array,
     add_edges_from_numpy_array
 )
@@ -139,10 +140,10 @@ def delaunay_network_topology_initialization(
 
     # Generate filenames
     coords_filename = config_filename_prefix + ".coords"
-    conn_core_edges_filename = (
-        config_filename_prefix + "-conn_core_edges" + ".dat"
+    conn_edges_filename = config_filename_prefix + "-conn_edges" + ".dat"
+    conn_edges_type_filename = (
+        config_filename_prefix + "-conn_edges_type" + ".dat"
     )
-    conn_pb_edges_filename = config_filename_prefix + "-conn_pb_edges" + ".dat"
 
     # Call appropriate helper function to initialize network topology
     if (scheme == "random") or (scheme == "prhd") or (scheme == "pdhu"):
@@ -253,9 +254,22 @@ def delaunay_network_topology_initialization(
     conn_core_edges = unique_lexsorted_edges(conn_core_edges)
     conn_pb_edges = unique_lexsorted_edges(conn_pb_edges)
 
+    # Explicitly denote edge type via np.ndarrays
+    conn_core_edges_type = np.ones(np.shape(conn_core_edges)[0], dtype=int)
+    conn_pb_edges_type = np.zeros(np.shape(conn_pb_edges)[0], dtype=int)
+
+    # Combine edge arrays and edge type arrays
+    conn_edges = np.vstack((conn_core_edges, conn_pb_edges), dtype=int)
+    conn_edges_type = np.concatenate(
+        (conn_core_edges_type, conn_pb_edges_type), dtype=int)
+    
+    # Lexicographically sort the edges and edge types
+    conn_edges, lexsort_indcs = lexsorted_edges(conn_edges, return_indcs=True)
+    conn_edges_type = conn_edges_type[lexsort_indcs]
+
     # Save fundamental graph constituents from this topology
-    np.savetxt(conn_core_edges_filename, conn_core_edges, fmt="%d")
-    np.savetxt(conn_pb_edges_filename, conn_pb_edges, fmt="%d")
+    np.savetxt(conn_edges_filename, conn_edges, fmt="%d")
+    np.savetxt(conn_edges_type_filename, conn_edges_type, fmt="%d")
     
 def delaunay_network_topology(
         network: str,
